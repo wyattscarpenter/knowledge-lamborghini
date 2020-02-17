@@ -1,22 +1,32 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
-var example = ["a", "b", "c"];
+var text = ["a", "b", "c"];
+var channel;
+var interval;
 
 client.on('ready', () => {
     console.log('I am ready!');
 });
 
 client.on('message', message => {
-    if (message.content === 'ping') {
-       interval = setInterval(() => {message.reply(think())}, 1000);
+    if (message.content.toLowerCase() === 'think!') {
+        channel = message.channel;
+        if(!text){
+            channel.send("Demand me nothing. What you know, you know.");
+        } else {
+            interval = setInterval(think(), 1000);
+        }
+    }
+    if (message.content.toLowerCase() === 'stop!') {
+        clearInterval(interval);
     }
 });
 
 function think(){
     var s = example.shift();
     if(s){
-        return s;
+        channel.send(s);
     } else {
         clearInterval(interval);
     }
