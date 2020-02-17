@@ -15,6 +15,7 @@ client.on('message', message => {
         if(text.length === 0){
             channel.send("Demand me nothing. What you know, you know.");
         } else {
+            think();
             interval = setInterval(think, 1000*60*60*24);
         }
     }
