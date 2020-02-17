@@ -24,7 +24,7 @@ client.on('message', message => {
 });
 
 function think(){
-    var s = example.shift();
+    var s = text.shift();
     if(s){
         channel.send(s);
     } else {
