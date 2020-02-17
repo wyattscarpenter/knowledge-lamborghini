@@ -12,7 +12,7 @@ client.on('ready', () => {
 client.on('message', message => {
     if (message.content.toLowerCase() === 'think!') {
         channel = message.channel;
-        if(!text){
+        if(text===[]){
             channel.send("Demand me nothing. What you know, you know.");
         } else {
             interval = setInterval(think, 1000);
