@@ -16,11 +16,12 @@ client.on('message', message => {
             channel.send("Demand me nothing. What you know, you know.");
         } else {
             think();
-            interval = setInterval(think, 1000*60*60*24);
+            if(!interval){interval = setInterval(think, 1000*60*60*24);}
         }
     }
     if (message.content.toLowerCase() === 'stop!') {
         clearInterval(interval);
+        interval = 0;
     }
 });
 
@@ -28,8 +29,10 @@ function think(){
     var s = text.shift();
     if(s){
         channel.send(s);
+        console.log(s);
     } else {
         clearInterval(interval);
+        interval = 0;
     }
 }
         
