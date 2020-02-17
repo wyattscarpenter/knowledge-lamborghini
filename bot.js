@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
-var text = ["a", "b", "c"];
+var text = require('./text.json');;
 var channel;
 var interval;
 
