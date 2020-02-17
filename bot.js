@@ -9,7 +9,7 @@ client.on('ready', () => {
 
 client.on('message', message => {
     if (message.content === 'ping') {
-       setInterval(message.reply(think()), 1000);
+       setInterval(() => {message.reply(think())}, 1000);
     }
 });
 
