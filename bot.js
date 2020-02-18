@@ -16,7 +16,7 @@ client.on('message', message => {
             channel.send("Demand me nothing. What you know, you know.");
         } else {
             think();
-            if(!interval){interval = setInterval(think, 1000*60*60*24);}
+            if(!interval){interval = setInterval(think, 1000*60*60);}
         }
     }
     if (message.content.toLowerCase() === 'stop!') {
