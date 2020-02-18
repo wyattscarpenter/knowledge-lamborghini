@@ -7,9 +7,8 @@ var interval;
 
 client.on('ready', () => {
     console.log('I am ready!');
+    client.user.setGame('Nicomachean Ethics');
 });
-
-client.user.setGame('Nicomachean Ethics');
 
 client.on('message', message => {
     if (message.content.toLowerCase() === 'think!') {
