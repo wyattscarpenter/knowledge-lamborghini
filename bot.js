@@ -29,7 +29,7 @@ client.on('message', message => {
 function think(){
     var s = text.shift();
     if(s){
-        for(var l in s.split("\n")){ //break lines into seperate messages
+        for(var l of s.split("\n")){ //break lines into seperate messages
             do{ //discord 2048 character limit
                 var chunk = l.split(0,2048); 
                 channel.send(chunk); //tbh I never bothered to find out if .send() Just Works for too long messages
