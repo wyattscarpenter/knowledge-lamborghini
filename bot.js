@@ -31,10 +31,10 @@ function think(){
     if(s){
         for(var l of s.split("\n")){ //break lines into seperate messages
             do{ //discord 2048 character limit
-                var chunk = l.split(0,2048); 
+                var chunk = l.slice(0,2048); 
                 channel.send(chunk); //tbh I never bothered to find out if .send() Just Works for too long messages
                 console.log(chunk);
-                l = l.split(2048);
+                l = l.slice(2048);
             }while(l.length > 0);
         }
     } else {
