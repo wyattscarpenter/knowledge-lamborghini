@@ -12,8 +12,8 @@ client.on('ready', () => {
 });
 
 client.on('message', message => {
+    channel = message.channel;
     if (message.content.toLowerCase() === 'think!') {
-        channel = message.channel;
         if(text.length === 0){
             channel.send("Demand me nothing. What you know, you know.");
         } else {
