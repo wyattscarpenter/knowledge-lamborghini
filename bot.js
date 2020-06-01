@@ -27,7 +27,7 @@ client.on('message', message => {
     }
 
     //extremely dumb features
-    if (/.*wh.*po.?k.?mon.*/.test(message.content.toLowerCase())) {
+    if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) {
         channel.send("It's https://commons.wikimedia.org/wiki/Special:Random/Image");
     }
     if (message.content.toLowerCase().startsWith("eval")) {
