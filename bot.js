@@ -1,5 +1,5 @@
 const Discord = require('discord.js');
-const http = require('http');
+const https = require('https');
 const client = new Discord.Client();
 
 var text = require('./text.json');
@@ -29,7 +29,7 @@ client.on('message', message => {
 
     //extremely dumb features
     if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
-        http.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6',//image
+        https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6',//image
           (resp) => {
               let data = '';
               resp.on('data', (chunk) => {data += chunk;});
