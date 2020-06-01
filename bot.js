@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const http = require('http');
 const client = new Discord.Client();
 
 var text = require('./text.json');
@@ -28,10 +29,12 @@ client.on('message', message => {
 
     //extremely dumb features
     if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
-        wikimediarandomimageapiurl = "https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6";
-        fetch('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6')
-          .then(response => response.json())
-          .then(data => channel.send(data));
+        http.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6',//image
+          (resp) => {
+              let data = '';
+              resp.on('data', (chunk) => {data += chunk;});
+              resp.on('end', () => {channel.send(JSON.parse(data));});
+        }).on("error", (err) => {console.log("Error: " + err.message);});
     }
     if (message.content.toLowerCase().startsWith("eval")) {
         //NEVER use this in production
