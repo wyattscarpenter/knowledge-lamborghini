@@ -27,7 +27,7 @@ client.on('message', message => {
     }
 
     //extremely dumb features
-    if (/.*who.*pok.?mon.*/.test(message.content.toLowerCase())) {
+    if (/.*wh.*pok.?mon.*/.test(message.content.toLowerCase())) {
         channel.send("It's https://en.wikipedia.org/wiki/Special:Random");
     }
     if (message.content.toLowerCase().startsWith("eval")) {
