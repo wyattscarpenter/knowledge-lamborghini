@@ -36,7 +36,7 @@ client.on('message', message => {
     }
     if (message.content.toLowerCase().startsWith("set")) {
         msg = message.content.toLowerCase().split(/\s(.+)/)[1];
-        thingum = message.content.toLowerCase().split(/\s(.+)/);
+        thingum = msg.split(/\s(.+)/);
         responses[thingum[0]] = thingum[1];
     }
     if (message.content.toLowerCase() in responses) {
