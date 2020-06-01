@@ -27,8 +27,11 @@ client.on('message', message => {
     }
 
     //extremely dumb features
-    if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) {
-        channel.send("It's https://commons.wikimedia.org/wiki/Special:Random/Image");
+    if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
+        wikimediarandomimageapiurl = "https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6";
+        fetch('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6')
+          .then(response => response.json())
+          .then(data => channel.send(data));
     }
     if (message.content.toLowerCase().startsWith("eval")) {
         //NEVER use this in production
