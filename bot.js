@@ -34,7 +34,7 @@ client.on('message', message => {
               let data = '';
               resp.on('data', (chunk) => {data += chunk;});
               resp.on('end', () => {channel.send(JSON.parse(data));});
-        }).on("error", (err) => {console.log("Error: " + err.message);});
+        }).on("error", (err) => {console.log("Error: " + err);});
     }
     if (message.content.toLowerCase().startsWith("eval")) {
         //NEVER use this in production
