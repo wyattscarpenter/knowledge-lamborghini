@@ -18,7 +18,11 @@ client.on('message', message => {
         if(text.length === 0){
             channel.send("Demand me nothing. What you know, you know.");
         } else {
-            think();
+            var s = text.shift();
+            while(s){ //I think .send() Just Fails for too long messages (over discord's 2000 character limit)
+                channel.send(s.slice(0,2000)); //does not include [2000] (the 2001st character, since we 0 index)
+                s = s.slice(2000);
+            }
             if(!interval){interval = setInterval(think, 1000*60*60);}
         }
     }
@@ -51,10 +55,6 @@ client.on('message', message => {
     }
 });
 
-function think(){
-    var s = text.shift();
-    channel.send(s); //tbh I never bothered to find out if .send() Just Works for too long messages
-    console.log(s);
 }
 
 // THIS  MUST  BE  THIS  WAY
