@@ -52,7 +52,7 @@ function think(){
     if(s){
         for(var l of s.split("\n")){ //break lines into seperate messages
             while(l){ //.send() Just Fails for messages over discord's 2000 character limit
-                channel.send.slice(0,2000); //note that this is 0-indexed and excludes the specified end character
+                channel.send(l.slice(0,2000)); //note that this is 0-indexed and excludes the specified end character
                 l = l.slice(2000); //going over is fine, you know how it is
             }
         }
