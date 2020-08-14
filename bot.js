@@ -18,11 +18,7 @@ client.on('message', message => {
         if(text.length === 0){
             channel.send("Demand me nothing. What you know, you know.");
         } else {
-            var s = text.shift();
-            while(s){ //I think .send() Just Fails for too long messages (over discord's 2000 character limit)
-                channel.send(s.slice(0,2000)); //does not include [2000] (the 2001st character, since we 0 index)
-                s = s.slice(2000);
-            }
+            think();
             if(!interval){interval = setInterval(think, 1000*60*60);}
         }
     }
@@ -54,6 +50,23 @@ client.on('message', message => {
         channel.send(responses[message.content]);
     }
 });
+
+function think(){
+    var s = text.shift();
+    if(s){
+        for(var l of s.split("\n")){ //break lines into seperate messages
+            do{ //discord 2048 character limit
+                var chunk = l.slice(0,2048);
+                channel.send(chunk); //tbh I never bothered to find out if .send() Just Works for too long messages
+                console.log(chunk);
+                l = l.slice(2048);
+            }while(l.length > 0);
+        }
+    } else {
+        clearInterval(interval);
+        interval = 0;
+    }
+}
 
 // THIS  MUST  BE  THIS  WAY
 client.login(process.env.BOT_TOKEN);//BOT_TOKEN is the Client Secret
