@@ -9,8 +9,9 @@ var responses = {"hewwo": "perish"};
 
 client.on('ready', () => {
     console.log('I am ready!');
-    client.user.setGame('Nicomachean Ethics');
-    client.user.setStatus("https://discord.com/api/oauth2/authorize?client_id=678989133196165152&permissions=0&scope=bot");
+    client.user.setPresence({ activity: { name: 'with discord.js' }, status: 'idle' })
+    //client.user.setGame('Nicomachean Ethics');
+    //client.user.setStatus("https://discord.com/api/oauth2/authorize?client_id=678989133196165152&permissions=0&scope=bot");
 });
 
 client.on('message', message => {
