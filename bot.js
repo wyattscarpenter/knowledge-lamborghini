@@ -18,8 +18,7 @@ client.on('message', message => {
             think();
     }
     if (message.content.toLowerCase() === 'stop!') {
-        clearInterval(interval);
-        interval = 0;
+        stop();
     }
 
     //extremely dumb features
@@ -56,12 +55,16 @@ function think(){
                 l = l.slice(2000); //going over is fine, you know how it is
             }
         }
-        if(!interval){interval = setInterval(think, 1000*60*60);}
+        if(!interval){interval = setInterval(think, 1000*60*60);} //do it again in an hour
     } else {
         channel.send("Demand me nothing. What you know, you know.");
-        clearInterval(interval);
-        interval = 0;
+        stop();
     }
+}
+
+function stop(){
+    clearInterval(interval);
+    interval = 0;
 }
 
 // THIS  MUST  BE  THIS  WAY
