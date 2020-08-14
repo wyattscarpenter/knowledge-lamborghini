@@ -53,8 +53,8 @@ client.on('message', message => {
 
 function think(){
     var s = text.shift();
-    channel.send(chunk); //tbh I never bothered to find out if .send() Just Works for too long messages
-    console.log(chunk);
+    channel.send(s); //tbh I never bothered to find out if .send() Just Works for too long messages
+    console.log(s);
 }
 
 // THIS  MUST  BE  THIS  WAY
