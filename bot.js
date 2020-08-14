@@ -9,7 +9,7 @@ var responses = {"hewwo": "perish"};
 
 client.on('ready', () => {
     console.log('I am ready!');
-    client.user.setActivity("Nicomachean Ethics https://discord.com/api/oauth2/authorize?client_id=678989133196165152&permissions=0&scope=bot", {url: "https://discord.com/api/oauth2/authorize?client_id=678989133196165152&permissions=0&scope=bot"});
+    client.user.setActivity("Nicomachean Ethics https://discord.com/api/oauth2/authorize?client_id=678989133196165152&permissions=0&scope=bot", {type: "WATCHING", url: "https://discord.com/api/oauth2/authorize?client_id=678989133196165152&permissions=0&scope=bot"});
 });
 
 client.on('message', message => {
