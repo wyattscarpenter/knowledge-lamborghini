@@ -15,12 +15,7 @@ client.on('ready', () => {
 client.on('message', message => {
     channel = message.channel;
     if (message.content.toLowerCase() === 'think!') {
-        if(text.length === 0){
-            channel.send("Demand me nothing. What you know, you know.");
-        } else {
             think();
-            if(!interval){interval = setInterval(think, 1000*60*60);}
-        }
     }
     if (message.content.toLowerCase() === 'stop!') {
         clearInterval(interval);
@@ -53,16 +48,17 @@ client.on('message', message => {
 
 function think(){
     var s = text.shift();
+    //text.length === 0 ?
     if(s){
         for(var l of s.split("\n")){ //break lines into seperate messages
-            do{ //discord 2048 character limit
-                var chunk = l.slice(0,2048);
-                channel.send(chunk); //tbh I never bothered to find out if .send() Just Works for too long messages
-                console.log(chunk);
-                l = l.slice(2048);
-            }while(l.length > 0);
+            while(l){ //.send() Just Fails for messages over discord's 2000 character limit
+                channel.send.slice(0,2000); //note that this is 0-indexed and excludes the specified end character
+                l = l.slice(2000); //going over is fine, you know how it is
+            }
         }
+        if(!interval){interval = setInterval(think, 1000*60*60);}
     } else {
+        channel.send("Demand me nothing. What you know, you know.");
         clearInterval(interval);
         interval = 0;
     }
