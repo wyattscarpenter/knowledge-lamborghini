@@ -41,7 +41,7 @@ client.on('message', message => {
   }
   if((result = execute_dice(message.content.toLowerCase())).valid){
       message.channel.send(result.result);
-  }
+  } else { console.log(result); }
 
   //extremely dumb features
   if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
