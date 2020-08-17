@@ -99,7 +99,7 @@ function roll(string){
   }
   
   function expression(){ //this will have to be expanded later
-    var lhs = number();
+    var lhs = number() || 1; //allow this to be empty so the user can say eg "d6"
     var d   = die_symbol();
     var rhs = number();
     for(var i = 0; i < lhs; i++){
