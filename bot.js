@@ -95,7 +95,7 @@ function roll(string){
     return string[symbolindex++];
   }
   function peek(){
-    return string[symbolindex+1];
+    return string[symbolindex];
   }
   
   function expression(){ //this will have to be expanded later
