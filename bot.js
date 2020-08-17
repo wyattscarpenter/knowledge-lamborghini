@@ -119,7 +119,7 @@ function roll(string){
   }
   function number(){
     var digits = "";
-    while(peek().match(/\d/)){
+    while(peek()&&peek().match(/\d/)){
       digits += pop();
     }
     return digits; //this will implicitly convert from string to number later
