@@ -118,11 +118,11 @@ function roll(string){
     }
   }
   function number(){
-    var number = "";
+    var digits = "";
     while(peek().match(/\d/)){
-      acc += pop();
+      digits += pop();
     }
-    return number; //this will implicitly convert from string to number later
+    return digits; //this will implicitly convert from string to number later
   }
   /* //might need to keep this test code to avoid annoying everyone with live debugging
   var match = string.match(/([0-9]+)[d!]([0-9]+)/);
