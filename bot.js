@@ -88,7 +88,7 @@ function roll(string){
   var match = string.match(/([0-9]+)[d!]([0-9]+)/);
   if(match){
     for(var i = 0; i < match[1]; i++){
-      var a_roll = Math.floor(Math.random()*match[2])+1);
+      var a_roll = Math.floor(Math.random()*match[2])+1;
       result += a_roll + " ";
       total += a_roll;
     }
