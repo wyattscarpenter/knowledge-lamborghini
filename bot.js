@@ -39,8 +39,8 @@ client.on('message', message => {
   if(message.content.toLowerCase().includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
-  if((result = execute_dice(message.content.toLowerCase()){
-      message.channel.send(result.result);
+  if(result = execute_dice(message.content.toLowerCase())){
+      message.channel.send(result);
   } else { console.log(result); }
 
   //extremely dumb features
@@ -164,14 +164,6 @@ function execute_dice(string){ //might want to make this return the result or fa
     }
     return digits; //this will implicitly convert from string to number later
   }
-  /* //might need to keep this test code to avoid annoying everyone with live debugging
-  var match = string.match(/([0-9]+)[d!]([0-9]+)/);
-  if(match){
-    
-  } else {
-    valid = false;
-  }
-  */
   /*
   if(!subresult.valid){
     valid=false;
