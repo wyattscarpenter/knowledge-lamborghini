@@ -21,6 +21,24 @@ client.on('message', message => {
     stop();
   }
 
+  //dice features.
+  /* tentative dice grammar:
+  //note that we observe pemdas, and do NOT care about whitespace
+  expression -> arithmetic | roll | subexpression
+  roll -> subexpression die-symbol subexpression
+  arithmetic -> arithmetic * arithmetic |  arithmetic / arithmetic | subexpression | addition
+  addition -> addition + addition |  addition - addition | subexpression | number
+  subexpression -> ( expression ) | number | advantage roll | disadvantage roll | min roll | max roll
+  die-symbol -> ! | d
+  number -> anything the implementation language will take as a number I guess
+  */
+  if(message.content.toLowerCase().includes('nice dice')){
+    message.channel.send("Sponsored by NiceDice™");
+  }
+  if((result = roll(message.content.toLowerCase())).valid){
+      message.channel.send(result.result());
+  }
+
   //extremely dumb features
   if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
     https.request('http://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6',//image
@@ -60,6 +78,33 @@ function think(){
     channel.send("Demand me nothing. What you know, you know.");
     stop();
   }
+}
+
+function roll(string){
+  var valid = true;
+  var result = "";
+  var total = 0;
+  var die_symbols = ['!','d'];
+  var match = string.match(/([0-9]+)[d!]([0-9]+)/);
+  if(match){
+    for(var i = 0; i < match[1]; i++){
+      var a_roll = Math.floor(Math.random()*match[2])+1);
+      result += a_roll + " ";
+      total += a_roll;
+    }
+    result += ": " + total;
+  } else {
+    valid = false;
+  }
+  /*
+  if(!subresult.valid){
+    valid=false;
+    result += "[parse error]";
+  } else {
+    result += subresult.result;
+  }
+  */
+  return {result: result, valid: valid}; 
 }
 
 function stop(){
