@@ -39,7 +39,7 @@ client.on('message', message => {
   if(message.content.toLowerCase().includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
-  if((result = execute_dice(message.content.toLowerCase())).valid){
+  if((result = execute_dice(message.content.toLowerCase()){
       message.channel.send(result.result);
   } else { console.log(result); }
 
@@ -180,8 +180,7 @@ function execute_dice(string){ //might want to make this return the result or fa
     result += subresult.result;
   }
   */
-  expression();
-  return {result: result, valid: valid}; 
+  return {result: result, total: valid&&expression()}; 
 }
 
 // THIS MUST BE THIS WAY
