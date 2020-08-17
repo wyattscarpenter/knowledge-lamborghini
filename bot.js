@@ -139,7 +139,7 @@ function execute_dice(string){ //might want to make this return the result or fa
     return value;
   }
   function roll(rolls, sides){
-    for(var i = 0; i < lhs; i++){
+    for(var i = 0; i < rolls; i++){
       var a_roll = Math.floor(Math.random()*sides)+1;
       result += a_roll + " ";
       total += a_roll;
