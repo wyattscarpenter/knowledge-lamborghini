@@ -15,7 +15,11 @@ client.on('ready', () => {
 client.on('message', message => {
   channel = message.channel;
   if (message.content.toLowerCase() === 'think!') {
-    think();
+    if(text.length){
+      think();
+    }else{
+      channel.send("Demand me nothing. What you know, you know.");
+    }  
   }
   if (message.content.toLowerCase() === 'stop!') {
     stop();
@@ -65,7 +69,6 @@ client.on('message', message => {
 
 function think(){
   var s = text.shift();
-  //text.length === 0 ?
   if(s){
     for(var l of s.split("\n")){ //break lines into seperate messages
       while(l){ //.send() Just Fails for messages over discord's 2000 character limit
@@ -75,7 +78,6 @@ function think(){
     }
     if(!interval){interval = setInterval(think, 1000*60*60);} //do it again in an hour
   } else {
-    channel.send("Demand me nothing. What you know, you know.");
     stop();
   }
 }
