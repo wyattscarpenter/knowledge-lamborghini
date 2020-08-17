@@ -80,22 +80,58 @@ function think(){
   }
 }
 
+function stop(){
+  clearInterval(interval);
+  interval = 0;
+}
+
 function roll(string){
   var valid = true;
   var result = "";
   var total = 0;
-  var die_symbols = ['!','d'];
-  var match = string.match(/([0-9]+)[d!]([0-9]+)/);
-  if(match){
-    for(var i = 0; i < match[1]; i++){
-      var a_roll = Math.floor(Math.random()*match[2])+1;
+  
+  var symbolindex = 0;
+  function pop(){
+    return string[symbolindex++];
+  }
+  function peek(){
+    return string[symbolindex+1];
+  }
+  
+  function expression(){ //this will have to be expanded later
+    var lhs = number();
+    var d   = die_symbol();
+    var rhs = number();
+    for(var i = 0; i < lhs; i++){
+      var a_roll = Math.floor(Math.random()*rhs)+1;
       result += a_roll + " ";
       total += a_roll;
     }
     result += ": " + total;
+  }
+  function die_symbol(){
+    var die_symbols = ['!','d'];
+    if(die_symbols.includes(peek())){
+      return pop();
+    } else {
+      valid = false;
+    }
+  }
+  function number(){
+    var number = "";
+    while(peek().match(/\d/)){
+      acc += pop();
+    }
+    return number; //this will implicitly convert from string to number later
+  }
+  /* //might need to keep this test code to avoid annoying everyone with live debugging
+  var match = string.match(/([0-9]+)[d!]([0-9]+)/);
+  if(match){
+    
   } else {
     valid = false;
   }
+  */
   /*
   if(!subresult.valid){
     valid=false;
@@ -104,12 +140,8 @@ function roll(string){
     result += subresult.result;
   }
   */
+  expression();
   return {result: result, valid: valid}; 
-}
-
-function stop(){
-  clearInterval(interval);
-  interval = 0;
 }
 
 // THIS MUST BE THIS WAY
