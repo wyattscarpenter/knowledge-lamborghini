@@ -125,7 +125,8 @@ function execute_dice(string){ //might want to make this return the result or fa
       return lhs/rhs; //like multiplication, it's unclear what/if the implicit here should be, since 1 is... useless.
     } else if(['!','d'].includes(op)){
       return roll(lhs, rhs);
-    } 
+    }
+    return "I am bad at programming.";
   }
   function subexpression(){
     if(peek()=='('){
