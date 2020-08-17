@@ -110,19 +110,23 @@ function execute_dice(string){ //might want to make this return the result or fa
     //so the implicit default has to be specified for each operator.
     //for some reason I decided that the lhs would always convert to something
     //but rhs missing was always a parse fail.
-    if(['!','d'].includes(op)){
-      return roll(lhs||1, rhs||(valid=false));
-    } else if (op=='+') {
-      return lhs||0 + rhs||(valid=false);
+    rhs||(valid=false);
+    lhs = lhs||0;
+    if (op=='+') {
+      return lhs+rhs;
     } else if (op=='-') {
-      return lhs||0 - rhs||(valid=false);
-    } else if (op=='*') {
-      return lhs||1 * rhs||(valid=false); //very tempting to make missing lhs here result in "nullpointerexception". but I contain myself.
-    } else if (op=='/') {
-      return lhs||1 / rhs||(valid=false);
-    } else if (op=='%') {
-      return lhs||1 / rhs||(valid=false); //like multiplication, it's unclear what/if the implicit here should be, since 1 is... useless.
+      return lhs-rhs;
     }
+    lhs = lhs||1;
+    if (op=='*') {
+      return lhs*rhs; //very tempting to make missing lhs here result in "nullpointerexception". but I contain myself.
+    } else if (op=='/') {
+      return lhs/rhs;
+    } else if (op=='%') {
+      return lhs/rhs; //like multiplication, it's unclear what/if the implicit here should be, since 1 is... useless.
+    } else if(['!','d'].includes(op)){
+      return roll(lhs, rhs);
+    } 
   }
   function subexpression(){
     if(peek()=='('){
