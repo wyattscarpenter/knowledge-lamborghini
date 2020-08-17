@@ -27,11 +27,11 @@ client.on('message', message => {
 
   //dice features.
   /* tentative dice grammar:
-  //note that we observe pemdas, and do NOT care about whitespace
+  //note that we observe pemdas (er... pdmdas?), and do NOT care about whitespace
   expression -> arithmetic | roll | subexpression
   roll -> subexpression die-symbol subexpression
   arithmetic -> arithmetic * arithmetic |  arithmetic / arithmetic | subexpression | addition
-  addition -> addition + addition |  addition - addition | subexpression | number
+  addition -> addition + addition |  addition - addition | subexpression | number //this actually gives peasdm lol TODO:fix
   subexpression -> ( expression ) | number | advantage roll | disadvantage roll | min roll | max roll
   die-symbol -> ! | d
   number -> anything the implementation language will take as a number I guess
@@ -39,7 +39,7 @@ client.on('message', message => {
   if(message.content.toLowerCase().includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
-  if((result = roll(message.content.toLowerCase())).valid){
+  if((result = execute_dice(message.content.toLowerCase())).valid){
       message.channel.send(result.result);
   }
 
@@ -87,7 +87,7 @@ function stop(){
   interval = 0;
 }
 
-function roll(string){
+function execute_dice(string){ //might want to make this return the result or false, instead of an object with a valid field
   var valid = true;
   var result = "";
   var total = 0;
@@ -99,21 +99,55 @@ function roll(string){
   function peek(){
     return string[symbolindex];
   }
-  
+
+  //we do NOT currently do pemdas, and in fact you must precisely parenthesize expressions like (2+3)+4
+  //since we only allow precisely parenthesized binary expressions, it's more like Precise Dice lol
   function expression(){ //this will have to be expanded later
-    var lhs = number() || 1; //allow this to be empty so the user can say eg "d6"
-    var d   = die_symbol();
-    var rhs = number() || (valid=false); //lol //don't allow this to be empty
+    var lhs = peek()=='('? subexpression() : number(); //could refactor to something like "sub_or_num"
+    var op = operator();
+    var rhs = peek()=='('? subexpression() : number();
+    //as we dispatch to operators, keep in mind that number can still be "",
+    //so the implicit default has to be specified for each operator.
+    //for some reason I decided that the lhs would always convert to something
+    //but rhs missing was always a parse fail.
+    if(['!','d'].includes(op)){
+      return roll(lhs||1, rhs||(valid=false));
+    } else if (op=='+') {
+      return lhs||0 + rhs||(valid=false);
+    } else if (op=='-') {
+      return lhs||0 - rhs||(valid=false);
+    } else if (op=='*') {
+      return lhs||1 * rhs||(valid=false); //very tempting to make missing lhs here result in "nullpointerexception". but I contain myself.
+    } else if (op=='/') {
+      return lhs||1 / rhs||(valid=false);
+    } else if (op=='%') {
+      return lhs||1 / rhs||(valid=false); //like multiplication, it's unclear what/if the implicit here should be, since 1 is... useless.
+    }
+  }
+  function subexpression(){
+    if(peek()=='('){
+      pop();
+    }else{
+      valid=false;
+    }
+    var value = expression();
+    if(peek()==')'){
+      pop();
+    }else{
+      valid=false;
+    }
+    return value;
+  }
+  function roll(rolls, sides){
     for(var i = 0; i < lhs; i++){
-      var a_roll = Math.floor(Math.random()*rhs)+1;
+      var a_roll = Math.floor(Math.random()*sides)+1;
       result += a_roll + " ";
       total += a_roll;
     }
     result += ": " + total;
   }
-  function die_symbol(){
-    var die_symbols = ['!','d'];
-    if(die_symbols.includes(peek())){
+  function operator(){
+    if(['d','!','*','/','%'].includes(peek())){
       return pop();
     } else {
       valid = false;
