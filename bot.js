@@ -101,14 +101,14 @@ function execute_dice(string){ //might want to make this return the result or fa
   //we do NOT currently do pemdas, and in fact you must precisely parenthesize expressions like (2+3)+4
   //since we only allow precisely parenthesized binary expressions, it's more like Precise Dice lol
   function expression(){ //this will have to be expanded later
-    var lhs = peek()=='('? subexpression() : number(); //could refactor to something like "sub_or_num"
+    var lhs = peek()&&peek()=='('? subexpression() : number(); //could refactor to something like "sub_or_num"
     var op = operator();
-    var rhs = peek()=='('? subexpression() : number();
+    var rhs = peek()&&peek()=='('? subexpression() : number();
     //as we dispatch to operators, keep in mind that number can still be "",
     //so the implicit default has to be specified for each operator.
     //for some reason I decided that the lhs would always convert to something
     //but rhs missing was always a parse fail.
-    rhs||(valid=false);
+    if(!rhs){valid=false};
     lhs = lhs||0;
     if (op=='+') {
       return lhs+rhs;
