@@ -126,7 +126,7 @@ function execute_dice(string){ //might want to make this return the result or fa
     } else if(['!','d'].includes(op)){
       return roll(lhs, rhs);
     }
-    return "I am bad at programming.";
+    valid=false;
   }
   function subexpression(){
     if(peek()=='('){
@@ -172,7 +172,7 @@ function execute_dice(string){ //might want to make this return the result or fa
     result += subresult.result;
   }
   */
-  return expression(); 
+  return valid&&expression(); 
 }
 
 // THIS MUST BE THIS WAY
