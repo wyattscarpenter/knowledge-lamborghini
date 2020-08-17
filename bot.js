@@ -39,9 +39,7 @@ client.on('message', message => {
   if(message.content.toLowerCase().includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
-  if(result = execute_dice(message.content.toLowerCase())){
-      message.channel.send(result);
-  } else { console.log(result); }
+  message.channel.send(execute_dice(message.content.toLowerCase())); //this will actually just do nothing if false. a good feature
 
   //extremely dumb features
   if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
@@ -172,7 +170,7 @@ function execute_dice(string){ //might want to make this return the result or fa
     result += subresult.result;
   }
   */
-  return {result: result, total: valid&&expression()}; 
+  return expression(); 
 }
 
 // THIS MUST BE THIS WAY
