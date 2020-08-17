@@ -37,7 +37,7 @@ client.on('message', message => {
   number -> anything the implementation language will take as a number I guess
   */
   if(message.content.toLowerCase().includes('nice dice')){
-    message.channel.send("Sponsored by NiceDice™");
+    message.channel.send("Sponsored by PreciseDice™");
   }
   console.log(execute_dice(message.content.toLowerCase()));
   message.channel.send(execute_dice(message.content.toLowerCase())); //this will actually just do nothing if false. a good feature
