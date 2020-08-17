@@ -39,6 +39,7 @@ client.on('message', message => {
   if(message.content.toLowerCase().includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
+  console.log(execute_dice(message.content.toLowerCase()));
   message.channel.send(execute_dice(message.content.toLowerCase())); //this will actually just do nothing if false. a good feature
 
   //extremely dumb features
