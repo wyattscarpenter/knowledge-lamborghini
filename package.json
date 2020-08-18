@@ -2,9 +2,9 @@
   "name": "knowledge-lamborghini",
   "description": "But you know what I like a lot more than knowledge? Knowledge.",
   "version": "0.1.0",
-  "main": "bot.js",
+  "main": "readme.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node readme.js"
   },
   "dependencies": {
     "discord.js": "12.2.0"
