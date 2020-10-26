@@ -5,7 +5,7 @@ const client = new Discord.Client();
 var text = require('./text.json');
 var channel;
 var interval;
-var responses = {"hewwo": "perish"};
+var responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 
 client.on('ready', () => {
   console.log('I am ready!');
