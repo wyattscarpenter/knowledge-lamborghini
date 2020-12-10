@@ -40,7 +40,11 @@ client.on('message', message => {
      (resp) => {
        let data = '';
        resp.on('data', (chunk) => {data += chunk;});
-       resp.on('end', () => {channel.send("https://commons.wikimedia.org/wiki/"+JSON.parse(data.match(/"File[\s\S]*"/)[0]).replace(/\s/g,"_"));});
+       resp.on('end', () => {
+         channel.send("https://commons.wikimedia.org/wiki/"+JSON.parse(data.match(/"File[\s\S]*"/)[0]).replace(/\s/g,"_"),
+                      {files: ["https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+JSON.parse(data.match(/"File[\s\S]*"/)[0]).replace(/\s/g,"_")}
+         );
+       });
      }
     ).on("error", (err) => {console.log(err);});
     req.end();
