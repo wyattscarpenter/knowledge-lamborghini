@@ -45,7 +45,7 @@ client.on('message', message => {
          pokemon_answer = JSON.parse(data.match(/"File[\s\S]*"/)[0]);
          channel.send({files:[{
            attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+pokemon_answer,
-           name: 'pokemon'+pokemon_answer.match(/\.\w*?$/)[0])
+           name: 'pokemon'+pokemon_answer.match(/\.\w*?$/)[0]
          }]});
        });
      }
