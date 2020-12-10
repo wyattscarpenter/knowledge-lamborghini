@@ -40,7 +40,7 @@ client.on('message', message => {
      (resp) => {
        let data = '';
        resp.on('data', (chunk) => {data += chunk;});
-       resp.on('end', () => {console.log(JSON.parse(data));});
+       resp.on('end', () => {channel.send("https://commons.wikimedia.org/wiki/"+data.match(/File[\s\S]*"/));} );
      }
     ).on("error", (err) => {console.log(err);});
     req.end();
