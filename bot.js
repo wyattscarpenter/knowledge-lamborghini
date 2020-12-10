@@ -36,7 +36,7 @@ client.on('message', message => {
   }
 
   //extremely dumb features
-  if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon //doesn't even work yet
+  if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
     var req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json',//image
      (resp) => {
        let data = '';
@@ -45,7 +45,7 @@ client.on('message', message => {
          pokemon_answer = JSON.parse(data.match(/"File[\s\S]*"/)[0]);
          channel.send({files:[{
            attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+pokemon_answer,
-           name: 'pokemon.jpg'
+           name: 'pokemon'+pokemon_answer.match(/\.\w*?$/)[0])
          }]});
        });
      }
