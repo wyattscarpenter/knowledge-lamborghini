@@ -36,7 +36,7 @@ client.on('message', message => {
 
   //extremely dumb features
   if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon //doesn't even work yet
-    var req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6',//image
+    var req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json',//image
      (resp) => {
        let data = '';
        resp.on('data', (chunk) => {data += chunk;});
