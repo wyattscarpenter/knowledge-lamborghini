@@ -25,16 +25,16 @@ client.on('message', message => {
   if (message.content.toLowerCase() === 'stop!') {
     stop();
   }
-/*
+
   if(message.content.toLowerCase().includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
-  if((result = roll(message.content.toLowerCase())).valid){
+  if((result = nicedice.roll(message.content.toLowerCase())).valid){
       message.channel.send(result.result);
   }
-*/
+
   //extremely dumb features
-  if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
+  if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon //doesn't even work yet
     https.request('http://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6',//image
      (resp) => {
        let data = '';
