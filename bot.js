@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const nicedice = require('nicedice');
 const https = require('http');
 const client = new Discord.Client();
 
