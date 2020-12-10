@@ -7,6 +7,7 @@ var text = require('./text.json');
 var channel;
 var interval;
 var responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
+var pokemon_answer;
 
 client.on('ready', () => {
   console.log('I am ready!');
@@ -41,13 +42,19 @@ client.on('message', message => {
        let data = '';
        resp.on('data', (chunk) => {data += chunk;});
        resp.on('end', () => {
-         channel.send({files: [
-           "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+JSON.parse(data.match(/"File[\s\S]*"/)[0]).replace(/\s/g,"_")
-         ]});
+         pokemon_answer = JSON.parse(data.match(/"File[\s\S]*"/)[0]);
+         channel.send({files:[{
+           attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+pokemon_answer,
+           name: 'pokemon.jpg'
+         }]});
        });
      }
     ).on("error", (err) => {console.log(err);});
     req.end();
+  }
+  function fuzzystringmatch(l,r){/*temporary*/return l==r;}
+  if(pokemon_answer && fuzzystringmatch(message.content, pokemon_answer)){
+    channel.send("Congratulations, "+pokemon_answer+" was the answer.");
   }
   if (message.content.toLowerCase().startsWith("set")) {
     msg = message.content.toLowerCase().split(/\s(.+)/)[1];
