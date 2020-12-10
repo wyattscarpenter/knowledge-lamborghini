@@ -44,10 +44,6 @@ client.on('message', message => {
      }
     ).on("error", (err) => {console.log(err);});
   }
-  if (message.content.toLowerCase().startsWith("eval")) {
-    //NEVER use this in production
-    channel.send(Function(message.content)());
-  }
   if (message.content.toLowerCase().startsWith("set")) {
     msg = message.content.toLowerCase().split(/\s(.+)/)[1];
     thingum = msg.split(/\s(.+)/);
