@@ -30,7 +30,7 @@ client.on('message', message => {
     message.channel.send("Sponsored by NiceDice™");
   }
   if((result = nicedice.roll(message.content.toLowerCase())).valid){
-      message.channel.send(result.value);
+      message.channel.send(result.value+"\n"+result.roll_record);
   }
 
   //extremely dumb features
