@@ -42,7 +42,7 @@ client.on('message', message => {
        resp.on('data', (chunk) => {data += chunk;});
        resp.on('end', () => {
          channel.send("https://commons.wikimedia.org/wiki/"+JSON.parse(data.match(/"File[\s\S]*"/)[0]).replace(/\s/g,"_"),
-                      {files: ["https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+JSON.parse(data.match(/"File[\s\S]*"/)[0]).replace(/\s/g,"_")}
+                      {files: ["https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+JSON.parse(data.match(/"File[\s\S]*"/)[0]).replace(/\s/g,"_")]}
          );
        });
      }
