@@ -58,7 +58,7 @@ client.on('message', message => {
   function fuzzystringmatch(l,r){
     return distance(l,r) < (l.length * 3 / 4);
   }
-  if(pokemon_answer && fuzzystringmatch(pokemon_answer, message.content)){
+  if(pokemon_answer && fuzzystringmatch(pokemon_answer.toLowerCase(), message.content.toLowerCase())){
     channel.send("It's `"+pokemon_answer+"`.");
     pokemon_answer = undefined;
   }
