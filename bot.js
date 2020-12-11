@@ -8,7 +8,7 @@ var text = require('./text.json');
 var channel;
 var interval;
 var responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
-var pokemon_answer;
+var pokemon_answers = {};
 
 client.on('ready', () => {
   console.log('I am ready!');
@@ -33,7 +33,9 @@ client.on('message', message => {
     message.channel.send("Sponsored by NiceDice™");
   }
   if((result = nicedice.roll(message.content.toLowerCase())).valid){
-      message.channel.send(result.value+"\n`"+result.roll_record+"`");
+    console.log("rollin: "+message.content.toLowerCase());
+    console.log("rollout: "+result);
+    message.channel.send(result.value+"\n`"+result.roll_record+"`");
   }
 
   //extremely dumb features
@@ -48,8 +50,8 @@ client.on('message', message => {
            attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+id,
            name: 'pokemon'+id.match(/\.\w*?$/)[0]
          }]});
-         pokemon_answer = id.match(/File:(.*)\.\w*?$/)[1];
-         console.log(pokemon_answer); //console.log answer so I can cheat-- er, I mean, test.
+         pokemon_answers[channel] = id.match(/File:(.*)\.\w*?$/)[1];
+         console.log(pokemon_answers[channel]); //console.log answer so I can cheat-- er, I mean, test.
        });
      }
     ).on("error", (err) => {console.log(err);});
@@ -58,12 +60,12 @@ client.on('message', message => {
   function fuzzystringmatch(l,r){
     return distance(l,r) < (l.length * 3 / 4);
   }
-  if(pokemon_answer){
+  if(pokemon_answers[channel]){
     var target = pokemon_answer.toLowerCase().replace(/[^a-z]/g, '');
     var guess = message.content.toLowerCase().replace(/[^a-z]/g, '');
     if (fuzzystringmatch(target, guess)){
-      channel.send("It's `"+pokemon_answer+"`.\nTarget: `"+target+"` Your Guess: `"+guess+"`.");
-      pokemon_answer = undefined;
+      channel.send("It's `"+pokemon_answers[channel]+"`.\nTarget: `"+target+"` Your Guess: `"+guess+"`.");
+      delete pokemon_answers[channel];
     }
   }
   if (message.content.toLowerCase().startsWith("set")) {
