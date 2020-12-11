@@ -49,6 +49,7 @@ client.on('message', message => {
            name: 'pokemon'+id.match(/\.\w*?$/)[0]
          }]});
          pokemon_answer = id.match(/File:(.*)\.\w*?$/)[1];
+         console.log(pokemon_answer); //console.log answer so I can cheat-- er, I mean, test.
        });
      }
     ).on("error", (err) => {console.log(err);});
