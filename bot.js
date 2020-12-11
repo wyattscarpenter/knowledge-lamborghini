@@ -58,9 +58,13 @@ client.on('message', message => {
   function fuzzystringmatch(l,r){
     return distance(l,r) < (l.length * 3 / 4);
   }
-  if(pokemon_answer && fuzzystringmatch(pokemon_answer.toLowerCase(), message.content.toLowerCase())){
-    channel.send("It's `"+pokemon_answer+"`.");
-    pokemon_answer = undefined;
+  if(pokemon_answer){
+    var target = pokemon_answer.toLowerCase().replace(/^[a-z]/g, '');
+    var guess = message.content.toLowerCase().replace(/^[a-z]/g, '');
+    if (fuzzystringmatch(target, guess)){
+      channel.send("It's `"+pokemon_answer+"`.\nTarget: `"+target+"` Your Guess: `"+guess+"`.");
+      pokemon_answer = undefined;
+    }
   }
   if (message.content.toLowerCase().startsWith("set")) {
     msg = message.content.toLowerCase().split(/\s(.+)/)[1];
