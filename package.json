@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "discord.js": "12.2.0",
-    "nicedice": "wyattscarpenter/nicedice"
+    "nicedice": "wyattscarpenter/nicedice",
+    "fastest-levenshtein"
   }
 }
