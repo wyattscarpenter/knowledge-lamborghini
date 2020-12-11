@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const nicedice = require('nicedice');
-const {strdistance, strclosest} = require('fastest-levenshtein');
+const {distance, closest} = require('fastest-levenshtein');
 const https = require('https');
 const client = new Discord.Client();
 
@@ -55,7 +55,7 @@ client.on('message', message => {
     req.end();
   }
   function fuzzystringmatch(l,r){
-    return strdistance(l,r) < (l.length * 3 / 4);
+    return distance(l,r) < (l.length * 3 / 4);
   }
   if(pokemon_answer && fuzzystringmatch(pokemon_answer, message.content)){
     channel.send("It's `"+pokemon_answer+"`.");
