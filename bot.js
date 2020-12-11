@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const nicedice = require('nicedice');
+const {strdistance, strclosest} = require('fastest-levenshtein');
 const https = require('https');
 const client = new Discord.Client();
 
@@ -42,19 +43,23 @@ client.on('message', message => {
        let data = '';
        resp.on('data', (chunk) => {data += chunk;});
        resp.on('end', () => {
-         pokemon_answer = JSON.parse(data.match(/"File[\s\S]*"/)[0]);
+         id = JSON.parse(data.match(/"File[\s\S]*"/)[0]);
          channel.send({files:[{
-           attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+pokemon_answer,
-           name: 'pokemon'+pokemon_answer.match(/\.\w*?$/)[0]
+           attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+id,
+           name: 'pokemon'+id.match(/\.\w*?$/)[0]
          }]});
+         pokemon_answer = id.match(/File:(.*)\.\w*?$/)[1];
        });
      }
     ).on("error", (err) => {console.log(err);});
     req.end();
   }
-  function fuzzystringmatch(l,r){/*temporary*/return l==r;}
-  if(pokemon_answer && fuzzystringmatch(message.content, pokemon_answer)){
-    channel.send("Congratulations, "+pokemon_answer+" was the answer.");
+  function fuzzystringmatch(l,r){
+    return strdistance(l,r) < (l.length * 3 / 4);
+  }
+  if(pokemon_answer && fuzzystringmatch(pokemon_answer, message.content)){
+    channel.send("It's `"+pokemon_answer+"`.");
+    pokemon_answer = undefined;
   }
   if (message.content.toLowerCase().startsWith("set")) {
     msg = message.content.toLowerCase().split(/\s(.+)/)[1];
