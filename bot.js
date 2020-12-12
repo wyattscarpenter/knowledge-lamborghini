@@ -17,6 +17,7 @@ client.on('ready', () => {
 
 client.on('message', message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
+  if (!message.content){return;} //don't even consider empty messages
   channel = message.channel;
   if (message.content.toLowerCase() === 'think!') {
     if(text.length){
