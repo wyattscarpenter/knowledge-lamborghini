@@ -45,22 +45,7 @@ client.on('message', message => {
 
   //extremely dumb features
   if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
-    var req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json',//image
-     (resp) => {
-       let data = '';
-       resp.on('data', (chunk) => {data += chunk;});
-       resp.on('end', () => {
-         id = JSON.parse(data.match(/"File[\s\S]*"/)[0]);
-         channel.send({files:[{
-           attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+encodeURIComponent(id),
-           name: 'pokemon'+id.match(/\.\w*?$/)[0].toLowerCase()
-         }]});
-         pokemon_answers[channel] = id.match(/File:(.*)\.\w*?$/)[1];
-         console.log(pokemon_answers[channel]); //console.log answer so I can cheat-- er, I mean, test.
-       });
-     }
-    ).on("error", (err) => {console.log(err);});
-    req.end();
+    whos_that_pokemon()
   }
   function fuzzystringmatch(l,r){
     return distance(l,r) < (l.length * 3 / 4);
@@ -69,7 +54,7 @@ client.on('message', message => {
     var target = pokemon_answers[channel].toLowerCase().replace(/[^a-z]/g, '');
     var guess = message.content.toLowerCase().replace(/[^a-z]/g, '');
     if (fuzzystringmatch(target, guess)){
-      channel.send("It's `"+pokemon_answers[channel]+"`.\nTarget: `"+target+"` Your Guess: `"+guess+"`.");
+      channel.send("It's `"+pokemon_answers[channel]+"`!\nTarget: `"+target+"` Your Guess: `"+guess+"`.");
       delete pokemon_answers[channel];
     }
   }
@@ -82,6 +67,25 @@ client.on('message', message => {
     channel.send(responses[message.content]);
   }
 });
+
+function whos_that_pokemon(){
+  var req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json',//image
+    (resp) => {
+      let data = '';
+      resp.on('data', (chunk) => {data += chunk;});
+      resp.on('end', () => {
+        id = JSON.parse(data.match(/"File[\s\S]*"/)[0]);
+        channel.send({files:[{
+          attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+encodeURIComponent(id),
+          name: 'pokemon'+id.match(/\.\w*?$/)[0].toLowerCase()
+        }]});
+        pokemon_answers[channel] = id.match(/File:(.*)\.\w*?$/)[1];
+        console.log(pokemon_answers[channel]); //console.log answer so I can cheat-- er, I mean, test.
+      });
+    }
+  ).on("error", (err) => {console.log(err);whos_that_pokemon();/*retry on error*/});
+  req.end();
+}
 
 function begin_think(){
   texts[channel] = text;
