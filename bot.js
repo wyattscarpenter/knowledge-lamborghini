@@ -5,8 +5,9 @@ const https = require('https');
 const client = new Discord.Client();
 
 var text = require('./text.json');
+var texts = {};
 var channel;
-var interval;
+var intervals = {};
 var responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 var pokemon_answers = {};
 
@@ -20,14 +21,16 @@ client.on('message', message => {
   if (!message.content){return;} //don't even consider empty messages
   channel = message.channel;
   if (message.content.toLowerCase() === 'think!') {
-    if(text.length){
+    if(texts[channel]===undefined){
+      begin_think();
+    } else if(texts[channel].length){
       think();
     }else{
       channel.send("Demand me nothing. What you know, you know.");
     }  
   }
   if (message.content.toLowerCase() === 'stop!') {
-    stop();
+    stop_think();
   }
 
   if(message.content.toLowerCase().includes('nice dice')){
@@ -79,8 +82,12 @@ client.on('message', message => {
   }
 });
 
+function begin_think(){
+  texts[channel] = text;
+}
+
 function think(){
-  var s = text.shift();
+  var s = texts[channel].shift();
   if(s){
     for(var l of s.split("\n")){ //break lines into seperate messages
       while(l){ //.send() Just Fails for messages over discord's 2000 character limit
@@ -88,15 +95,15 @@ function think(){
         l = l.slice(2000); //going over is fine, you know how it is
       }
     }
-    if(!interval){interval = setInterval(think, 1000*60*60);} //do it again in an hour
+    if(!intervals[channel]){intervals[channel] = setInterval(think, 1000*60*60*24);} //do it again in a day
   } else {
     stop();
   }
 }
 
-function stop(){
-  clearInterval(interval);
-  interval = 0;
+function stop_think(){
+  clearInterval(intervals[channel]);
+  delete intervals[channel];
 }
 
 // THIS MUST BE THIS WAY
