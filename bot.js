@@ -23,7 +23,8 @@ client.on('message', message => {
   if (message.content.toLowerCase() === 'think!') {
     if(texts[channel]===undefined){
       begin_think();
-    } else if(texts[channel].length){
+    }
+    if(texts[channel].length){
       think();
     }else{
       channel.send("Demand me nothing. What you know, you know.");
