@@ -52,8 +52,8 @@ client.on('message', message => {
        resp.on('end', () => {
          id = JSON.parse(data.match(/"File[\s\S]*"/)[0]);
          channel.send({files:[{
-           attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+id,
-           name: 'pokemon'+id.match(/\.\w*?$/)[0]
+           attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+encodeURIComponent(id),
+           name: 'pokemon'+id.match(/\.\w*?$/)[0].toLowerCase()
          }]});
          pokemon_answers[channel] = id.match(/File:(.*)\.\w*?$/)[1];
          console.log(pokemon_answers[channel]); //console.log answer so I can cheat-- er, I mean, test.
