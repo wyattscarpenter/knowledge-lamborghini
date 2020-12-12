@@ -33,7 +33,7 @@ client.on('message', message => {
     message.channel.send("Sponsored by NiceDice™");
   }
   if((result = nicedice.roll(message.content.toLowerCase())).valid){
-    console.log("rollin: `"+message.content.toLowerCase()+"`");
+    console.log("rollin: "+JSON.stringify(message.content.toLowerCase()));
     console.log("rollout: "+JSON.stringify(result));
     message.channel.send(result.value+"\n`"+result.roll_record+"`");
   }
