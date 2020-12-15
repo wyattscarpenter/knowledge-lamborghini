@@ -6,6 +6,11 @@
   "scripts": {
     "start": "node bot.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wyattscarpenter/knowledge-lamborghini.git"
+  },
+  "license": "CC0-1.0",
   "dependencies": {
     "discord.js": "12.2.0",
     "nicedice": "wyattscarpenter/nicedice",
