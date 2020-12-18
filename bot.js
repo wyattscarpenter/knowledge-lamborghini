@@ -48,7 +48,7 @@ client.on('message', message => {
     whos_that_pokemon()
   }
   function fuzzystringmatch(l,r){
-    return distance(l,r) < (l.length * 3 / 4);
+    return distance(l,r) < (l.length / 2);
   }
   if(pokemon_answers[channel]){
     var target = pokemon_answers[channel].toLowerCase().replace(/[^a-z]/g, '');
