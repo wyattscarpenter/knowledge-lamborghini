@@ -56,8 +56,12 @@ client.on('message', message => {
     target = target.replace(/[^a-z]/g, '') || target;
     var guess = message.content.toLowerCase();
     guess = guess.replace(/[^a-z]/g, '') || guess;
-    if (fuzzystringmatch(target, guess)){
-      channel.send("It's `"+pokemon_answers[channel]+"`!\nTarget: `"+target+"` Your Guess: `"+guess+"`.");
+    //fuzzy string match
+    var normalized_distance = distance(target, guess) / target.length;
+    var distance_threshold = .75;
+    console.log(guess, normalized_distance); //TODO: remove this after tuning
+    if (normalized_distance < distance_threshold){
+      channel.send("It's "+pokemon_answers[channel]+"!\nTarget: `"+target+"` Your Guess: `"+guess+"`.\nNormalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold);
       delete pokemon_answers[channel];
     }
   }
