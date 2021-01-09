@@ -52,7 +52,8 @@ client.on('message', message => {
   }
   if(pokemon_answers[channel]){
     var target = pokemon_answers[channel].toLowerCase();
-    var target_sans_parenthetical_phrase = target.replace(/\(.*\)/g, '')
+    var target_sans_parenthetical_phrase = target.replace(/[^\(]*\)/g, '')
+    target_sans_parenthetical_phrase = target.replace(/\(/g, '')
     if (target_sans_parenthetical_phrase){ //if the thing is empty, ignore the previous step
       target = target_sans_parenthetical_phrase;
     }
