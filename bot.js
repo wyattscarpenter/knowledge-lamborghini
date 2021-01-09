@@ -52,12 +52,10 @@ client.on('message', message => {
   }
   if(pokemon_answers[channel]){
     var target = pokemon_answers[channel].toLowerCase();
-    var target_sans_parenthetical_phrases = target.replace(/[^\(]*\)/g, '').replace(/\(/g, '');
-    if (target_sans_parenthetical_phrases){ //if the thing is empty, ignore the previous step
-      target = target_sans_parenthetical_phrases;
-    }
-    target = target.replace(/[^a-z]/g, '');
-    var guess = message.content.toLowerCase().replace(/[^a-z]/g, '');
+    target = target.replace(/[^\(]*\)/g, '').replace(/\(/g, '') || target;
+    target = target.replace(/[^a-z]/g, '') || target;
+    var guess = message.content.toLowerCase();
+    guess = guess.replace(/[^a-z]/g, '') || guess;
     if (fuzzystringmatch(target, guess)){
       channel.send("It's `"+pokemon_answers[channel]+"`!\nTarget: `"+target+"` Your Guess: `"+guess+"`.");
       delete pokemon_answers[channel];
