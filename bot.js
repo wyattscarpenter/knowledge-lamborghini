@@ -28,7 +28,7 @@ client.on('message', message => {
     if (!r.startsWith("old.")){
       target = r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/([\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*)/ )[1];
       // "target" is not here meant to have any precise technical meaning, it's just all the url stuff after the first / (almost, but not quite, a "path").
-      channel.send("https://old.reddit.com/"+target+""); //note that urls followed by eg a comma might include the comma, since it's technically a valid url to have that character at the end. 
+      channel.send("<https://old.reddit.com/"+target+">"); //note that urls followed by eg a comma might include the comma, since it's technically a valid url to have that character at the end. 
     }
   }
   
