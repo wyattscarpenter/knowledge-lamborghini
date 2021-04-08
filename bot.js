@@ -20,6 +20,19 @@ client.on('message', message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
   if (!message.content){return;} //don't even consider empty messages
   channel = message.channel;
+  
+  //oldify reddit links.
+  for (r of message.content.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi )){
+    //huge character list from https://stackoverflow.com/a/1547940
+    //note that it was easier to detect reddit urls and then futz with them each individually than do some crazy capture-jutsu. 
+    if (!r.startsWith("old.")){
+      target = r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/([\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*)/ )[1];
+      // "target" is not here meant to have any precise technical meaning, it's just all the url stuff after the first / (almost, but not quite, a "path").
+      channel.send("https://old.reddit.com/"+target+""); //note that urls followed by eg a comma might include the comma, since it's technically a valid url to have that character at the end. 
+    }
+  }
+  
+  //post book
   if (message.content.toLowerCase() === 'think!') {
     if(texts[channel]===undefined){
       begin_think();
@@ -34,6 +47,7 @@ client.on('message', message => {
     stop_think();
   }
 
+  //nicedice
   if(message.content.toLowerCase().includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
@@ -44,7 +58,8 @@ client.on('message', message => {
   }
 
   //extremely dumb features
-  if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) { //who's that pokemon
+  //who's that pokemon
+  if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) {
     whos_that_pokemon()
   }
   function fuzzystringmatch(l,r){
@@ -75,6 +90,7 @@ client.on('message', message => {
   }
 });
 
+//implementation functions
 function whos_that_pokemon(){
   var req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json',//image
     (resp) => {
