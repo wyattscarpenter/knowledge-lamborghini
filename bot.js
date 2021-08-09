@@ -4,7 +4,7 @@ const {distance, closest} = require('fastest-levenshtein');
 const https = require('https');
 const client = new Discord.Client();
 
-var text = require('./text.json');
+var text = require('./text.json'); //At this time, this is the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 var texts = {};
 var channel;
 var intervals = {};
