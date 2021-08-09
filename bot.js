@@ -13,7 +13,7 @@ var pokemon_answers = {};
 
 client.on('ready', () => {
   console.log('I am ready!');
-  setInterval(()=>client.user.setActivity(Date()), 1000);
+  setInterval(()=>client.user.setActivity(new Date().toTimeString()), 1000);
 });
 
 client.on('message', message => {
