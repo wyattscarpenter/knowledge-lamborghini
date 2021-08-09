@@ -16,7 +16,7 @@ Commands:
 * Using the power of NiceDice, kl will interpret any message consisting solely of a dnd-style dice expression, generate random numbers to simulate dice rolls, and output the result.
 * Type `set [word] [response message]` and kl will respond with the response message when the word is posted in chat.
 * Reddit link "oldification": links to reddit.com pages will be immediately reposted as links to old.reddit.com pages.
-* [PLANNED] KL will display the time in a given timezone.
+* KL will displays the time in Los Angeles as its status in real time.
 
 Metadata:
 
