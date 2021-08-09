@@ -13,7 +13,7 @@ var pokemon_answers = {};
 
 client.on('ready', () => {
   console.log('I am ready!');
-  client.user.setActivity("Nicomachean Ethics\nhttps://discord.com/api/oauth2/authorize?client_id=678989133196165152&permissions=0&scope=bot");
+  setInterval(()=>client.user.setActivity(Date()), 1000);
 });
 
 client.on('message', message => {
@@ -113,8 +113,8 @@ function whos_that_pokemon(){
 
 function begin_think(){
   texts[channel] = text;
-}
-
+}  
+  
 function think(){
   var s = texts[channel].shift();
   if(s){
