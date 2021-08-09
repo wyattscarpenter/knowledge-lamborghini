@@ -13,7 +13,7 @@ var pokemon_answers = {};
 
 client.on('ready', () => {
   console.log('I am ready!');
-  setInterval(()=>client.user.setActivity(new Date().toTimeString()), 1000);
+  setInterval(()=>client.user.setActivity(new Date().toTimeString()), 2*1000); //Doesn't update every second because that's too frequent and the status gets stuck
 });
 
 client.on('message', message => {
