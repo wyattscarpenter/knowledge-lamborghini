@@ -13,7 +13,7 @@ var pokemon_answers = {};
 
 client.on('ready', () => {
   console.log('I am ready!');
-  setInterval(()=>client.user.setActivity(new Date().toLocaleTimeString()), 60*1000); //Doesn't update every second because that's too frequent and the status gets stuck
+  setInterval(update_status_clock, 60*1000); //Doesn't update every second because that's too frequent and the status gets stuck. Note that this means we may be behind by up to a full minute. I haven't tested the minimum interval at which discord will allow us to refresh.
 });
 
 client.on('message', message => {
@@ -92,6 +92,15 @@ client.on('message', message => {
 });
 
 //implementation functions
+
+function update_status_clock(){ //This date is extremely precisely formatted for maximum readability in Discord's tiny area, and also familiarity and explicitness to users.
+  date = new Date(); //Want to avoid edge cases so we use the same Date object in each format call.
+  client.user.setActivity( new Intl.DateTimeFormat('en-US', {timeStyle: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " PT " //time with hard-coded zone. Looks like 4:20 PM PT 
+                         + new Intl.DateTimeFormat('en-US', {weekday: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " " //day of week (short name). Looks like Mon 
+                         + new Intl.DateTimeFormat('en-US', {dateStyle: 'medium', timeZone: 'America/Los_Angeles'}).format(date) //date. Looks like Aug 9, 2021
+                         );
+}
+
 function whos_that_pokemon(){
   var req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json',//image
     (resp) => {
