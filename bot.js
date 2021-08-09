@@ -97,7 +97,7 @@ function update_status_clock(){ //This date is extremely precisely formatted for
   date = new Date(); //Want to avoid edge cases so we use the same Date object in each format call.
   client.user.setActivity( new Intl.DateTimeFormat('en-US', {timeStyle: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " PT " //time with hard-coded zone. Looks like 4:20 PM PT 
                          + new Intl.DateTimeFormat('en-US', {weekday: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " " //day of week (short name). Looks like Mon 
-                         + new Intl.DateTimeFormat('en-US', {dateStyle: 'medium', timeZone: 'America/Los_Angeles'}).format(date) //date. Looks like Aug 9, 2021
+                         + new Intl.DateTimeFormat('en-GB', {dateStyle: 'medium', timeZone: 'America/Los_Angeles'}).format(date) //date, with day first. Looks like 9 Aug, 2021
                          );
 }
 
