@@ -13,7 +13,7 @@ var pokemon_answers = {};
 
 client.on('ready', () => {
   console.log('I am ready!');
-  setInterval(update_status_clock, 60*1000); //Doesn't update every second because that's too frequent and the status gets stuck. Note that this means we may be behind by up to a full minute. I haven't tested the minimum interval at which discord will allow us to refresh.
+  setInterval(update_status_clock, 1000);
 });
 
 client.on('message', message => {
@@ -95,10 +95,12 @@ client.on('message', message => {
 
 function update_status_clock(){ //This date is extremely precisely formatted for maximum readability in Discord's tiny area, and also familiarity and explicitness to users.
   date = new Date(); //Want to avoid edge cases so we use the same Date object in each format call.
+  if(date.getSeconds()){return false;} //only update with minute resolution, on 00 seconds of each minute (Discord can't handle us using second resolution)
   client.user.setActivity( new Intl.DateTimeFormat('en-US', {timeStyle: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " PT " //time with hard-coded zone. Looks like 4:20 PM PT 
                          + new Intl.DateTimeFormat('en-US', {weekday: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " " //day of week (short name). Looks like Mon 
                          + new Intl.DateTimeFormat('en-GB', {dateStyle: 'medium', timeZone: 'America/Los_Angeles'}).format(date) //date, with day first. Looks like 9 Aug, 2021
                          );
+  return true; //nota bene: the return value indicates if the function decided to update, but I don't use the return value anywhere else in the program so far.
 }
 
 function whos_that_pokemon(){
