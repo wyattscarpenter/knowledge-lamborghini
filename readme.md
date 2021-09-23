@@ -2,7 +2,7 @@
 
 _"But you know what I like a lot more than knowledge? Knowledge."_
 
-This is Knowledge Lamborghini ("KL"), an eclectic discord bot with exactly these features:
+This is Knowledge Lamborghini ("kl"), an eclectic discord bot with exactly these features:
 
 Negative features:
 
@@ -11,12 +11,12 @@ Negative features:
 
 Commands:
 
-* Type "think!" and kl will begin to recite the book located in text.json, one unit per hour in the channel in which you made the command. "stop!" will cease the madness.
-* Type a phrase that's something like "who's that pokemon?" and kl will post an image from wikimedia for you to guess the name of.
-* Using the power of NiceDice, kl will interpret any message consisting solely of a dnd-style dice expression, generate random numbers to simulate dice rolls, and output the result.
+* Type "think!" and kl begins to recite the book located in text.json, one unit per hour in the channel in which you made the command. "stop!" ceases the madness.
+* Type a phrase that's something like "who's that pokemon?" and kl posts an image from wikimedia for you to guess the file name of. The first successful guess for any picture is acknowledged.
+* Using the power of NiceDice (https://github.com/wyattscarpenter/nicedice), kl interprets any message consisting solely of a dnd-style dice expression, generates random numbers to simulate dice rolls, and outputs the result.
 * Type `set [word] [response message]` and kl will respond with the response message when the word is posted in chat.
-* Reddit link "oldification": links to reddit.com pages will be immediately reposted as links to old.reddit.com pages.
-* KL will displays the time in Los Angeles as its status in real time.
+* Reddit link "oldification": links to reddit.com pages are immediately reposted as links to old.reddit.com pages.
+* KL displays the time in Los Angeles as its status, updated each minute.
 
 Metadata:
 
