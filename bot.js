@@ -47,6 +47,10 @@ client.on('message', message => {
   if (message.content.toLowerCase() === 'stop!') {
     stop_think();
   }
+  
+  if (message.content.toLowerCase() === 'crash') {
+    crash; //since this is undefined, the program crashes
+  }
 
   //nicedice
   if(message.content.toLowerCase().includes('nice dice')){
