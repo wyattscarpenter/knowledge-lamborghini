@@ -15,6 +15,7 @@ Commands:
 * Type a phrase that's something like "who's that pokemon?" and kl posts an image from wikimedia for you to guess the file name of. The first successful guess for any picture is acknowledged.
 * Using the power of NiceDice (https://github.com/wyattscarpenter/nicedice), kl interprets any message consisting solely of a dnd-style dice expression, generates random numbers to simulate dice rolls, and outputs the result.
 * Type `set [word] [response message]` and kl will respond with the response message when the word is posted in chat.
+* Type "crash" and kl will crash. Please do not do this.
 * Reddit link "oldification": links to reddit.com pages are immediately reposted as links to old.reddit.com pages.
 * KL displays the time in Los Angeles as its status, updated each minute.
 
