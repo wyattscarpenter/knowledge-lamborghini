@@ -50,7 +50,7 @@ client.on('message', message => {
   
   if (message.content.toLowerCase() === 'crash') {
     console.log("triggering crash in this program");
-    channel.send("I'm crashing ova heya! [crashes]").then(crash());
+    channel.send("I'm crashing ova heya! [crashes]").then(crash);
   }
 
   //nicedice
