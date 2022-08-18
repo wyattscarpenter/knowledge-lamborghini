@@ -49,7 +49,9 @@ client.on('message', message => {
   }
   
   if (message.content.toLowerCase() === 'crash') {
-    crash; //since this is undefined, the program crashes
+    console.log("triggering crash in this program");
+    channel.send("I'm crashing ova heya! [crashes]");
+    crash; //since this term is not defined, the program crashes
   }
 
   //nicedice
