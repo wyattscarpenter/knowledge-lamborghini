@@ -50,8 +50,7 @@ client.on('message', message => {
   
   if (message.content.toLowerCase() === 'crash') {
     console.log("triggering crash in this program");
-    channel.send("I'm crashing ova heya! [crashes]");
-    crash; //since this term is not defined, the program crashes
+    channel.send("I'm crashing ova heya! [crashes]").then(crash());
   }
 
   //nicedice
@@ -150,6 +149,10 @@ function think(){
 function stop_think(){
   clearInterval(intervals[channel]);
   delete intervals[channel];
+}
+
+function crash(){
+  crash; //since this term is not defined, the program crashes
 }
 
 // THIS MUST BE THIS WAY
