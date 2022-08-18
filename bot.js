@@ -152,7 +152,7 @@ function stop_think(){
 }
 
 function crash(){
-  HALT_AND_CATCH_FIRE; //since this term is not defined, the program crashes
+  throw "crash"; //do not catch this, if you really want to crash
 }
 
 // THIS MUST BE THIS WAY
