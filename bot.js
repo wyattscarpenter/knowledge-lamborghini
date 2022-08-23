@@ -96,7 +96,7 @@ client.on('message', message => {
     responses[channel][thingum[0]] = thingum[1];
     fs.writeFile("responses.json", JSON.stringify(responses), console.log);
   }
-  if (m in responses[channel]) {
+  if (responses[channel] && m in responses[channel]) { //guard against empty responses set for this channel
     channel.send(responses[channel][message.content]);
   }
   if (m in global_responses) {
