@@ -91,14 +91,15 @@ client.on('message', message => {
   if (message.content.toLowerCase().startsWith("set")) {
     msg = message.content.toLowerCase().split(/\s(.+)/)[1];
     thingum = msg.split(/\s(.+)/);
+    responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it in the next line.
     responses[channel][thingum[0]] = thingum[1];
     fs.writeFile("responses.json", JSON.stringify(responses), console.log);
   }
   if (message.content.toLowerCase() in responses) {
-    channel.send(responses[message.content]);
+    channel.send(responses[channel][message.content]);
   }
   if (message.content.toLowerCase() in global_responses) {
-    channel.send(responses[message.content]);
+    channel.send(global_responses[message.content]);
   }
 });
 
