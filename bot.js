@@ -23,6 +23,7 @@ client.on('message', message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
   if (!message.content){return;} //don't even consider empty messages
   channel = message.channel;
+  var m = message.content.toLowerCase();
   
   //oldify reddit links.
   if ( message.content.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi) ){
@@ -37,7 +38,7 @@ client.on('message', message => {
     }
   }
   //post book
-  if (message.content.toLowerCase() === 'think!') {
+  if (m === 'think!') {
     if(texts[channel]===undefined){
       begin_think();
     }
@@ -47,28 +48,28 @@ client.on('message', message => {
       channel.send("Demand me nothing. What you know, you know.");
     }  
   }
-  if (message.content.toLowerCase() === 'stop!') {
+  if (m === 'stop!') {
     stop_think();
   }
   
-  if (message.content.toLowerCase() === 'crash') {
+  if (m === 'crash') {
     console.log("triggering crash in this program");
     channel.send("I'm crashing ova heya! [crashes]").then(crash);
   }
 
   //nicedice
-  if(message.content.toLowerCase().includes('nice dice')){
+  if(m.includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
-  if((result = nicedice.roll(message.content.toLowerCase())).valid){
-    console.log("rollin: "+JSON.stringify(message.content.toLowerCase()));
+  if((result = nicedice.roll(m)).valid){
+    console.log("rollin: "+JSON.stringify(m));
     console.log("rollout: "+JSON.stringify(result));
     message.channel.send(result.value+"\n`"+result.roll_record+"`");
   }
 
   //extremely dumb features
   //who's that pokemon
-  if (/.*wh.*po.?k.?t?\s?mon.*/.test(message.content.toLowerCase())) {
+  if (/.*wh.*po.?k.?t?\s?mon.*/.test(m)) {
     whos_that_pokemon()
   }
   function fuzzystringmatch(l,r){
@@ -78,7 +79,7 @@ client.on('message', message => {
     var target = pokemon_answers[channel].toLowerCase();
     target = target.replace(/[^\(]*\)/g, '').replace(/\(/g, '') || target;
     target = target.replace(/[^a-z]/g, '') || target;
-    var guess = message.content.toLowerCase();
+    var guess = m;
     guess = guess.replace(/[^a-z]/g, '') || guess;
     //fuzzy string match
     var normalized_distance = distance(target, guess) / target.length;
@@ -88,17 +89,17 @@ client.on('message', message => {
       delete pokemon_answers[channel];
     }
   }
-  if (message.content.toLowerCase().startsWith("set")) {
-    msg = message.content.toLowerCase().split(/\s(.+)/)[1];
+  if (m.startsWith("set")) {
+    msg = m.split(/\s(.+)/)[1];
     thingum = msg.split(/\s(.+)/);
     responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it in the next line.
     responses[channel][thingum[0]] = thingum[1];
     fs.writeFile("responses.json", JSON.stringify(responses), console.log);
   }
-  if (message.content.toLowerCase() in responses) {
+  if (m in responses[channel]) {
     channel.send(responses[channel][message.content]);
   }
-  if (message.content.toLowerCase() in global_responses) {
+  if (m in global_responses) {
     channel.send(global_responses[message.content]);
   }
 });
