@@ -2,13 +2,16 @@ const Discord = require('discord.js');
 const nicedice = require('nicedice');
 const {distance, closest} = require('fastest-levenshtein');
 const https = require('https');
+const fs = require('fs');
+
 const client = new Discord.Client();
 
 var text = require('./text.json'); //At this time, this is the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
+var responses = require('./responses.json'); //This provides persistent storage of responses. Unless, of course, your file system were to randomly restart and wipe on a periodic basis. Oh ho ho, what a wacky and unrealistic notion, surely not in practice by any of the services I use to host KL! (Narrator voice: but they did in fact have this operating policy.)
 var texts = {};
 var channel;
 var intervals = {};
-var responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
+var global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 var pokemon_answers = {};
 
 client.on('ready', () => {
@@ -79,8 +82,7 @@ client.on('message', message => {
     guess = guess.replace(/[^a-z]/g, '') || guess;
     //fuzzy string match
     var normalized_distance = distance(target, guess) / target.length;
-    var distance_threshold = .75;
-    console.log(guess, normalized_distance); //TODO: remove this after tuning
+    var distance_threshold = .75; // this tuning seems alright, in terms of false negative to false positive ratio, but the whole experience is still very difficult, which is regrettable
     if (normalized_distance < distance_threshold){
       channel.send("It's "+pokemon_answers[channel]+"!\nTarget: `"+target+"` Your Guess: `"+guess+"`.\nNormalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold);
       delete pokemon_answers[channel];
@@ -89,9 +91,13 @@ client.on('message', message => {
   if (message.content.toLowerCase().startsWith("set")) {
     msg = message.content.toLowerCase().split(/\s(.+)/)[1];
     thingum = msg.split(/\s(.+)/);
-    responses[thingum[0]] = thingum[1];
+    responses[channel][thingum[0]] = thingum[1];
+    fs.writeFile("responses.json", JSON.stringify(responses), console.log);
   }
   if (message.content.toLowerCase() in responses) {
+    channel.send(responses[message.content]);
+  }
+  if (message.content.toLowerCase() in global_responses) {
     channel.send(responses[message.content]);
   }
 });
