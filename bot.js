@@ -134,6 +134,7 @@ client.on('message', message => {
       for(const key of Object.keys(r)){
         if (random - cumulative_weights.shift() <= 0) {
           key && channel.send(key);
+          break;
         }
       }
     }
