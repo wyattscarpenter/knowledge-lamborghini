@@ -110,7 +110,7 @@ client.on('message', message => {
     } else {
       responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
       //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted to delete it.
-      if is_string(responses[channel][keyword]){
+      if(is_string(responses[channel][keyword])){
         delete responses[channel][keyword];
       }
       responses[channel][keyword] ??= {}
