@@ -127,11 +127,11 @@ client.on('message', message => {
       //pick by weighted randomness
       //implicitly, the type is object mapping from string → int, with each int being the number of "tickets" the string has in the "raffle", so to speak.
       var cumulative_weights = {}
-      for (let key of r){
+      for(const key of Object.keys(r)){
         cumulative_weights.push(r[key]||1 + cumulative_weights.at(-1)||0);
       }
       const random = Math.random() * cumulative_weights.at(-1);
-      for (let key of r){
+      for(const key of Object.keys(r)){
         if (random - cumulative_weights.shift() <= 0) {
           key && channel.send(key);
         }
