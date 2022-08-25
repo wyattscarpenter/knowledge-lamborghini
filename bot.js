@@ -129,6 +129,7 @@ client.on('message', message => {
       var cumulative_weights = {}
       for (let key of r){
         cumulative_weights.push(r[key]||1 + cumulative_weights.at(-1)||0);
+      }
       const random = Math.random() * cumulative_weights.at(-1);
       for (let key of r){
         if (random - cumulative_weights.shift() <= 0) {
