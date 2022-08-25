@@ -89,15 +89,53 @@ client.on('message', message => {
       delete pokemon_answers[channel];
     }
   }
-  if (m.startsWith("set")) {
-    msg = m.split(/\s(.+)/)[1];
-    thingum = msg.split(/\s(.+)/);
-    responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it in the next line.
-    responses[channel][thingum[0]] = thingum[1];
-    fs.writeFile("responses.json", JSON.stringify(responses), console.log);
+  if (m.startsWith("set ")) {
+    text_portion = m.split(/\s(.+)/)[1];
+    if(text_portion){ //guard against setting the empty set. not sure if this is needed.
+      thingum = msg.split(/\s(.+)/);
+      responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it in the next line.
+      responses[channel][thingum[0]] = thingum[1];
+      fs.writeFile("responses.json", JSON.stringify(responses), console.log);
+    }
+  }
+  if (m.startsWith("set-probabilistic ")) {
+    command_arguments_text = m.split(/\s(.+)/)[1];
+    number = command_arguments_text.split(/\s(.+)/)[0];
+    text_portion = command_arguments_text.split(/\s(.+)/)[1];
+    keyword = text_portion.split(/\s(.+)/)[0];
+    response = text_portion.split(/\s(.+)/)[1];
+    
+    if(isNaN(number)){
+      channel.send("`set-probabilistic` requires a valid number as its second argument to be its weight, then the keyword, then the response. This, you have failed to provide.");
+    } else {
+      responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
+      //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted to delete it.
+      if is_string(responses[channel][keyword]){
+        delete responses[channel][keyword];
+      }
+      responses[channel][keyword] ??= {}
+      responses[channel][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string.
+
+      fs.writeFile("responses.json", JSON.stringify(responses), console.log);
+    }
   }
   if (responses[channel] && m in responses[channel]) { //guard against empty responses set for this channel
-    channel.send(responses[channel][message.content]);
+    const r = responses[channel][message.content]; //the response. might be a string or an object mapping from strings to weights.
+    if(is_string(r)){
+      r && channel.send(r); //guard against sending an empty string (which is a crashing error for us... maybe fix that with a wrapping function later?)
+    } else {
+      //pick by weighted randomness
+      //implicitly, the type is object mapping from string → int, with each int being the number of "tickets" the string has in the "raffle", so to speak.
+      var cumulative_weights = {}
+      for (let key of r){
+        cumulative_weights.push(r[key]||1 + cumulative_weights.at(-1)||0);
+      const random = Math.random() * cumulative_weights.at(-1);
+      for (let key of r){
+        if (random - cumulative_weights.shift() <= 0) {
+          key && channel.send(key);
+        }
+      }
+    }
   }
   if (m in global_responses) {
     channel.send(global_responses[message.content]);
@@ -142,7 +180,7 @@ function begin_think(){
 function think(){
   var s = texts[channel].shift();
   if(s){
-    for(var l of s.split("\n")){ //break lines into seperate messages
+    for(var l of s.split("\n")){ //break lines into separate messages
       while(l){ //.send() Just Fails for messages over discord's 2000 character limit
         channel.send(l.slice(0,2000)); //note that this is 0-indexed and excludes the specified end character
         l = l.slice(2000); //going over is fine, you know how it is
@@ -161,6 +199,10 @@ function stop_think(){
 
 function crash(){
   throw "crash"; //do not catch this, if you really want to crash
+}
+
+function is_string(variable){
+  return (typeof variable === 'string' || variable instanceof String)
 }
 
 // THIS MUST BE THIS WAY
