@@ -126,7 +126,7 @@ client.on('message', message => {
     } else {
       //pick by weighted randomness
       //implicitly, the type is object mapping from string → int, with each int being the number of "tickets" the string has in the "raffle", so to speak.
-      var cumulative_weights = {}
+      var cumulative_weights = [];
       for(const key of Object.keys(r)){
         cumulative_weights.push(r[key]||1 + cumulative_weights.at(-1)||0);
       }
