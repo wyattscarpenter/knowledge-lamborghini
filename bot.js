@@ -92,7 +92,7 @@ client.on('message', message => {
   if (m.startsWith("set ")) {
     text_portion = m.split(/\s(.+)/)[1];
     if(text_portion){ //guard against setting the empty set. not sure if this is needed.
-      thingum = msg.split(/\s(.+)/);
+      thingum = text_portion.split(/\s(.+)/);
       responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it in the next line.
       responses[channel][thingum[0]] = thingum[1];
       fs.writeFile("responses.json", JSON.stringify(responses), console.log);
