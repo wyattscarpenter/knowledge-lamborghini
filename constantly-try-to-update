@@ -1,0 +1,6 @@
+while true; do
+  if [ `git pull` != "Already up to date.\n" ]; then
+    pkill node
+    npm start &
+  fi
+done
