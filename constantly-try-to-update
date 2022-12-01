@@ -1,5 +1,5 @@
 while true; do
-  if [ "`git pull`" != "Already up to date.\n" ]; then
+  if [ "`git pull`" != "Already up to date." ]; then
     pkill node
     npm start &
   fi
