@@ -16,7 +16,7 @@ Commands:
 * Type a phrase that's something like "who's that pokemon?" and kl posts an image from wikimedia for you to guess the file name of. The first successful guess for any picture is acknowledged.
 * Using the power of NiceDice (https://github.com/wyattscarpenter/nicedice), kl interprets any message consisting solely of a dnd-style dice expression, generates random numbers to simulate dice rolls, and outputs the result.
 * Type `set [word] [response message]` and kl will respond with the response message when the word is posted in the channel. This is a per-channel setting!
-* `set-probabilistic [number] [word] [response message]` is the same as `set`, but sets a response in a pool of responses to be randomly selected, weighted by the number given (metaphorically, you can think of the response as a raffle, in which the response has [number] tickets'). Naturally, to set up any random effect, this command must be used multiple times.
+* `set-probabilistic [number] [word] [response message]` is the same as `set`, but sets a response in a pool of responses to be randomly selected, weighted by the number given (metaphorically, you can think of the response as a raffle, in which the response has [number] tickets'). Naturally, to give any randomness to the effect, this command must be used multiple times.
 * Type "crash" and kl will crash. Please do not do this.
 * Reddit link "oldification": links to reddit.com pages are immediately reposted as links to old.reddit.com pages.
 * KL displays the time in Los Angeles as its status, updated each minute.
