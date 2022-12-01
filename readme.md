@@ -30,4 +30,4 @@ Metadata:
 
 A special note for contributors:
 
-Since responses.json is tracked in this git repo to make the bot initially work, but will have all the responses written to it (naturally), you should probably run `git update-index --skip-worktree responses.json` if you're intending to commit changes to git in the same copy of this repo you're running the bot from.
+Since responses.json is tracked in this git repo to make the bot initially work, but will have all the responses written to it (naturally), you should probably run `git update-index --skip-worktree responses.json` if you're intending to commit changes to git in the same copy of this repo you're running the bot from. I realize that this is bad UX so I will alter the code soon so you don't have to do this. (Thus making my code markedly less streamlined in that area, alas.)
