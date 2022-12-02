@@ -6,7 +6,7 @@ const fs = require('fs');
 
 const client = new Discord.Client();
 
-const BOT_TOKEN = require("./token.json"); 
+const BOT_TOKEN = require("./token.json"); //this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding it in quotes to make a javascript string, "like this". That's all!
 var text = require('./text.json'); //At this time, this is the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 try{
   var responses = require('./responses.json'); //This provides persistent storage of responses.
