@@ -6,6 +6,7 @@ const fs = require('fs');
 
 const client = new Discord.Client();
 
+const BOT_TOKEN = require("./token.js"); 
 var text = require('./text.json'); //At this time, this is the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 var responses = require('./responses.json'); //This provides persistent storage of responses. Unless, of course, your file system were to randomly restart and wipe on a periodic basis. Oh ho ho, what a wacky and unrealistic notion, surely not in practice by any of the services I use to host KL! (Narrator voice: but they did in fact have this operating policy.)
 var texts = {};
@@ -208,5 +209,5 @@ function is_string(variable){
 }
 
 // THIS MUST BE THIS WAY
-client.login(process.env.BOT_TOKEN);//BOT_TOKEN is the Client Secret
-delete process.env.BOT_TOKEN; //delete this so I can't accidentally divulge it
+client.login(BOT_TOKEN);//BOT_TOKEN is the Client Secret
+delete BOT_TOKEN; //delete this so I can't accidentally divulge it
