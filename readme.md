@@ -2,6 +2,14 @@
 
 _"But you know what I like a lot more than knowledge? Knowledge."_
 
+Important links:
+
+**Instructions** (you are here): https://github.com/wyattscarpenter/knowledge-lamborghini/
+
+**Invite** kl to your server (I think they've done several permission scheme reworks since I got this link, so who knows how that works ¯\\\_(ツ)\_/¯): https://discord.com/api/oauth2/authorize?client_id=678989133196165152&permissions=0&scope=bot
+
+**Developer** portal for editing details about the bot and finding the token (only works if you are me): https://discord.com/developers/applications/678989133196165152/
+
 This is Knowledge Lamborghini ("kl"), an eclectic discord bot with exactly these features:
 
 Negative features:
