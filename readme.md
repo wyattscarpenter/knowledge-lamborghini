@@ -16,7 +16,7 @@ Commands:
 * Using the power of NiceDice (https://github.com/wyattscarpenter/nicedice), kl interprets any message consisting solely of a dnd-style dice expression, generates random numbers to simulate dice rolls, and outputs the result.
 * Type `set [word] [response message]` and kl will respond with the response message when the word is posted in the channel. This is a per-channel setting! You can remove a setting by setting it to the empty string.
 * `set-probabilistic ([number]) [word] [response message]` is the same as `set`, but sets a response in a pool of responses to be randomly selected, weighted by the number given (metaphorically, you can think of the response as a raffle, in which the response has [number] tickets')—if no number is given, that quantity defaults to 1 (if you'd like set [word] to be a number, you must provide [number], to avoid ambiguity). Naturally, to give any randomness to the effect, this command must be used multiple times. Also, using set-probabilistic on a word that already has a response set by `set` will turn that response into a one-ticket possibility.
-* `enumerate sets` lists all the responses.
+* `enumerate responses` lists all the responses for the channel.
 * Type "crash" and kl will crash. Please do not do this.
 * Reddit link "oldification": links to reddit.com pages are immediately reposted as links to old.reddit.com pages.
 * KL displays the time in Los Angeles as its status, updated each minute.
