@@ -127,7 +127,7 @@ client.on('message', message => {
       responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
       //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted for the latter.
       if(is_string(responses[channel][keyword])){
-        responses[channel][keyword] = {responses[channel][keyword]: 1};
+        responses[channel][keyword] = {[responses[channel][keyword]]: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
       }
       responses[channel][keyword] ??= {}
       responses[channel][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. //TODO: do I need to formalize this so it doesn't show up in enumerate sets?
