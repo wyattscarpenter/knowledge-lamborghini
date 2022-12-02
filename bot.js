@@ -8,7 +8,7 @@ const client = new Discord.Client();
 
 const BOT_TOKEN = require("./token.json"); 
 var text = require('./text.json'); //At this time, this is the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
-var responses = require('./responses.json'); //This provides persistent storage of responses. Unless, of course, your file system were to randomly restart and wipe on a periodic basis. Oh ho ho, what a wacky and unrealistic notion, surely not in practice by any of the services I use to host KL! (Narrator voice: but they did in fact have this operating policy.)
+var responses = require('./responses.json'); //This provides persistent storage of responses. //TODO: use fs instead, to handle this file not existing.
 var texts = {};
 var channel;
 var intervals = {};
@@ -94,6 +94,9 @@ client.on('message', message => {
       delete pokemon_answers[channel];
     }
   }
+  if (m === 'enumerate sets') {
+    send_long(channel, JSON.stringify(responses));
+  }
   if (m.startsWith("set ")) {
     text_portion = m.split(/\s(.+)/)[1];
     if(text_portion){ //guard against setting the empty set. not sure if this is needed.
@@ -103,23 +106,26 @@ client.on('message', message => {
       fs.writeFile("responses.json", JSON.stringify(responses), console.log);
     }
   }
-  if (m.startsWith("set-probabilistic ")) {
-    command_arguments_text = m.split(/\s(.+)/)[1];
+  if (m.startsWith("set-probabilistic ")) { //TODO: this may be getting stuck on the first option now, for some reason?! It worked before...
+    command_arguments_text = m.split(/\s(.+)/)[1]; // eg: s-p, (blah, (blah , blah blah blah))
     number = command_arguments_text.split(/\s(.+)/)[0];
     text_portion = command_arguments_text.split(/\s(.+)/)[1];
     keyword = text_portion.split(/\s(.+)/)[0];
     response = text_portion.split(/\s(.+)/)[1];
     
-    if(isNaN(number)){
-      channel.send("`set-probabilistic` requires a valid number as its second argument to be its weight, then the keyword, then the response. This, you have failed to provide.");
+    if(isNaN(number)){ //optional, default to 1 if there's nothing there.
+      //shift everything to the right (consider the eg diagram above for a sketch of what this is working on)
+      response = text_portion;
+      word = number;
+      number = 1;
     } else {
       responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
-      //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted to delete it.
+      //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted for the latter.
       if(is_string(responses[channel][keyword])){
-        delete responses[channel][keyword];
+        responses[channel][keyword] = {responses[channel][keyword]: 1};
       }
       responses[channel][keyword] ??= {}
-      responses[channel][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string.
+      responses[channel][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. //TODO: do I need to formalize this so it doesn't show up in enumerate sets?
 
       fs.writeFile("responses.json", JSON.stringify(responses), console.log);
     }
@@ -187,12 +193,7 @@ function begin_think(){
 function think(){
   var s = texts[channel].shift();
   if(s){
-    for(var l of s.split("\n")){ //break lines into separate messages
-      while(l){ //.send() Just Fails for messages over discord's 2000 character limit
-        channel.send(l.slice(0,2000)); //note that this is 0-indexed and excludes the specified end character
-        l = l.slice(2000); //going over is fine, you know how it is
-      }
-    }
+    send_long(channel, s);
     if(!intervals[channel]){intervals[channel] = setInterval(think, 1000*60*60*24);} //do it again in a day
   } else {
     stop();
@@ -202,6 +203,16 @@ function think(){
 function stop_think(){
   clearInterval(intervals[channel]);
   delete intervals[channel];
+}
+
+//Could overwrite the original send() 🤔. On the other hand, I could probably just upgrade discord.js to the newest version one of these days, maybe it's fixed there.
+function send_long(channel, string){ //.send() Just Fails for messages over discord's 2000 character limit
+  for(var l of s.split("\n")){ //break lines into separate messages
+    while(l){
+      channel.send(l.slice(0,2000)); //note that this is 0-indexed and excludes the specified end character
+      l = l.slice(2000); //going over is fine, you know how it is
+    }
+  }
 }
 
 function crash(){
