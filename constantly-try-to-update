@@ -1,7 +1,7 @@
 while true; do
-  if [ "`git pull`" != "Already up to date." ]; then
+  if [ "`git pull origin master --rebase`" != "Already up to date." ]; then
     pkill node
     npm start &
   fi
-  sleep 1 #fudge factor to prevent git from humiliatingly erroring.
+  #sleep 1 #fudge factor to prevent git from humiliatingly erroring.
 done
