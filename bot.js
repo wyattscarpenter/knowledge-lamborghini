@@ -8,7 +8,11 @@ const client = new Discord.Client();
 
 const BOT_TOKEN = require("./token.json"); 
 var text = require('./text.json'); //At this time, this is the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
-var responses = require('./responses.json'); //This provides persistent storage of responses. //TODO: use fs instead, to handle this file not existing.
+try{
+  var responses = require('./responses.json'); //This provides persistent storage of responses.
+} catch {
+  var responses = {};
+}
 var texts = {};
 var channel;
 var intervals = {};
