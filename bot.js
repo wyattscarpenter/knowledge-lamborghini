@@ -120,7 +120,7 @@ client.on('message', message => {
     if(isNaN(number)){ //optional, default to 1 if there's nothing there.
       //shift everything to the right (consider the eg diagram above for a sketch of what this is working on)
       response = text_portion;
-      word = number;
+      keyword = number;
       number = 1;
     }
     responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
@@ -130,7 +130,7 @@ client.on('message', message => {
       responses[channel][keyword] = {current_guy: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
     }
     responses[channel][keyword] ??= {}
-    responses[channel][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. //TODO: do I need to formalize this so it doesn't show up in enumerate sets?
+    responses[channel][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. The latter approach also removes it from enumerate responses, which is cool.
 
     fs.writeFile("responses.json", JSON.stringify(responses), console.log);
   }
