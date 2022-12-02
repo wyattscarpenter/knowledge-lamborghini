@@ -27,7 +27,7 @@ client.on('message', message => {
   channel = message.channel;
   var m = message.content.toLowerCase();
 
-  if(message.mentions.has(bot.user)){
+  if(message.mentions.has(client.user, {ignoreRoles: true, ignoreRepliedUser: true, ignoreEveryone: true})){
     channel.send("You @ me? I'm at your service. Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
   }
   //oldify reddit links.
