@@ -117,25 +117,22 @@ client.on('message', message => {
     text_portion = command_arguments_text.split(/\s(.+)/)[1];
     keyword = text_portion.split(/\s(.+)/)[0];
     response = text_portion.split(/\s(.+)/)[1];
-    
     if(isNaN(number)){ //optional, default to 1 if there's nothing there.
       //shift everything to the right (consider the eg diagram above for a sketch of what this is working on)
-      //TODO: I think this might not work in the case where we try to replace a regular with a probabalistic...
       response = text_portion;
       word = number;
       number = 1;
-    } else {
-      responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
-      //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted for the latter.
-      var current_guy = responses[channel][keyword];
-      if(is_string(current_guy)){
-        responses[channel][keyword] = {current_guy: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
-      }
-      responses[channel][keyword] ??= {}
-      responses[channel][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. //TODO: do I need to formalize this so it doesn't show up in enumerate sets?
-
-      fs.writeFile("responses.json", JSON.stringify(responses), console.log);
     }
+    responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
+    //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted for the latter.
+    var current_guy = responses[channel][keyword];
+    if(is_string(current_guy)){
+      responses[channel][keyword] = {current_guy: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
+    }
+    responses[channel][keyword] ??= {}
+    responses[channel][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. //TODO: do I need to formalize this so it doesn't show up in enumerate sets?
+
+    fs.writeFile("responses.json", JSON.stringify(responses), console.log);
   }
   if (responses[channel] && m in responses[channel]) { //guard against empty responses set for this channel
     const r = responses[channel][m]; //the response might be a string or an object mapping from strings to weights.
