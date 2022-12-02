@@ -1,3 +1,5 @@
+<img src="https://i.redd.it/1v4zaf534i851.jpg" alt="drawing" width="400" align="right"/>
+
 # Knowledge Lamborghini
 
 _"But you know what I like a lot more than knowledge? Knowledge."_
@@ -35,6 +37,6 @@ This is Knowledge Lamborghini ("kl"), an eclectic discord bot with exactly these
 ### Metadata
 
 * The code is public domain under CC0 1.0.
-* KL's icon is https://i.redd.it/1v4zaf534i851.jpg or best equivalent.
+* KL's icon is https://i.redd.it/1v4zaf534i851.jpg (also seen above) or best equivalent.
 * KL's motto is derivative of YouTube Poops of "Here in My Garage" by Tai Lopez.
 * Invite this bot using https://discord.com/api/oauth2/authorize?client_id=678989133196165152&permissions=0&scope=bot
