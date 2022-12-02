@@ -35,9 +35,9 @@ client.on('message', message => {
     channel.send("You @ me? I'm at your service. Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
   }
   //oldify reddit links.
-  if ( message.content.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi) ){
+  if ( m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi) ){
   //here we check if null first to avoid crash on trying to iterate over null. having done that, we actually do the thing:
-    for (r of message.content.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi ) ){
+    for (r of m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi ) ){
       //huge character list from https://stackoverflow.com/a/1547940
       //note that it was easier to detect reddit urls and then futz with them each individually than do some crazy capture-jutsu. 
       if (!r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*old\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi)){ //It's already old reddit, do nothing.
@@ -136,7 +136,7 @@ client.on('message', message => {
     }
   }
   if (responses[channel] && m in responses[channel]) { //guard against empty responses set for this channel
-    const r = responses[channel][message.content]; //the response. might be a string or an object mapping from strings to weights.
+    const r = responses[channel][m]; //the response might be a string or an object mapping from strings to weights.
     if(is_string(r)){
       r && channel.send(r); //guard against sending an empty string (which is a crashing error for us... maybe fix that with a wrapping function later?)
     } else {
@@ -156,7 +156,7 @@ client.on('message', message => {
     }
   }
   if (m in global_responses) {
-    channel.send(global_responses[message.content]);
+    channel.send(global_responses[m]);
   }
 });
 
