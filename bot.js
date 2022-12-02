@@ -111,7 +111,7 @@ client.on('message', message => {
       fs.writeFile("responses.json", JSON.stringify(responses), console.log);
     }
   }
-  if (m.startsWith("set-probabilistic ")) { //TODO: this may be getting stuck on the first option now, for some reason?! It worked before...
+  if (m.startsWith("set-probabilistic ")) { //TODO: this may be getting stuck on the last option now, for some reason?! It worked before...
     command_arguments_text = m.split(/\s(.+)/)[1]; // eg: s-p, (blah, (blah , blah blah blah))
     number = command_arguments_text.split(/\s(.+)/)[0];
     text_portion = command_arguments_text.split(/\s(.+)/)[1];
@@ -120,14 +120,16 @@ client.on('message', message => {
     
     if(isNaN(number)){ //optional, default to 1 if there's nothing there.
       //shift everything to the right (consider the eg diagram above for a sketch of what this is working on)
+      //TODO: I think this might not work in the case where we try to replace a regular with a probabalistic...
       response = text_portion;
       word = number;
       number = 1;
     } else {
       responses[channel] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
       //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted for the latter.
-      if(is_string(responses[channel][keyword])){
-        responses[channel][keyword] = {[responses[channel][keyword]]: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
+      var current_guy = responses[channel][keyword];
+      if(is_string(current_guy)){
+        responses[channel][keyword] = {current_guy: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
       }
       responses[channel][keyword] ??= {}
       responses[channel][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. //TODO: do I need to formalize this so it doesn't show up in enumerate sets?
