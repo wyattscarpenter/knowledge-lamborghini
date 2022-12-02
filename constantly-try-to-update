@@ -1,5 +1,5 @@
 while true; do
-  if [ "`git pull origin master --rebase`" != "Already up to date." ]; then
+  if [ "`git pull origin master --rebase 2>/dev/null`" != "Already up to date." ]; then
     pkill node
     npm start &
   fi
