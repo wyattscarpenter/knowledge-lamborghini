@@ -11,7 +11,7 @@ Negative features:
 * NO persistent storage over about a day, because my current hosting solution erases all of it every 24 hours. This means `set` and `set-probabilistic` are useless long-term.
 
 Commands:
-
+* @ the bot to get a link to this help document.
 * Type "think!" and kl begins to recite the book located in text.json, one unit per hour in the channel in which you made the command. "stop!" ceases the madness.
 * Type a phrase that's something like "who's that pokemon?" and kl posts an image from wikimedia for you to guess the file name of. The first successful guess for any picture is acknowledged.
 * Using the power of NiceDice (https://github.com/wyattscarpenter/nicedice), kl interprets any message consisting solely of a dnd-style dice expression, generates random numbers to simulate dice rolls, and outputs the result.

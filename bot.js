@@ -23,9 +23,13 @@ client.on('ready', () => {
 client.on('message', message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
   if (!message.content){return;} //don't even consider empty messages
+  
   channel = message.channel;
   var m = message.content.toLowerCase();
-  
+
+  if(message.mentions.has(bot.user)){
+    channel.send("You @ me? I'm at your service. Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
+  }
   //oldify reddit links.
   if ( message.content.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi) ){
   //here we check if null first to avoid crash on trying to iterate over null. having done that, we actually do the thing:
