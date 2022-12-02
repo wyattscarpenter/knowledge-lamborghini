@@ -3,5 +3,5 @@ while true; do
     pkill node
     npm start &
   fi
-  sleep .1 #fudge factor to prevent git from humiliatingly erroring.
+  sleep .2 #fudge factor to prevent git from humiliatingly erroring.
 done
