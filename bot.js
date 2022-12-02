@@ -95,7 +95,7 @@ client.on('message', message => {
     }
   }
   if (m === 'enumerate sets') {
-    send_long(channel, JSON.stringify(responses));
+    send_long( channel, JSON.stringify(responses[channel]) );
   }
   if (m.startsWith("set ")) {
     text_portion = m.split(/\s(.+)/)[1];
@@ -207,7 +207,7 @@ function stop_think(){
 
 //Could overwrite the original send() 🤔. On the other hand, I could probably just upgrade discord.js to the newest version one of these days, maybe it's fixed there.
 function send_long(channel, string){ //.send() Just Fails for messages over discord's 2000 character limit
-  for(var l of s.split("\n")){ //break lines into separate messages
+  for(var l of string.split("\n")){ //break lines into separate messages
     while(l){
       channel.send(l.slice(0,2000)); //note that this is 0-indexed and excludes the specified end character
       l = l.slice(2000); //going over is fine, you know how it is
