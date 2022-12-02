@@ -18,6 +18,7 @@ This is Knowledge Lamborghini ("kl"), an eclectic discord bot with exactly these
 
 * NO special sigil, all commands are invoked as they are written here. All commands are case-insensitive.
 * NO versioning, uptime, or stability guarantees. I keep the version number at 0.1.0 and commit broken features directly to master as I work on them. I may or may not have the bot running at any given time.
+* NO automatic testing paradigm, because I didn't think about how easy it would be to do that until I had built all the features.
 
 ### Commands
 * @ the bot to get a link to this help document.
