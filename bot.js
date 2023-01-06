@@ -32,7 +32,9 @@ client.on('message', message => {
   var m = message.content.toLowerCase();
 
   if(message.mentions.has(client.user, {ignoreRoles: true, ignoreRepliedUser: true, ignoreEveryone: true})){
-    channel.send("You @ me? I'm at your service. Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
+    if(m.includes("help")){
+      channel.send("You @ me? I'm at your service. Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
+    }
   }
   //oldify reddit links.
   if ( m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi) ){

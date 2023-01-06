@@ -23,7 +23,7 @@ This is Knowledge Lamborghini (“kl”), an eclectic discord bot with exactly t
 * NO automatic testing paradigm, because I didn't think about how easy it would be to do that until I had built all the features.
 
 ### Commands
-* @ the bot to get a link to this help document.
+* @ the bot with a message containing "help" to get a link to this help document.
 * Type `think!` and kl begins to recite the book located in text.json, one unit per hour in the channel in which you made the command. `stop!` ceases the madness.
 * Type a phrase that's something like `who's that pokemon?` and kl posts an image from wikimedia for you to guess the file name of. The first successful guess for any picture is acknowledged.
 * Using the power of NiceDice (https://github.com/wyattscarpenter/nicedice), kl interprets any message consisting solely of a dnd-style dice expression, generates random numbers to simulate dice rolls, and outputs the result.
