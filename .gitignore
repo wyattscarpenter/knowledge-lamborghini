@@ -1,2 +1,5 @@
 token.js*
 responses.json
+server_responses.json
+node_modules/
+package-lock.json

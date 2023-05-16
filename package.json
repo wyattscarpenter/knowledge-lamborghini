@@ -4,13 +4,18 @@
   "version": "0.1.0",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node bot.js",
+    "compile-check": "tsc --checkJs --noEmit --resolveJsonModule bot.js",
+    "Remark on compile-check": "By the way, compile-check is almost completely useless, because typescript wants to check a lot of things we don't & can't care about. But, it does sometimes catch variable name mistakes, which is nice."
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wyattscarpenter/knowledge-lamborghini.git"
   },
   "license": "CC0-1.0",
+  "devDependencies": {
+    "typescript": "~4.7.0"
+  },
   "dependencies": {
     "discord.js": "12.2.0",
     "nicedice": "git://github.com/wyattscarpenter/nicedice.git",
