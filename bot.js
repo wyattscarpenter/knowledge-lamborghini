@@ -236,7 +236,7 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
       response_container[response_container_indexer][keyword] = {[current_guy]: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
     }
     response_container[response_container_indexer][keyword] ??= {}
-    response_container[response_container_indexer][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. The latter approach also removes it from enumerate responses, which is cool.
+    response_container[response_container_indexer][keyword][response] = +number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. The latter approach also removes it from enumerate responses, which is cool.
   } else {
     const text_portion = message.content.split(/\s(.+)/)[1];
     if(text_portion){ //guard against setting the empty set. not sure if this is needed.
@@ -256,15 +256,18 @@ function the_function_that_does_sending_for_responses(message, for_server=false)
   
   const r = response_container[response_container_indexer][message.content.toLowerCase()]; //the response might be a string or an object mapping from strings to weights.
   if(is_string(r)){
+    console.log("string response", r);
     r && message.channel.send(r); //guard against sending an empty string (which is a crashing error for us... maybe fix that with a wrapping function later?)
   } else {
-    //pick by weighted randomness
-    //implicitly, the type is object mapping from string → int, with each int being the number of "tickets" the string has in the "raffle", so to speak.
+    console.log("random response", r);
+    //Pick by weighted randomness
+    //Implicitly, the type of r is object mapping from string → int, with each int being the number of "tickets" the string has in the "raffle", so to speak.
     let cumulative_weights = [];
     for(const key of Object.keys(r)){
       cumulative_weights.push(r[key]||1 + cumulative_weights.at(-1)||0);
     }
     const random = Math.random() * cumulative_weights.at(-1);
+    console.log("random number", random, "cumulative_weights", cumulative_weights);
     for(const key of Object.keys(r)){
       if (random - cumulative_weights.shift() <= 0) {
         key && message.channel.send(key);
