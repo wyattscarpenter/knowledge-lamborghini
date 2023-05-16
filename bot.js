@@ -227,7 +227,7 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
     //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted for the latter.
     let current_guy = response_container[response_container_indexer][keyword];
     if(is_string(current_guy)){
-      response_container[response_container_indexer][keyword] = {current_guy: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
+      response_container[response_container_indexer][keyword] = {[current_guy]: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
     }
     response_container[response_container_indexer][keyword] ??= {}
     response_container[response_container_indexer][keyword][response] = number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. The latter approach also removes it from enumerate responses, which is cool.
@@ -246,7 +246,6 @@ function the_function_that_does_sending_for_responses(message, for_server=false)
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild : message.channel;
   
-  //Should this be lowerCased?
   const r = response_container[response_container_indexer][message.content.toLowerCase()]; //the response might be a string or an object mapping from strings to weights.
   if(is_string(r)){
     r && message.channel.send(r); //guard against sending an empty string (which is a crashing error for us... maybe fix that with a wrapping function later?)
