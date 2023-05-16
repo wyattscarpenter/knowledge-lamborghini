@@ -118,19 +118,19 @@ client.on('message', message => {
     the_function_that_does_setting_for_responses(message);
   }
   if (m.startsWith("set-probabilistic ")) {
-    the_function_that_does_setting_for_responses(message, probabilistic=true);
+    the_function_that_does_setting_for_responses(message, true);
   }
   if (m.startsWith("set-for-server ")) {
-    the_function_that_does_setting_for_responses(message, for_server=true);
+    the_function_that_does_setting_for_responses(message, false, true);
   }
   if (m.startsWith("set-probabilistic-for-server ")) {
-    the_function_that_does_setting_for_responses(message, probabilistic=true, for_server=true);
+    the_function_that_does_setting_for_responses(message, true, true);
   }
   if (responses[channel] && m in responses[channel]) { //guard against empty responses set for this channel
     the_function_that_does_sending_for_responses(message);
   }
   if (server_responses[message.guild] && m in server_responses[message.guild]) { //guard against empty responses set for this channel
-    the_function_that_does_sending_for_responses(message, for_server=true);
+    the_function_that_does_sending_for_responses(message, true);
   }
   if (m in global_responses) {
     channel.send(global_responses[m]);
