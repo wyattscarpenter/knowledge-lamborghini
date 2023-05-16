@@ -6,16 +6,21 @@ const fs = require('fs');
 
 const client = new Discord.Client();
 
-const BOT_TOKEN = require("./token.json"); //this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding it in quotes to make a javascript string, "like this". That's all!
+{ // THIS BLOCK MUST HAPPEN FOR THE BOT TO LOGIN!
+  const BOT_TOKEN = require("./token.json"); //this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding it in quotes to make a javascript string, "like this". That's all!
+  client.login(BOT_TOKEN);//BOT_TOKEN is the Client Secret
+} //Closing the block scope should thereby destroy the block-scoped BOT_TOKEN constant for the rest of the program. This to make it less likely that we'll accidentally divulge it. I used to just use the `delete` keyword on it, but typescript objected to that for some reason (this may be a javscript strict mode thing? MDN claims it never works, but it worked for me I think ¯\_(ツ)_/¯ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/delete#description ).
 var text = require('./text.json'); //At this time, this is the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 
 try{
+  // @ts-ignore: I use typescript to check various properties of this javascript file, but one thing typescript complains about constantly is that it can't find these json files. I intentionally have not created these files, for version-control reasons. So, I just have to suppress those errors with these comments.
   var responses = require('./responses.json'); //This provides persistent storage of responses.
 } catch {
   var responses = {};
 }
 
 try{
+  // @ts-ignore: (see previous ts-ignore)
   var server_responses = require('./server_responses.json'); //This provides persistent storage of responses.
 } catch {
   var server_responses = {};
@@ -38,9 +43,9 @@ client.on('message', message => {
   channel = message.channel;
   const m = message.content.toLowerCase();
 
-  if(message.mentions.has(client.user, {ignoreRoles: true, ignoreRepliedUser: true, ignoreEveryone: true})){
+  if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
     if(m.includes("help")){
-      channel.send("You @ me? I'm at your service. Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
+      channel.send("Need help? Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands."+ BOT_TOKEN ? "" : " :)"); //surreptitious check that allows me to verify that BOT_TOKEN is out of scope //why doesn't typescript object to this? Just because I don't try to assign to the name...?
     }
   }
   //oldify reddit links.
@@ -110,9 +115,9 @@ client.on('message', message => {
   }
   if (m === 'enumerate responses') {
     console.log(responses[channel]);
-    send_long( channel, JSON.stringify(responses[channel]) );
+    send_long( channel, "Channel-specific responses:"+JSON.stringify(responses[channel]) );
     console.log(server_responses[message.guild]);
-    send_long( channel, JSON.stringify(server_responses[message.guild]) );
+    send_long( channel, "Server-specific responses:"+JSON.stringify(server_responses[message.guild]) );
   }
   if (m.startsWith("set ")) {
     the_function_that_does_setting_for_responses(message);
@@ -209,12 +214,13 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild : message.channel;
   const saving_file_name = for_server? "server_responses.json" : "responses.json";
+  let keyword;
 
   if(probabilistic){
     let command_arguments_text = message.content.split(/\s(.+)/)[1]; // structural diagram: set-probabilistic (blah, (blah , blah blah blah))
     let number = command_arguments_text.split(/\s(.+)/)[0];
     let text_portion = command_arguments_text.split(/\s(.+)/)[1];
-    let keyword = text_portion.split(/\s(.+)/)[0];
+    keyword = text_portion.split(/\s(.+)/)[0];
     let response = text_portion.split(/\s(.+)/)[1];
     if(isNaN(number)){ //optional, default to 1 if there's nothing there.
       //shift everything to the right (consider the eg diagram above for a sketch of what this is working on)
@@ -235,11 +241,13 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
     const text_portion = message.content.split(/\s(.+)/)[1];
     if(text_portion){ //guard against setting the empty set. not sure if this is needed.
       let thingum = text_portion.split(/\s(.+)/);
+      keyword = thingum[0].toLowerCase();
       response_container[response_container_indexer] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it in the next line.
-      response_container[response_container_indexer][thingum[0].toLowerCase()] = thingum[1];
+      response_container[response_container_indexer][keyword] = thingum[1];
     }
   }
   fs.writeFile(saving_file_name, JSON.stringify(response_container), console.log);
+  message.channel.send("OK, "+JSON.stringify(keyword)+" is now set to "+JSON.stringify(response_container[response_container_indexer][keyword]));
 }
 
 function the_function_that_does_sending_for_responses(message, for_server=false){
@@ -265,7 +273,3 @@ function the_function_that_does_sending_for_responses(message, for_server=false)
     }
   }
 }
-
-// THIS MUST BE THIS WAY
-client.login(BOT_TOKEN);//BOT_TOKEN is the Client Secret
-delete BOT_TOKEN; //delete this to make it less likely that we'll accidentally divulge it

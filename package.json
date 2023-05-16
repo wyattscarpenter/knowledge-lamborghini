@@ -5,8 +5,8 @@
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
-    "compile-check": "tsc --checkJs --noEmit --resolveJsonModule bot.js",
-    "Remark on compile-check": "By the way, compile-check is almost completely useless, because typescript wants to check a lot of things we don't & can't care about. But, it does sometimes catch variable name mistakes, which is nice."
+    "compile-check": "tsc --checkJs --noEmit --resolveJsonModule --skipLibCheck --lib es2022,dom bot.js",
+    "tsc": "tsc --all"
   },
   "repository": {
     "type": "git",
@@ -14,11 +14,12 @@
   },
   "license": "CC0-1.0",
   "devDependencies": {
-    "typescript": "~4.7.0"
+    "@types/node": "^20.1.7",
+    "typescript": "~5"
   },
   "dependencies": {
     "discord.js": "12.2.0",
-    "nicedice": "git://github.com/wyattscarpenter/nicedice.git",
-    "fastest-levenshtein": "1.0.12"
+    "fastest-levenshtein": "1.0.12",
+    "nicedice": "~1.0.2"
   }
 }
