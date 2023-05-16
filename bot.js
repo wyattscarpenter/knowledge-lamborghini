@@ -45,7 +45,7 @@ client.on('message', message => {
 
   if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
     if(m.includes("help")){
-      channel.send("Need help? Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands."+ BOT_TOKEN ? "" : " :)"); //surreptitious check that allows me to verify that BOT_TOKEN is out of scope //why doesn't typescript object to this? Just because I don't try to assign to the name...?
+      channel.send("Need help? Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
     }
   }
   //oldify reddit links.
