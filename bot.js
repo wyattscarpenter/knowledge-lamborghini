@@ -1,10 +1,11 @@
-const Discord = require('discord.js');
+const { Client, Intents } = require('discord.js');
 const nicedice = require('nicedice');
 const {distance, closest} = require('fastest-levenshtein');
+const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
 
-const client = new Discord.Client();
+const client = new Client( {intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.MESSAGE_CONTENT]} );
 
 { // THIS BLOCK MUST HAPPEN FOR THE BOT TO LOGIN!
   const BOT_TOKEN = require("./token.json"); //this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding it in quotes to make a javascript string, "like this". That's all!
@@ -25,6 +26,14 @@ try{
 } catch {
   var server_responses = {};
 }
+
+try{ //This loads the remindmes, but we can't actually do anything with them until the bot is ready, because we might need to discharge them by sending messsages.
+  // @ts-ignore: (see first ts-ignore)
+  var remindmes = require('./remindmes.json'); //This provides persistent storage of responses.
+} catch {
+  var remindmes = [];
+}
+
 var texts = {};
 var channel;
 var intervals = {};
@@ -34,9 +43,10 @@ var pokemon_answers = {};
 client.on('ready', () => {
   console.log('I am ready!');
   setInterval(update_status_clock, 1000);
+  launch_remindmes(remindmes);
 });
 
-client.on('message', message => {
+client.on('messageCreate', message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
   if (!message.content){return;} //don't even consider empty messages
 
@@ -112,6 +122,9 @@ client.on('message', message => {
       channel.send("It's "+pokemon_answers[channel]+"!\nTarget: `"+target+"` Your Guess: `"+guess+"`.\nNormalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold);
       delete pokemon_answers[channel];
     }
+  }
+  if (m.startsWith("remindme ")) {
+    set_remindme(message);
   }
   if (m === 'enumerate responses') {
     console.log(responses[channel]);
@@ -275,4 +288,46 @@ function the_function_that_does_sending_for_responses(message, for_server=false)
       }
     }
   }
+}
+
+function discord_timestamp(date, is_relative=false){
+  return "<t:"+ Math.trunc(+date/1000) + (is_relative? ":R>" : ">"); //there are other types of discord timestamps but we needn't bother with them here.
+}
+
+function set_remindme(message){
+  const command_arguments_text = message.content.split(/\s(.+)/)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text.
+  const d = chrono.parseDate(command_arguments_text);
+  if(!d){
+    message.reply("You have used the remindme command with argument `"+command_arguments_text+"`, but I can't understand the date you've tried to specify. I think it's `"+ d + "` My date parsing handles a lot of natural language, but it's not perfect. Try a different tack?");
+  } else if (d<=new Date()){ //Because the computer operates with variable speed(?) d<now is SOMETIMES true if you've declared d to be now. But d<=now is ALWAYS true, so we use it for greater consistency.
+    message.reply("You have used the remindme command with argument `"+command_arguments_text+"`, but I think you're trying to specify the date `"+ d +"`, which is "+discord_timestamp(d)+" ie "+discord_timestamp(d, true)+". I think this is in the past, and I cannot retroactively remind you of things! Please try a different time specification if need be.");
+  } else {
+    message.reply("OK! You have used the remindme command with argument `"+command_arguments_text+"`.\n\nOn the date `"+ d +"`, which is "+discord_timestamp(d)+" ie "+discord_timestamp(d, true)+", I will reply to your comment and quote back your message to you—assuming this bot and this channel are still around by then!");
+    //Add a remindme, making sure to commit it to the authoritative data structure, and cache that structure to file:
+    const remindme = {datestamp: +d, message: message};
+    remindmes.push(remindme);
+    fs.writeFile("remindmes.json", JSON.stringify(remindmes), console.log); //update record on disk
+    launch_remindmes([remindme]);
+  }
+}
+
+function launch_remindmes(remindmes){
+  for (const remindme of remindmes) {
+    const now = +(new Date());
+    if (remindme.datestamp<=now){ //The correct time may have happened whilst the bot was sleeping or doing other work, and frankly I don't know what setTimeout does for negative values.
+      discharge_remindme(remindme);
+    } else {
+      setTimeout(discharge_remindme, remindme.datestamp - now, remindme);
+    }
+  }
+}
+
+function discharge_remindme(remindme){ //Send a remindme, making sure to remove it from the authoritative data structure, and cache that structure to file:
+  //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
+  // @ts-ignore: TS wants an `as TextChannel` here that cannot be had in pure javascript. Le sigh. Maybe this is fixed in later versions of discordjs, idk.
+  client.channels.fetch(remindme.message.channelId).then(channel => channel.send(
+    { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} }
+  ));
+  remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
+  fs.writeFile("remindmes.json", JSON.stringify(remindmes), console.log); //update record on disk
 }

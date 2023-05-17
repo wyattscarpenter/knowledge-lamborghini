@@ -20,6 +20,7 @@ This is Knowledge Lamborghini (“kl”), an eclectic discord bot with exactly t
 
 * NO special sigil, all commands are invoked as they are written here. All commands are case-insensitive.
 * NO versioning, uptime, or stability guarantees. I keep the version number at 0.1.0 and commit broken features directly to master as I work on them. I may or may not have the bot running at any given time.
+* NO particular security guarantees. While there's no particular reason to think data stored in the bot is INsecure, it is just stored in plaintext on a server somewhere. So I wouldn't recommend putting critical secrets in there.
 * NO automatic testing paradigm, because I didn't think about how easy it would be to do that until I had built all the features.
 
 ### Positive features
@@ -34,6 +35,7 @@ A note about the commands: all commands are usually just as they are written her
 * `set-probabilistic (number) [word] [response message]` is the same as `set`, but sets a response in a pool of responses to be randomly selected, weighted by the number given (metaphorically, you can think of the response as a raffle, in which the response has [number] tickets)—if no number is given, that quantity defaults to 1 (if you'd like set [word] to be a number, you must provide [number], to avoid ambiguity). Naturally, to give any randomness to the effect, this command must be used multiple times. Also, using set-probabilistic on a word that already has a response set by `set` will turn that response into a one-ticket possibility.
 * `set-for-server` and `set-probabilistic-for-server` are the server-wide equivalents of the above commands. The banks of server responses and channel responses are different, so if you make overlapping responses kl might double-reply, etc.
 * `enumerate responses` lists all the responses for the channel.
+* `remindme`, followed by freeform text that includes a date or time of some sort that kl can interpret (I use the chrono-node library to try to parse these), will cause kl to reply to your message at that date. This feature is useful to remind you of things... if you're confident this tech stack will last that long!
 * Type `crash` and kl will crash. Please do not do this.
 * Reddit link “oldification”: links to reddit.com pages are immediately reposted as links to old.reddit.com pages.
 * KL displays the time in Los Angeles as its status, updated each minute.
