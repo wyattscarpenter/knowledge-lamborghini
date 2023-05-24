@@ -5,45 +5,47 @@ const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
 
-const client = new Client( {intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.MESSAGE_CONTENT]} );
+const client = new Client( {intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.MESSAGE_CONTENT]} );
 
-{ // THIS BLOCK MUST HAPPEN FOR THE BOT TO LOGIN!
-  const BOT_TOKEN = require("./token.json"); //this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding it in quotes to make a javascript string, "like this". That's all!
-  client.login(BOT_TOKEN);//BOT_TOKEN is the Client Secret
-} //Closing the block scope should thereby destroy the block-scoped BOT_TOKEN constant for the rest of the program. This to make it less likely that we'll accidentally divulge it. I used to just use the `delete` keyword on it, but typescript objected to that for some reason (this may be a javscript strict mode thing? MDN claims it never works, but it worked for me I think ¯\_(ツ)_/¯ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/delete#description ).
-var text = require('./text.json'); //At this time, this is the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
+// THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
+client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding it in quotes to make a javascript string, "like this". That's all!
 
-try{
-  // @ts-ignore: I use typescript to check various properties of this javascript file, but one thing typescript complains about constantly is that it can't find these json files. I intentionally have not created these files, for version-control reasons. So, I just have to suppress those errors with these comments.
-  var responses = require('./responses.json'); //This provides persistent storage of responses.
-} catch {
-  var responses = {};
+/** @type string[] */
+let text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
+
+function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
+  try{ return require(require_id); } catch (e) {console.log(`${e.message.split('\n')[0]} — ${require_id} not found (or errored horribly), using default value ${JSON.stringify(default_value)}`); return default_value; }
 }
 
-try{
-  // @ts-ignore: (see previous ts-ignore)
-  var server_responses = require('./server_responses.json'); //This provides persistent storage of responses.
-} catch {
-  var server_responses = {};
-}
+//These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
+let responses = try_require("./responses.json", {});
+let server_responses = try_require('./server_responses.json', {});
+let remindmes = try_require('./remindmes.json',[]); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
+//The type of track_leaves an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string; } in typescript.
+/** @type {{ [guildId: string]: string[] }} */
+let track_leaves = try_require('./track_leaves.json', {});
 
-try{ //This loads the remindmes, but we can't actually do anything with them until the bot is ready, because we might need to discharge them by sending messsages.
-  // @ts-ignore: (see first ts-ignore)
-  var remindmes = require('./remindmes.json'); //This provides persistent storage of responses.
-} catch {
-  var remindmes = [];
-}
-
-var texts = {};
-var channel;
-var intervals = {};
-var global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
+let texts = {};
+let channel;
+var think_intervals = {};
 var pokemon_answers = {};
+const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
+
 
 client.on('ready', () => {
-  console.log('I am ready!');
+  console.log('I am ready! Logged in as '+client.user.tag);
   setInterval(update_status_clock, 1000);
   launch_remindmes(remindmes);
+});
+
+client.on('guildMemberRemove', member => { //"Emitted whenever a member leaves a guild, or is kicked."
+  if ( track_leaves[member.guild.id] ) {
+    for (const channelId of track_leaves[member.guild.id]){
+      client.channels.fetch(channelId).then(channel => channel.isText() && channel.send(
+        member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is removed from the server (left or kicked)."
+      ));
+    }
+  }
 });
 
 client.on('messageCreate', message => {
@@ -58,7 +60,7 @@ client.on('messageCreate', message => {
       channel.send("Need help? Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
     }
   }
-  //oldify reddit links.
+  //To oldify reddit links.
   if ( m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi) ){
   //here we check if null first to avoid crash on trying to iterate over null. having done that, we actually do the thing:
     for (let r of m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi ) ){
@@ -70,12 +72,12 @@ client.on('messageCreate', message => {
       }
     }
   }
-  //post book
+  //To post book
   if (m === 'think!') {
-    if(texts[channel]===undefined){
-      begin_think();
+    if(texts[channel.id]===undefined){
+      texts[channel.id] = text.slice(); //Populate the text to begin with, for the channel. A shallow copy is fine for this.
     }
-    if(texts[channel].length){
+    if(texts[channel.id].length){
       think();
     }else{
       channel.send("Demand me nothing. What you know, you know.");
@@ -88,6 +90,24 @@ client.on('messageCreate', message => {
   if (m === 'crash') {
     console.log("triggering crash in this program");
     channel.send("I'm crashing ova heya! [crashes]").then(crash);
+  }
+
+  //Track members leaving a server
+  if (m.startsWith('death has many doors')) {
+    if ( track_leaves[message.guild.id] ){
+      track_leaves[message.guild.id].push(message.channel.id);
+    } else {
+      track_leaves[message.guild.id] = [message.channel.id];
+    }
+    fs.writeFile("track_leaves.json", JSON.stringify(track_leaves), console.log); //update record on disk
+    message.reply("A record will be kept here.");
+  }
+  if (m.startsWith('death has no doors')) {
+    if ( track_leaves[message.guild.id] ){
+      track_leaves[message.guild.id] = array_but_without(track_leaves[message.guild.id], message.channel.id);
+    }
+    fs.writeFile("track_leaves.json", JSON.stringify(track_leaves), console.log); //update record on disk
+    message.reply("No record will be kept here.");
   }
 
   //nicedice
@@ -109,8 +129,8 @@ client.on('messageCreate', message => {
   function fuzzystringmatch(l,r){
     return distance(l,r) < l.length*.75;
   }
-  if(pokemon_answers[channel]){
-    let target = pokemon_answers[channel].toLowerCase();
+  if(pokemon_answers[channel.id]){
+    let target = pokemon_answers[channel.id].toLowerCase();
     target = target.replace(/[^\(]*\)/g, '').replace(/\(/g, '') || target;
     target = target.replace(/[^a-z]/g, '') || target;
     let guess = m;
@@ -119,18 +139,18 @@ client.on('messageCreate', message => {
     let normalized_distance = distance(target, guess) / target.length;
     let distance_threshold = .75; // this tuning seems alright, in terms of false negative to false positive ratio, but the whole experience is still very difficult, which is regrettable
     if (normalized_distance < distance_threshold){
-      channel.send("It's "+pokemon_answers[channel]+"!\nTarget: `"+target+"` Your Guess: `"+guess+"`.\nNormalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold);
-      delete pokemon_answers[channel];
+      channel.send("It's "+pokemon_answers[channel.id]+"!\nTarget: `"+target+"` Your Guess: `"+guess+"`.\nNormalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold);
+      delete pokemon_answers[channel.id];
     }
   }
   if (m.startsWith("remindme ")) {
     set_remindme(message);
   }
   if (m === 'enumerate responses') {
-    console.log(responses[channel]);
-    send_long( channel, "Channel-specific responses:"+JSON.stringify(responses[channel]) );
-    console.log(server_responses[message.guild]);
-    send_long( channel, "Server-specific responses:"+JSON.stringify(server_responses[message.guild]) );
+    console.log(responses[channel.id]);
+    send_long( channel, "Channel-specific responses:"+JSON.stringify(responses[channel.id]) );
+    console.log(server_responses[message.guild.id]);
+    send_long( channel, "Server-specific responses:"+JSON.stringify(server_responses[message.guild.id]) );
   }
   if (m.startsWith("set ")) {
     the_function_that_does_setting_for_responses(message);
@@ -144,10 +164,10 @@ client.on('messageCreate', message => {
   if (m.startsWith("set-probabilistic-for-server ")) {
     the_function_that_does_setting_for_responses(message, true, true);
   }
-  if (responses[channel] && m in responses[channel]) { //guard against empty responses set for this channel
+  if (responses[channel.id] && m in responses[channel.id]) { //guard against empty responses set for this channel
     the_function_that_does_sending_for_responses(message);
   }
-  if (server_responses[message.guild] && m in server_responses[message.guild]) { //guard against empty responses set for this channel
+  if (server_responses[message.guild.id] && m in server_responses[message.guild.id]) { //guard against empty responses set for this channel
     the_function_that_does_sending_for_responses(message, true);
   }
   if (m in global_responses) {
@@ -178,31 +198,29 @@ function whos_that_pokemon(){
           attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+encodeURIComponent(id),
           name: 'pokemon'+id.match(/\.\w*?$/)[0].toLowerCase()
         }]});
-        pokemon_answers[channel] = id.match(/File:(.*)\.\w*?$/)[1];
-        console.log(pokemon_answers[channel]); //console.log answer so I can cheat-- er, I mean, test.
+        pokemon_answers[channel.id] = id.match(/File:(.*)\.\w*?$/)[1];
+        console.log(pokemon_answers[channel.id]); //console.log answer so I can cheat-- er, I mean, test.
       });
     }
   ).on("error", (err) => {console.log(err);whos_that_pokemon();/*retry on error*/});
   req.end();
 }
 
-function begin_think(){
-  texts[channel] = text;
-}
-
 function think(){
-  let s = texts[channel].shift();
+  let s = texts[channel.id].shift();
   if(s){
     send_long(channel, s);
-    if(!intervals[channel]){intervals[channel] = setInterval(think, 1000*60*60*24);} //do it again in a day
+    if(!think_intervals[channel.id]){ //This clause handles the difference between a guy saying Think! for the first time, and a guy spamming Think!. It ensures there will be no great think-spam the next day as well.
+      think_intervals[channel.id] = setInterval(think, 1000*60*60*24); //do it again in a day
+    }
   } else {
-    stop();
+    clearInterval(think_intervals[channel.id]); //purposefully, I do not delete the entry for the channel, prevent it, for now, from being re-Think!ed. Then it can mutter its cool quip for the end of the text when prompted.
   }
 }
 
 function stop_think(){
-  clearInterval(intervals[channel]);
-  delete intervals[channel];
+  clearInterval(think_intervals[channel.id]);
+  delete think_intervals[channel.id]; //purposefully, I delete the entry for the channel, to allow it to be re-Think!ed
 }
 
 //Could overwrite the original send() 🤔. On the other hand, I could probably just upgrade discord.js to the newest version one of these days, maybe it's fixed there.
@@ -312,22 +330,26 @@ function set_remindme(message){
 }
 
 function launch_remindmes(remindmes){
+  const workaround_wait_ms = 2000000000; // 147,483,647 less than the s32-int-max.
   for (const remindme of remindmes) {
     const now = +(new Date());
-    if (remindme.datestamp<=now){ //The correct time may have happened whilst the bot was sleeping or doing other work, and frankly I don't know what setTimeout does for negative values.
+    if (remindme.datestamp<=now){ //The correct time may have happened whilst the bot was sleeping or doing other work, and frankly I don't know what setTimeout is specified to do for negative values.
       discharge_remindme(remindme);
+    } else if (remindme.datestamp - now > workaround_wait_ms) { //setTimeout takes as a delay parameter a signed-32-bit integer, so we have to work around that. We just delay an arbitrary but manageable amount of time here. This shouldn't cause any problems, because it doesn't mess with the global remindmes data structure, which is authoritative. I worry about the performance implications of these timeouts all returning at the same time, possibly in the middle of something else, but it should be fine.
+      setTimeout(launch_remindmes, workaround_wait_ms, [remindme]); //This kicks this particular can about 24 days down the road.
     } else {
-      setTimeout(discharge_remindme, remindme.datestamp - now, remindme);
+      setTimeout(discharge_remindme, remindme.datestamp - now, remindme); //BUG: setTimeout can only take a s32. Have to work around it.
     }
   }
 }
 
 function discharge_remindme(remindme){ //Send a remindme, making sure to remove it from the authoritative data structure, and cache that structure to file:
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
-  // @ts-ignore: TS wants an `as TextChannel` here that cannot be had in pure javascript. Le sigh. Maybe this is fixed in later versions of discordjs, idk.
-  client.channels.fetch(remindme.message.channelId).then(channel => channel.send(
+  client.channels.fetch(remindme.message.channelId).then(channel => channel.isText() && channel.send( //the isText is purely to appease the typescript typechecker; it should always be superfluous.
     { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} }
   ));
   remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
   fs.writeFile("remindmes.json", JSON.stringify(remindmes), console.log); //update record on disk
 }
+
+function array_but_without(array, undesirable_item) { return array.filter(item => item !== undesirable_item); } // This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
