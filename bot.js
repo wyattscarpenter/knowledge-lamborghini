@@ -243,7 +243,7 @@ function is_string(variable){
 
 function the_function_that_does_setting_for_responses(message, probabilistic=false, for_server=false){
   const response_container = for_server? server_responses : responses;
-  const response_container_indexer = for_server? message.guild : message.channel;
+  const response_container_indexer = for_server? message.guild.id : message.channel.id;
   const saving_file_name = for_server? "server_responses.json" : "responses.json";
   let keyword;
 
@@ -283,7 +283,7 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
 
 function the_function_that_does_sending_for_responses(message, for_server=false){
   const response_container = for_server? server_responses : responses;
-  const response_container_indexer = for_server? message.guild : message.channel;
+  const response_container_indexer = for_server? message.guild.id : message.channel.id;
   
   const r = response_container[response_container_indexer][message.content.toLowerCase()]; //the response might be a string or an object mapping from strings to weights.
   if(is_string(r)){
