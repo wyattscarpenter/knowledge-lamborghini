@@ -152,16 +152,16 @@ client.on('messageCreate', message => {
     console.log(server_responses[message.guild.id]);
     send_long( channel, "Server-specific responses:"+JSON.stringify(server_responses[message.guild.id]) );
   }
-  if (m.startsWith("set ")) {
+  if (m.startsWith("set-for-channel ")) {
     the_function_that_does_setting_for_responses(message);
   }
-  if (m.startsWith("set-probabilistic ")) {
+  if (m.startsWith("set-probabilistic-for-channel ")) {
     the_function_that_does_setting_for_responses(message, true);
   }
-  if (m.startsWith("set-for-server ")) {
+  if (m.startsWith("set-for-server ") || m.startsWith("set ")) {
     the_function_that_does_setting_for_responses(message, false, true);
   }
-  if (m.startsWith("set-probabilistic-for-server ")) {
+  if (m.startsWith("set-probabilistic-for-server ") || m.startsWith("set-probabilistic ")) {
     the_function_that_does_setting_for_responses(message, true, true);
   }
   if (responses[channel.id] && m in responses[channel.id]) { //guard against empty responses set for this channel
