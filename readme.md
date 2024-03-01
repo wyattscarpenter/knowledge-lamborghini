@@ -37,6 +37,7 @@ A note about the commands: all commands are usually just as they are written her
 * `set` and `set-probabilistic` are aliases for `set-for-server` and `set-probabilistic-for-server`, respectively. This is because it is funnier in practice to make the default the most intrusive option.
 * `enumerate responses` lists all the responses for the channel.
 * `remindme`, followed by freeform text that includes a date or time of some sort that kl can interpret (I use the chrono-node library to try to parse these), will cause kl to reply to your message at that date. This feature is useful to remind you of things... if you're confident this tech stack will last that long!
+* `'(!)remind( )me(!)`, where by parenthesized characters I mean they may be optionally included or excluded in all possible combinations, are also aliased to remindme. Furthermore, since the natural language parser rejects commands like "remindme 1 day" but accepts commands like "remindme in 1 day", remindme will insert an "in " automatically at the beginning and retry parsing, if the date parsing fails the first time.
 * `death has many doors` (starting a message; followed by any or no other text) will cause kl to post a message in that channel whenever someone leaves/is kicked from the server, identifying them by mention, tag, and user id. `death has no doors` will turn this feature off for a channel it is posted in.
 * Type `crash` and kl will crash. Please do not do this.
 * Reddit link “oldification”: links to reddit.com pages are immediately reposted as links to old.reddit.com pages.

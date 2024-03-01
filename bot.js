@@ -48,6 +48,8 @@ client.on('guildMemberRemove', member => { //"Emitted whenever a member leaves a
   }
 });
 
+const remindme_regex = /^!?remind ?me!?/i;
+
 client.on('messageCreate', message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
   if (!message.content){return;} //don't even consider empty messages
@@ -143,7 +145,7 @@ client.on('messageCreate', message => {
       delete pokemon_answers[channel.id];
     }
   }
-  if (m.startsWith("remindme ")) {
+  if (remindme_regex.test(m)) {
     set_remindme(message);
   }
   if (m === 'enumerate responses') {
@@ -313,10 +315,14 @@ function discord_timestamp(date, is_relative=false){
 }
 
 function set_remindme(message){
-  const command_arguments_text = message.content.split(/\s(.+)/)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text.
-  const d = chrono.parseDate(command_arguments_text);
+  const command_arguments_text = message.content.split(remindme_regex)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text.
+  let d = chrono.parseDate(command_arguments_text);
+  const d_first = d;
+  if(!d){ //try again, once, with "in "
+    d = chrono.parseDate("in "+command_arguments_text);
+  }
   if(!d){
-    message.reply("You have used the remindme command with argument `"+command_arguments_text+"`, but I can't understand the date you've tried to specify. I think it's `"+ d + "` My date parsing handles a lot of natural language, but it's not perfect. Try a different tack?");
+    message.reply("You have used the remindme command with argument `"+command_arguments_text+"`, but I can't understand the date you've tried to specify. I think it's `"+ d_first + "`. I also tried the modified argument `"+"in "+command_arguments_text+"` for good measure, but that also got me `"+ d + "`. My date parsing handles a lot of natural language, but it's not perfect. Try a different tack?");
   } else if (d<=new Date()){ //Because the computer operates with variable speed(?) d<now is SOMETIMES true if you've declared d to be now. But d<=now is ALWAYS true, so we use it for greater consistency.
     message.reply("You have used the remindme command with argument `"+command_arguments_text+"`, but I think you're trying to specify the date `"+ d +"`, which is "+discord_timestamp(d)+" ie "+discord_timestamp(d, true)+". I think this is in the past, and I cannot retroactively remind you of things! Please try a different time specification if need be.");
   } else {
