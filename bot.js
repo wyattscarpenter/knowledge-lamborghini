@@ -24,6 +24,12 @@ let remindmes = try_require('./remindmes.json',[]); //This loads the remindmes i
 //The type of track_leaves an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string; } in typescript.
 /** @type {{ [guildId: string]: string[] }} */
 let track_leaves = try_require('./track_leaves.json', {});
+/** @type string */
+const version_number = require('./package.json').version;
+/** @type string */
+const git_commit = require('child_process').execSync('git log --oneline -1').toString().trim().split('\n')[1];
+/** @type string */
+const version_string = "Version "+version_number+", git commit "+git_commit;
 
 let texts = {};
 let channel;
@@ -58,6 +64,9 @@ client.on('messageCreate', message => {
   const m = message.content.toLowerCase();
 
   if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
+    if(m.includes("version")){
+      channel.send(version_string);
+    }
     if(m.includes("help")){
       channel.send("Need help? Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
     }
