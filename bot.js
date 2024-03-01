@@ -295,7 +295,7 @@ function the_function_that_does_sending_for_responses(message, for_server=false)
     //Implicitly, the type of r is object mapping from string → int, with each int being the number of "tickets" the string has in the "raffle", so to speak.
     let cumulative_weights = [];
     for(const key of Object.keys(r)){
-      cumulative_weights.push( (+r[key]||1) + (+cumulative_weights.at(-1)||0) );
+      cumulative_weights.push( (+r[key]||0) + (+cumulative_weights.at(-1)||0) );
     }
     const random = Math.random() * cumulative_weights.at(-1);
     console.log("random number", random, "cumulative_weights", cumulative_weights);
