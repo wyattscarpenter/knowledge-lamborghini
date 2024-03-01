@@ -5,10 +5,12 @@ const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
 
+//TODO: I could probably bump the version to 1.0.0, after squashing the current TODOs... might want to figure out how to dynamically bump the version on git commit, first, though.
+
 const client = new Client( {intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.MESSAGE_CONTENT]} );
 
 // THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
-client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding it in quotes to make a javascript string, "like this". That's all!
+client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
 
 /** @type string[] */
 let text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
@@ -27,7 +29,7 @@ let track_leaves = try_require('./track_leaves.json', {});
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
-const git_commit = require('child_process').execSync('git log --oneline -1').toString().trim().split('\n')[1];
+const git_commit = require('child_process').execSync('git log --oneline -1').toString().trim().split('\n')[1]; //TODO: this in undefined on the production deployment server, although locally in my deve environment it is fine. Maybe my node version is wrong or something? Or my git version is different?
 /** @type string */
 const version_string = "Version "+version_number+", git commit "+git_commit;
 
@@ -258,7 +260,7 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
   const saving_file_name = for_server? "server_responses.json" : "responses.json";
   let keyword;
 
-  if(probabilistic){
+  if(probabilistic){ //TODO: should the no-value set-probabilistic remove the option instead of assigning it one ticket? This would be equivalent to assigning it zero tickets, but it would no-longer show up in the listing, either. Need more empirical observation of user behavior. 
     let command_arguments_text = message.content.split(/\s(.+)/)[1]; // structural diagram: set-probabilistic (blah, (blah , blah blah blah))
     let number = command_arguments_text.split(/\s(.+)/)[0];
     let text_portion = command_arguments_text.split(/\s(.+)/)[1];
