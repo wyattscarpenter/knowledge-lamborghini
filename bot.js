@@ -29,7 +29,7 @@ let track_leaves = try_require('./track_leaves.json', {});
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
-const git_commit = require('child_process').execSync('git log --oneline -1').toString().trim().split('\n')[1]; //TODO: this in undefined on the production deployment server, although locally in my deve environment it is fine. Maybe my node version is wrong or something? Or my git version is different?
+const git_commit = fs.readFileSync(".git/refs/heads/master").toString().trim() //this gets us the git commit hash, assuming you're on branch master, which we assume. Unfortunately, this doesn't get you the commit message, but this is an easy 80% solution.
 /** @type string */
 const version_string = "Version "+version_number+", git commit "+git_commit;
 
