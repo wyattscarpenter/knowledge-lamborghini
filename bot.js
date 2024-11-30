@@ -36,7 +36,7 @@ const version_string = "Version "+version_number+", git commit "+git_commit;
 let texts = {};
 let channel;
 var think_intervals = {};
-var pokemon_answers = {};
+var pokemon_answers = {}; //TODO: serialize this to a json. Also, also store the parent message in this.
 const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 
 
