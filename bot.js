@@ -260,7 +260,7 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
   const saving_file_name = for_server? "server_responses.json" : "responses.json";
   let keyword;
 
-  if(probabilistic){ //TODO: should the no-value set-probabilistic remove the option instead of assigning it one ticket? This would be equivalent to assigning it zero tickets, but it would no-longer show up in the listing, either. Need more empirical observation of user behavior. 
+  if(probabilistic){ //TODO: should the no-value set-probabilistic remove the option instead of assigning it one ticket? This would be equivalent to assigning it zero tickets, but it would no-longer show up in the listing, either. The idea being that you analogously unset something by typing `set whatever` with no further arguments. Need more empirical observation of user behavior. 
     let command_arguments_text = message.content.split(/\s(.+)/)[1]; // structural diagram: set-probabilistic (blah, (blah , blah blah blah))
     let number = command_arguments_text.split(/\s(.+)/)[0];
     let text_portion = command_arguments_text.split(/\s(.+)/)[1];
