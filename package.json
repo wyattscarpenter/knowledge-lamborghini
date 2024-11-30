@@ -1,6 +1,6 @@
 {
   "name": "knowledge-lamborghini",
-  "description": "But you know what I like a lot more than knowledge? Knowledge.",
+  "description": "But you know what I like a lot more than knowledge? Knowledge. (an eclectic discord bot)",
   "version": "0.9.0",
   "main": "bot.js",
   "scripts": {
