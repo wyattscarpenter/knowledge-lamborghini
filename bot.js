@@ -5,8 +5,6 @@ const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
 
-//TODO: I could probably bump the version to 1.0.0, after squashing the current TODOs... might want to figure out how to dynamically bump the version on git commit, first, though.
-
 const client = new Client( {intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.MESSAGE_CONTENT]} );
 
 // THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
