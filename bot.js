@@ -16,7 +16,12 @@ client.login(require("./token.json"));//this file is probably missing from your 
 let text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 
 function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
-  try{ return require(require_id); } catch (e) {console.log(`${e.message.split('\n')[0]} — ${require_id} not found (or errored horribly), using default value ${JSON.stringify(default_value)}`); return default_value; }
+  try{
+    return require(require_id);
+  } catch (e) {
+    console.log(`I could not find ${require_id} (or perhaps it errored horribly), so I am using the specified default value ${JSON.stringify(default_value)}, which should be fine. Original error message first line: ${e.message.split('\n')[0]}`);
+    return default_value;
+  }
 }
 
 //These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
@@ -29,14 +34,21 @@ let track_leaves = try_require('./track_leaves.json', {});
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
-const git_commit = fs.readFileSync(".git/refs/heads/master").toString().trim() //this gets us the git commit hash, assuming you're on branch master, which we assume. Unfortunately, this doesn't get you the commit message, but this is an easy 80% solution.
+const git_commit_hash = (() => {
+  //This gets us the git commit hash, assuming you're on branch master, which we assume. Unfortunately, this doesn't get you the commit message, but this is an easy 80% solution.
+  try {
+    return fs.readFileSync(".git/refs/heads/master").toString().trim();
+  } catch (e) {
+    return `unknown ( ${e.message.split('\n')[0]} )`;
+  }
+})()
 /** @type string */
-const version_string = "Version "+version_number+", git commit "+git_commit;
+const version_string = "Version "+version_number+", git commit "+git_commit_hash;
 
 let texts = {};
 let channel;
 var think_intervals = {};
-var pokemon_answers = {}; //TODO: serialize this to a json. Also, also store the parent message in this.
+var pokemon_answers = try_require("./pokemon_answers.json", {});
 const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 
 
@@ -137,13 +149,13 @@ client.on('messageCreate', message => {
   //extremely dumb features
   //who's that pokemon
   if (/.*wh.*po.?k.?t?\s?mon.*/.test(m)) {
-    whos_that_pokemon()
+    whos_that_pokemon(message.url)
   }
   function fuzzystringmatch(l,r){
     return distance(l,r) < l.length*.75;
   }
   if(pokemon_answers[channel.id]){
-    let target = pokemon_answers[channel.id].toLowerCase();
+    let target = pokemon_answers[channel.id].answer.toLowerCase();
     target = target.replace(/[^\(]*\)/g, '').replace(/\(/g, '') || target;
     target = target.replace(/[^a-z]/g, '') || target;
     let guess = m;
@@ -152,8 +164,9 @@ client.on('messageCreate', message => {
     let normalized_distance = distance(target, guess) / target.length;
     let distance_threshold = .75; // this tuning seems alright, in terms of false negative to false positive ratio, but the whole experience is still very difficult, which is regrettable
     if (normalized_distance < distance_threshold){
-      channel.send("It's "+pokemon_answers[channel.id]+"!\nTarget: `"+target+"` Your Guess: `"+guess+"`.\nNormalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold);
+      channel.send("[It's]("+pokemon_answers[channel.id].original_message_link+") "+pokemon_answers[channel.id].answer+"!\nTarget: `"+target+"` Your Guess: `"+guess+"`.\nNormalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold);
       delete pokemon_answers[channel.id];
+      fs.writeFile("pokemon_answers.json", JSON.stringify(pokemon_answers), console.log); //update record on disk
     }
   }
   if (remindme_regex.test(m)) {
@@ -200,7 +213,7 @@ function update_status_clock(){ //This date is extremely precisely formatted for
   return true; //nota bene: the return value indicates if the function decided to update, but I don't use the return value anywhere else in the program so far.
 }
 
-function whos_that_pokemon(){
+function whos_that_pokemon(original_message_link){
   let req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json',//image
     (resp) => {
       let data = '';
@@ -211,11 +224,16 @@ function whos_that_pokemon(){
           attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+encodeURIComponent(id),
           name: 'pokemon'+id.match(/\.\w*?$/)[0].toLowerCase()
         }]});
-        pokemon_answers[channel.id] = id.match(/File:(.*)\.\w*?$/)[1];
+        //Technically I guess the original_message_link should be what we get returned from channel.send, .url, but that's more trouble than it's worth, so we just use the message that triggered us instead.
+        pokemon_answers[channel.id] = {answer: id.match(/File:(.*)\.\w*?$/)[1], original_message_link: original_message_link}
         console.log(pokemon_answers[channel.id]); //console.log answer so I can cheat-- er, I mean, test.
+        fs.writeFile("pokemon_answers.json", JSON.stringify(pokemon_answers), console.log); //update record on disk
       });
     }
-  ).on("error", (err) => {console.log(err);whos_that_pokemon();/*retry on error*/});
+  ).on("error", (err) => { /*retry on error*/
+    console.log(err);
+    whos_that_pokemon(original_message_link);
+  });
   req.end();
 }
 
@@ -260,7 +278,7 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
   const saving_file_name = for_server? "server_responses.json" : "responses.json";
   let keyword;
 
-  if(probabilistic){ //TODO: should the no-value set-probabilistic remove the option instead of assigning it one ticket? This would be equivalent to assigning it zero tickets, but it would no-longer show up in the listing, either. The idea being that you analogously unset something by typing `set whatever` with no further arguments. Need more empirical observation of user behavior. 
+  if(probabilistic){ //Instead of what it does now, should the no-value set-probabilistic remove the option instead of assigning it one ticket? This would be equivalent to assigning it zero tickets, but it would no-longer show up in the listing, either. The idea being that you analogously unset something by typing `set whatever` with no further arguments. Need more empirical observation of user behavior. 
     let command_arguments_text = message.content.split(/\s(.+)/)[1]; // structural diagram: set-probabilistic (blah, (blah , blah blah blah))
     let number = command_arguments_text.split(/\s(.+)/)[0];
     let text_portion = command_arguments_text.split(/\s(.+)/)[1];
