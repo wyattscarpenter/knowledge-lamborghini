@@ -253,8 +253,7 @@ function stop_think(){
   delete think_intervals[channel.id]; //purposefully, I delete the entry for the channel, to allow it to be re-Think!ed
 }
 
-//Could overwrite the original send() 🤔. On the other hand, I could probably just upgrade discord.js to the newest version one of these days, maybe it's fixed there.
-function send_long(channel, string){ //.send() Just Fails for messages over discord's 2000 character limit
+function send_long(channel, string){ //.send() Just Fails for messages over discord's 2000 character limit, and discordjs is not going to fix this.
   for(let l of string.split("\n\n")){ //break lines into separate messages if they're separated by two newlines
     while(l){
       channel.send(l.slice(0,2000)); //note that this is 0-indexed and excludes the specified end character
