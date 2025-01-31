@@ -172,9 +172,9 @@ client.on('messageCreate', message => {
   }
   if (m === 'enumerate responses') {
     console.log(responses[channel.id]);
-    send_long( channel, "Channel-specific responses:"+JSON.stringify(responses[channel.id]) );
+    send_long( channel, "Channel-specific responses:"+JSON.stringify(responses[channel.id], null, 4) );
     console.log(server_responses[message.guild.id]);
-    send_long( channel, "Server-specific responses:"+JSON.stringify(server_responses[message.guild.id]) );
+    send_long( channel, "Server-specific responses:"+JSON.stringify(server_responses[message.guild.id], null, 4) );
   }
   if (m.startsWith("set-for-channel ")) {
     the_function_that_does_setting_for_responses(message);
@@ -254,7 +254,7 @@ function stop_think(){
 
 //Could overwrite the original send() 🤔. On the other hand, I could probably just upgrade discord.js to the newest version one of these days, maybe it's fixed there.
 function send_long(channel, string){ //.send() Just Fails for messages over discord's 2000 character limit
-  for(let l of string.split("\n")){ //break lines into separate messages
+  for(let l of string.split("\n\n")){ //break lines into separate messages if they're separated by two newlines
     while(l){
       channel.send(l.slice(0,2000)); //note that this is 0-indexed and excludes the specified end character
       l = l.slice(2000); //going over is fine, you know how it is
