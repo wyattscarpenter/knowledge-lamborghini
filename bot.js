@@ -149,9 +149,6 @@ client.on('messageCreate', message => {
   if (/.*wh.*po.?k.?t?\s?mon.*/.test(m)) {
     whos_that_pokemon(message.url)
   }
-  function fuzzystringmatch(l,r){
-    return distance(l,r) < l.length*.75;
-  }
   if(pokemon_answers[channel.id]){
     let target = pokemon_answers[channel.id].answer.toLowerCase();
     target = target.replace(/[^\(]*\)/g, '').replace(/\(/g, '') || target;
@@ -160,9 +157,13 @@ client.on('messageCreate', message => {
     guess = guess.replace(/[^a-z]/g, '') || guess;
     //fuzzy string match
     let normalized_distance = distance(target, guess) / target.length;
-    let distance_threshold = .75; // this tuning seems alright, in terms of false negative to false positive ratio, but the whole experience is still very difficult, which is regrettable
+    let distance_threshold = .75; // This tuning seems alright, in terms of false negative to false positive ratio, but the whole experience is still very difficult, which is regrettable.
     if (normalized_distance < distance_threshold){
-      channel.send("[It's]("+pokemon_answers[channel.id].original_message_link+") "+pokemon_answers[channel.id].answer+"!\nTarget: `"+target+"` Your Guess: `"+guess+"`.\nNormalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold);
+      channel.send(
+        "[It's]("+pokemon_answers[channel.id].original_message_link+") "+pokemon_answers[channel.id].answer+"!\n" +
+        "Target: `"+target+"` Your Guess: `"+guess+"`.\n" +
+        "Normalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold
+      );
       delete pokemon_answers[channel.id];
       fs.writeFile("pokemon_answers.json", JSON.stringify(pokemon_answers), console.log); //update record on disk
     }
