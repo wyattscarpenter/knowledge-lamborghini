@@ -1,11 +1,11 @@
-const { Client, Intents } = require('discord.js');
+const { Client, IntentsBitField } = require('discord.js');
 const nicedice = require('nicedice');
 const {distance, closest} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
 
-const client = new Client( {intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.MESSAGE_CONTENT]} );
+const client = new Client( {intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent]} );
 
 // THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
 client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
@@ -59,9 +59,11 @@ client.on('ready', () => {
 client.on('guildMemberRemove', member => { //"Emitted whenever a member leaves a guild, or is kicked."
   if ( track_leaves[member.guild.id] ) {
     for (const channelId of track_leaves[member.guild.id]){
-      client.channels.fetch(channelId).then(channel => channel.isText() && channel.send(
-        member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is removed from the server (left or kicked)."
-      ));
+      client.channels.fetch(channelId).then(
+        channel.send(
+          member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is removed from the server (left or kicked)."
+        )
+      );
     }
   }
 });
@@ -267,7 +269,7 @@ function crash(){
 }
 
 function is_string(variable){
-  return (typeof variable === 'string' || variable instanceof String)
+  return (typeof variable === 'string')
 }
 
 function the_function_that_does_setting_for_responses(message, probabilistic=false, for_server=false){
@@ -378,7 +380,7 @@ function launch_remindmes(remindmes){
 
 function discharge_remindme(remindme){ //Send a remindme, making sure to remove it from the authoritative data structure, and cache that structure to file:
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
-  client.channels.fetch(remindme.message.channelId).then(channel => channel.isText() && channel.send( //the isText is purely to appease the typescript typechecker; it should always be superfluous.
+  client.channels.fetch(remindme.message.channelId).then(channel.send(
     { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} }
   ));
   remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
