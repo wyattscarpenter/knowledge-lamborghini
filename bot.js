@@ -175,9 +175,9 @@ client.on('messageCreate', message => {
   }
   if (m === 'enumerate responses') {
     console.log(responses[channel.id]);
-    send_long( channel, "Channel-specific responses:"+JSON.stringify(responses[channel.id], null, 4) );
+    send_long( channel, "Channel-specific responses: "+pretty_string(responses[channel.id]) );
     console.log(server_responses[message.guild.id]);
-    send_long( channel, "Server-specific responses:"+JSON.stringify(server_responses[message.guild.id], null, 4) );
+    send_long( channel, "Server-specific responses: "+pretty_string(server_responses[message.guild.id]) );
   }
   if (m.startsWith("set-for-channel ")) {
     the_function_that_does_setting_for_responses(message);
@@ -203,6 +203,10 @@ client.on('messageCreate', message => {
 });
 
 //implementation functions
+
+function pretty_string(object){
+  return JSON.stringify(object, null, 4);
+}
 
 function update_status_clock(){ //This date is extremely precisely formatted for maximum readability in Discord's tiny area, and also familiarity and explicitness to users.
   let date = new Date(); //Want to avoid edge cases so we use the same Date object in each format call.
@@ -309,7 +313,7 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
     }
   }
   fs.writeFile(saving_file_name, JSON.stringify(response_container), console.log);
-  message.channel.send("OK, "+JSON.stringify(keyword)+" is now set to "+JSON.stringify(response_container[response_container_indexer][keyword]));
+  send_long( message.channel, "OK, "+JSON.stringify(keyword)+" is now set to "+pretty_string(response_container[response_container_indexer][keyword]) );
 }
 
 function the_function_that_does_sending_for_responses(message, for_server=false){
