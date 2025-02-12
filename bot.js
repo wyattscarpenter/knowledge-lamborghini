@@ -124,14 +124,14 @@ client.on('messageCreate', message => {
     } else {
       track_leaves[message.guild.id] = [message.channel.id];
     }
-    fs.writeFile("track_leaves.json", JSON.stringify(track_leaves), console.log); //update record on disk
+    fs.writeFile("track_leaves.json", JSON.stringify(track_leaves), console_log_if_not_null); //update record on disk
     message.reply("A record will be kept here.");
   }
   if (m.startsWith('death has no doors')) {
     if ( track_leaves[message.guild.id] ){
       track_leaves[message.guild.id] = array_but_without(track_leaves[message.guild.id], message.channel.id);
     }
-    fs.writeFile("track_leaves.json", JSON.stringify(track_leaves), console.log); //update record on disk
+    fs.writeFile("track_leaves.json", JSON.stringify(track_leaves), console_log_if_not_null); //update record on disk
     message.reply("No record will be kept here.");
   }
 
@@ -167,7 +167,7 @@ client.on('messageCreate', message => {
         "Normalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold
       );
       delete pokemon_answers[channel.id];
-      fs.writeFile("pokemon_answers.json", JSON.stringify(pokemon_answers), console.log); //update record on disk
+      fs.writeFile("pokemon_answers.json", JSON.stringify(pokemon_answers), console_log_if_not_null); //update record on disk
     }
   }
   if (remindme_regex.test(m)) {
@@ -232,7 +232,7 @@ function whos_that_pokemon(original_message_link){
         //Technically I guess the original_message_link should be what we get returned from channel.send, .url, but that's more trouble than it's worth, so we just use the message that triggered us instead.
         pokemon_answers[channel.id] = {answer: id.match(/File:(.*)\.\w*?$/)[1], original_message_link: original_message_link}
         console.log(pokemon_answers[channel.id]); //console.log answer so I can cheat-- er, I mean, test.
-        fs.writeFile("pokemon_answers.json", JSON.stringify(pokemon_answers), console.log); //update record on disk
+        fs.writeFile("pokemon_answers.json", JSON.stringify(pokemon_answers), console_log_if_not_null); //update record on disk
       });
     }
   ).on("error", (err) => { /*retry on error*/
@@ -312,7 +312,7 @@ function the_function_that_does_setting_for_responses(message, probabilistic=fal
       response_container[response_container_indexer][keyword] = thingum[1];
     }
   }
-  fs.writeFile(saving_file_name, JSON.stringify(response_container), console.log);
+  fs.writeFile(saving_file_name, JSON.stringify(response_container), console_log_if_not_null);
   send_long( message.channel, "OK, "+JSON.stringify(keyword)+" is now set to "+pretty_string(response_container[response_container_indexer][keyword]) );
 }
 
@@ -363,7 +363,7 @@ function set_remindme(message){
     //Add a remindme, making sure to commit it to the authoritative data structure, and cache that structure to file:
     const remindme = {datestamp: +d, message: message};
     remindmes.push(remindme);
-    fs.writeFile("remindmes.json", JSON.stringify(remindmes), console.log); //update record on disk
+    fs.writeFile("remindmes.json", JSON.stringify(remindmes), console_log_if_not_null); //update record on disk
     launch_remindmes([remindme]);
   }
 }
@@ -388,7 +388,14 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
     { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} }
   ));
   remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
-  fs.writeFile("remindmes.json", JSON.stringify(remindmes), console.log); //update record on disk
+  fs.writeFile("remindmes.json", JSON.stringify(remindmes), console_log_if_not_null); //update record on disk
 }
 
 function array_but_without(array, undesirable_item) { return array.filter(item => item !== undesirable_item); } // This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
+
+function console_log_if_not_null(object){
+  // fs.writeFile wants us to have a callback for handling errors, and there's no point writing to the console.log if the error is null (no error) 
+  if (object !== null){
+    console.log(object)
+  }
+}
