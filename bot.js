@@ -1,11 +1,11 @@
-const { Client, IntentsBitField } = require('discord.js');
+const { Client, IntentsBitField, ChannelType, MessagePayload } = require('discord.js');
 const nicedice = require('nicedice');
 const {distance, closest} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
 
-const client = new Client( {intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent]} );
+const client = new Client( {intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent, IntentsBitField.Flags.GuildMessageReactions]} );
 
 // THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
 client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
@@ -25,10 +25,14 @@ function try_require(require_id, default_value){ // require_id is a bit baroque,
 //These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
 let responses = try_require("./responses.json", {});
 let server_responses = try_require('./server_responses.json', {});
-let remindmes = try_require('./remindmes.json',[]); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
+let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
 //The type of track_leaves an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string; } in typescript.
 /** @type {{ [guildId: string]: string[] }} */
 let track_leaves = try_require('./track_leaves.json', {});
+//The type of starboards an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string; } in typescript.
+//Maybe one day this should also map to an integer that is the cutoff for the number of reactions needed to forward to the starboard.
+/** @type {{ [guildId: string]: string[] }} */
+let starboards = try_require('./starboards.json', {});
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
@@ -133,6 +137,24 @@ client.on('messageCreate', message => {
     }
     fs.writeFile("track_leaves.json", JSON.stringify(track_leaves), console_log_if_not_null); //update record on disk
     message.reply("No record will be kept here.");
+  }
+
+  //Track starboard-type functionality
+  if (m.startsWith('keep a starboard here')) {
+    if ( starboards[message.guild.id] ){
+      starboards[message.guild.id].push(message.channel.id);
+    } else {
+      starboards[message.guild.id] = [message.channel.id];
+    }
+    fs.writeFile("starboards.json", JSON.stringify(starboards), console_log_if_not_null); //update record on disk
+    message.reply("A starboard will be kept here.");
+  }
+  if (m.startsWith("don't keep a starboard here")) {
+    if ( starboards[message.guild.id] ){
+      starboards[message.guild.id] = array_but_without(starboards[message.guild.id], message.channel.id);
+    }
+    fs.writeFile("starboards.json", JSON.stringify(starboards), console_log_if_not_null); //update record on disk
+    message.reply("No starboard will be kept here.");
   }
 
   //nicedice
@@ -399,3 +421,25 @@ function console_log_if_not_null(object){
     console.log(object)
   }
 }
+
+client.on('messageReactionAdd', (reaction, user) => {
+  if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
+      if (reaction.count == 5) { //if it has 5 emoji (probably: 4 going to 5. Obvious failure mode: if it goes down from 6 or etc. But I'd have to, like, build and manage a hashmap to prevent that. And I already don't like working on this feature.)
+        for (const channel_id of starboards[reaction.message.guild.id]){ //forward to starboard channels, with the emoji
+          client.channels.fetch(channel_id).then( channel => {
+            if (channel != null && channel.type === ChannelType.GuildText) {
+              //forward the message to the channel, doesn't include embeds or files, unfortunately FOR SOME REASON?! I'm trying to "build" the message to send attachments as well but the docs are hard to look through.
+              const emoji_string = reaction.emoji.id === null? reaction.emoji.name : `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
+              //This will error silently out on contents larger than 2000 characters, but we only add a couple of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slight.
+              channel.send(MessagePayload.create(channel, {
+                content: emoji_string + `\n<@${user.id}>` + `\n<${reaction.message.url}>` + "\n>>> " + reaction.message.content,
+                embeds: reaction.message.embeds,
+                //files: reaction.message.files //I guess files aren't real anymore? idk I was just guessing on this one
+              }));
+            }
+          });
+        }
+      }
+      //see https://discordjs.guide/popular-topics/reactions.html#reacting-to-messages for more, such as if we want to cover old messages... (again: I'm already sick of implmenting this feature.)
+  }
+});

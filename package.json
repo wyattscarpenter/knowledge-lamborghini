@@ -1,7 +1,7 @@
 {
   "name": "knowledge-lamborghini",
   "description": "But you know what I like a lot more than knowledge? Knowledge. (an eclectic discord bot)",
-  "version": "1.4.0",
+  "version": "1.5.0-dev",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
@@ -21,6 +21,7 @@
     "chrono-node": "^2.6.3",
     "discord.js": "14.17.3",
     "fastest-levenshtein": "1.0.12",
-    "nicedice": "~1.0.2"
+    "nicedice": "~1.0.2",
+    "nodemon": "^3.1.9"
   }
 }
