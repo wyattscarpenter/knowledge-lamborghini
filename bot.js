@@ -429,10 +429,9 @@ client.on('messageReactionAdd', (reaction, user) => {
           client.channels.fetch(channel_id).then( channel => {
             if (channel != null && channel.type === ChannelType.GuildText) {
               //forward the message to the channel, doesn't include embeds or files, unfortunately FOR SOME REASON?! I'm trying to "build" the message to send attachments as well but the docs are hard to look through.
-              const emoji_string = reaction.emoji.id === null? reaction.emoji.name : `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
               //This will error silently out on contents larger than 2000 characters, but we only add a couple of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slight.
               channel.send(MessagePayload.create(channel, {
-                content: emoji_string + `\n<@${reaction.message.user.id}>` + `\n<${reaction.message.url}>` + "\n>>> " + reaction.message.content,
+                content: reaction.emoji + `\n<@${reaction.message.user.id}>` + `\n<${reaction.message.url}>` + "\n>>> " + reaction.message.content,
                 embeds: reaction.message.embeds,
                 //files: reaction.message.files //I guess files aren't real anymore? idk I was just guessing on this one
               }));
