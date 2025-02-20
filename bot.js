@@ -432,7 +432,7 @@ client.on('messageReactionAdd', (reaction, user) => {
               const emoji_string = reaction.emoji.id === null? reaction.emoji.name : `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
               //This will error silently out on contents larger than 2000 characters, but we only add a couple of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slight.
               channel.send(MessagePayload.create(channel, {
-                content: emoji_string + `\n<@${user.id}>` + `\n<${reaction.message.url}>` + "\n>>> " + reaction.message.content,
+                content: emoji_string + `\n<@${reaction.message.user.id}>` + `\n<${reaction.message.url}>` + "\n>>> " + reaction.message.content,
                 embeds: reaction.message.embeds,
                 //files: reaction.message.files //I guess files aren't real anymore? idk I was just guessing on this one
               }));
