@@ -440,7 +440,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 			return;
 		}
 	}
-	// Now the message has been cached and is fully available
+  // Now the message has been cached and is fully available
   // The reaction is now also fully available and the properties will be reflected accurately
 
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
@@ -451,7 +451,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
               //forward the message to the channel, doesn't include embeds or files, unfortunately FOR SOME REASON?! I'm trying to "build" the message to send attachments as well but the docs are hard to look through.
               //This will error silently out on contents larger than 2000 characters, but we only add a couple of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slight.
               channel.send(MessagePayload.create(channel, {
-                content: `${reaction.emoji}\n${reaction.message.author}\n${reaction.message.url}\n>>> ${reaction.message.content}`,
+                content: `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}\n>>> ${reaction.message.content}`,
                 embeds: reaction.message.embeds,
                 //files: reaction.message.files //I guess files aren't real anymore? idk I was just guessing on this one
               }));
