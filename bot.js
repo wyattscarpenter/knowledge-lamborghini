@@ -31,10 +31,10 @@ function try_require(require_id, default_value){ // require_id is a bit baroque,
 let responses = try_require("./responses.json", {});
 let server_responses = try_require('./server_responses.json', {});
 let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
-//The type of track_leaves an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string; } in typescript.
+//The type of track_leaves is an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string[]; } in typescript.
 /** @type {{ [guildId: string]: string[] }} */
 let track_leaves = try_require('./track_leaves.json', {});
-//The type of starboards an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string; } in typescript.
+//The type of starboards is (TODO) an object mapping from guildIds to an object mapping from channelIds to messageIds (of already-included messages). 
 //Maybe one day this should also map to an integer that is the cutoff for the number of reactions needed to forward to the starboard.
 /** @type {{ [guildId: string]: string[] }} */
 let starboards = try_require('./starboards.json', {});
