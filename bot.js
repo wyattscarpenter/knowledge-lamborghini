@@ -65,7 +65,7 @@ client.on('ready', () => {
   launch_remindmes(remindmes);
 });
 
-client.on('guildMemberRemove', member => { //"Emitted whenever a member leaves a guild, or is kicked."
+client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member leaves a guild, or is kicked."
   if ( track_leaves[member.guild.id] ) {
     for (const channelId of track_leaves[member.guild.id]){
       client.channels.fetch(channelId).then(
@@ -79,7 +79,7 @@ client.on('guildMemberRemove', member => { //"Emitted whenever a member leaves a
 
 const remindme_regex = /^!?remind ?me!?/i;
 
-client.on('messageCreate', message => {
+client.on(Events.MessageCreate, message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
   if (!message.content){return;} //don't even consider empty messages
 
