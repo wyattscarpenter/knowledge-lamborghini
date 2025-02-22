@@ -1,11 +1,14 @@
-const { Client, IntentsBitField, ChannelType, MessagePayload } = require('discord.js');
+const { Client, Events, GatewayIntentBits, ChannelType, MessagePayload, Partials} = require('discord.js');
 const nicedice = require('nicedice');
 const {distance, closest} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
 
-const client = new Client( {intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent, IntentsBitField.Flags.GuildMessageReactions]} );
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessageReactions],
+  partials: [Partials.Message, Partials.Reaction],
+});
 
 const kl_test_emoji_id = 1342850037792772106 //this is a test emoji I created when we need to test an emoji feature.
 
@@ -424,7 +427,22 @@ function console_log_if_not_null(object){
   }
 }
 
-client.on('messageReactionAdd', (reaction, user) => {
+//the top of this function is example code from https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
+client.on(Events.MessageReactionAdd, async (reaction, user) => {
+	// When a reaction is received, check if the structure is partial
+	if (reaction.partial) {
+		// If the message this reaction belongs to was removed, the fetching might result in an API error which should be handled
+		try {
+			await reaction.fetch();
+		} catch (error) {
+			console.error('Something went wrong when fetching the message:', error);
+			// Return as `reaction.message.author` may be undefined/null
+			return;
+		}
+	}
+	// Now the message has been cached and is fully available
+  // The reaction is now also fully available and the properties will be reflected accurately
+
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
       if (reaction.count == 5 || reaction.emoji.id == kl_test_emoji_id) { //if it has 5 emoji (probably: 4 going to 5. Obvious failure mode: if it goes down from 6 or etc. But I'd have to, like, build and manage a hashmap to prevent that. And I already don't like working on this feature.)
         for (const channel_id of starboards[reaction.message.guild.id]){ //forward to starboard channels, with the emoji
@@ -441,6 +459,5 @@ client.on('messageReactionAdd', (reaction, user) => {
           });
         }
       }
-      //see https://discordjs.guide/popular-topics/reactions.html#reacting-to-messages for more, such as if we want to cover old messages... (again: I'm already sick of implmenting this feature.)
   }
 });
