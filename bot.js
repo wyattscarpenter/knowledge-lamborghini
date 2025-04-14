@@ -1,7 +1,7 @@
 // @ts-check //This instructs typescript to also check this file, and provide diagnostics, in vscode. I also have `"js/ts.implicitProjectConfig.checkJs": true` in my user `settings.json`, which does the same thing for all js files.
 const { Client, Events, GatewayIntentBits, ChannelType, MessagePayload, Partials} = require('discord.js');
 const nicedice = require('nicedice');
-const {distance, closest} = require('fastest-levenshtein');
+const {distance} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
@@ -19,11 +19,19 @@ client.login(require("./token.json"));//this file is probably missing from your 
 /** @type string[] */
 let text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 
+function error_message_first_line_if_error(e){
+  if (e instanceof Error) {
+    const error_message = e.message.split('\n')[0];
+  } else {
+    const error_message = e;
+  }
+}
+
 function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
   try{
     return require(require_id);
   } catch (e) {
-    console.log(`I could not find ${require_id} (or perhaps it errored horribly), so I am using the specified default value ${JSON.stringify(default_value)}, which should be fine. Original error message first line: ${e.message.split('\n')[0]}`);
+    console.log(`I could not find ${require_id} (or perhaps it errored horribly), so I am using the specified default value ${JSON.stringify(default_value)}, which should be fine. Original error message first line: ${error_message_first_line_if_error(e)}`);
     return default_value;
   }
 }
@@ -47,7 +55,7 @@ const git_commit_hash = (() => {
   try {
     return fs.readFileSync(".git/refs/heads/master").toString().trim();
   } catch (e) {
-    return `unknown ( ${e.message.split('\n')[0]} )`;
+    return `unknown ( ${error_message_first_line_if_error(e)} )`;
   }
 })()
 /** @type string */
