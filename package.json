@@ -5,7 +5,7 @@
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
-    "check": "tsc --checkJs --noEmit --resolveJsonModule --skipLibCheck --lib es2022,dom bot.js --strictNullChecks",
+    "check": "tsc --checkJs --noEmit --resolveJsonModule --skipLibCheck --lib es2022,dom bot.js --strict --noImplicitAny false",
     "tsc": "tsc --all"
   },
   "repository": {
