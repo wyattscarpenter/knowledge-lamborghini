@@ -1,3 +1,4 @@
+// @ts-check //This instructs typescript to also check this file, and provide diagnostics, in vscode. I also have `"js/ts.implicitProjectConfig.checkJs": true` in my user `settings.json`, which does the same thing for all js files.
 const { Client, Events, GatewayIntentBits, ChannelType, MessagePayload, Partials} = require('discord.js');
 const nicedice = require('nicedice');
 const {distance, closest} = require('fastest-levenshtein');
@@ -53,14 +54,13 @@ const git_commit_hash = (() => {
 const version_string = "Version "+version_number+", git commit "+git_commit_hash;
 
 let texts = {};
-let channel;
 var think_intervals = {};
 var pokemon_answers = try_require("./pokemon_answers.json", {});
 const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 
 
 client.on('ready', () => {
-  console.log('I am ready! Logged in as '+client.user.tag);
+  console.log('I am ready! Logged in as '+client.user?.tag);
   setInterval(update_status_clock, 1000);
   launch_remindmes(remindmes);
 });
@@ -68,10 +68,16 @@ client.on('ready', () => {
 client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member leaves a guild, or is kicked."
   if ( track_leaves[member.guild.id] ) {
     for (const channelId of track_leaves[member.guild.id]){
-      client.channels.fetch(channelId).then(
+      client.channels.fetch(channelId).then( channel => {
+        if (channel === null || channel.type !== ChannelType.GuildText) {
+          console.log("channel I wanted to tell about a member leaving was null or not a GuildText, which is surprising, and I can't send the message.");
+          console.log(channel, member.guild, member.user.toString())
+          return;
+        }
         channel.send(
           member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is removed from the server (left or kicked)."
         )
+      }
       );
     }
   }
@@ -82,43 +88,48 @@ const remindme_regex = /^!?remind ?me!?/i;
 client.on(Events.MessageCreate, message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
   if (!message.content){return;} //don't even consider empty messages
-
-  channel = message.channel;
+  if (!message.guild){return;} //don't consider... uh... I guess this is DMs? IDK I just got a warning from typescript.
+  const channel = message.channel;
   const m = message.content.toLowerCase();
-
-  if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
-    if(m.includes("version")){
-      channel.send(version_string);
-    }
-    if(m.includes("help")){
-      channel.send("Need help? Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
-    }
-  }
-  //To oldify reddit links.
-  if ( m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi) ){
-  //here we check if null first to avoid crash on trying to iterate over null. having done that, we actually do the thing:
-    for (let r of m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi ) ){
-      //huge character list from https://stackoverflow.com/a/1547940
-      //note that it was easier to detect reddit urls and then futz with them each individually than do some crazy capture-jutsu. 
-      if (!r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*old\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi)){ //It's already old reddit, do nothing.
-        let target = r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/([\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*)/ )[1]; // "target" is not here meant to have any precise technical meaning, it's just all the url stuff after the first / (almost, but not quite, a "path").
-        channel.send("<https://old.reddit.com/"+target+">"); //note that urls followed by eg a comma might include the comma, since it's technically a valid url to have that character at the end. This is arguably undesireable behavior.
+  if (client.user !== null){ //apparently this could be null. So, guard against that.
+    if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
+      if(m.includes("version")){
+        channel.send(version_string);
+      }
+      if(m.includes("help")){
+        channel.send("Need help? Please see <https://github.com/wyattscarpenter/knowledge-lamborghini/> for documentation about my commands. :)");
       }
     }
   }
+  //To oldify reddit links.
+  // Here we "check" if null, using ??, to avoid crash on trying to iterate over null. having done that, we actually do the thing:
+  for (let r of m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi ) ?? [] ){
+    //huge character list from https://stackoverflow.com/a/1547940
+    //note that it was easier to detect reddit urls and then futz with them each individually than do some crazy capture-jutsu. 
+    if (!r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*old\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi)){ //It's already old reddit, do nothing.
+      const little_match = r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/([\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*)/ )
+      if (little_match === null) {
+        console.log("little_match of the reddit link was null, which I didn't even think was possible. Logging this message and returning early...");
+        return;
+      }
+      const target = little_match[1]; // "target" is not here meant to have any precise technical meaning, it's just all the url stuff after the first / (almost, but not quite, a "path").
+      channel.send("<https://old.reddit.com/"+target+">"); //note that urls followed by eg a comma might include the comma, since it's technically a valid url to have that character at the end. This is arguably undesireable behavior.
+    }
+  }
+  
   //To post book
   if (m === 'think!') {
     if(texts[channel.id]===undefined){
       texts[channel.id] = text.slice(); //Populate the text to begin with, for the channel. A shallow copy is fine for this.
     }
     if(texts[channel.id].length){
-      think();
+      think(channel);
     }else{
       channel.send("Demand me nothing. What you know, you know.");
     }
   }
   if (m === 'stop!') {
-    stop_think();
+    stop_think(channel);
   }
 
   if (m === 'crash') {
@@ -176,7 +187,7 @@ client.on(Events.MessageCreate, message => {
   //extremely dumb features
   //who's that pokemon
   if (/.*wh.*po.?k.?t?\s?mon.*/.test(m)) {
-    whos_that_pokemon(message.url)
+    whos_that_pokemon(channel, message.url)
   }
   if(pokemon_answers[channel.id]){
     let target = pokemon_answers[channel.id].answer.toLowerCase();
@@ -238,6 +249,7 @@ function pretty_string(object){
 function update_status_clock(){ //This date is extremely precisely formatted for maximum readability in Discord's tiny area, and also familiarity and explicitness to users.
   let date = new Date(); //Want to avoid edge cases so we use the same Date object in each format call.
   if(date.getSeconds()){return false;} //only update with minute resolution, on 00 seconds of each minute (Discord can't handle us using second resolution)
+  if(!client.user){return false;} // I guess this could be null sometimes somehow.
   client.user.setActivity( new Intl.DateTimeFormat('en-US', {timeStyle: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " PT " //time with hard-coded zone. Looks like 4:20 PM PT
                          + new Intl.DateTimeFormat('en-US', {weekday: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " " //day of week (short name). Looks like Mon
                          + new Intl.DateTimeFormat('en-GB', {dateStyle: 'medium', timeZone: 'America/Los_Angeles'}).format(date) //date, with day first. Looks like 9 Aug, 2021
@@ -245,13 +257,18 @@ function update_status_clock(){ //This date is extremely precisely formatted for
   return true; //nota bene: the return value indicates if the function decided to update, but I don't use the return value anywhere else in the program so far.
 }
 
-function whos_that_pokemon(original_message_link){
+function whos_that_pokemon(channel, original_message_link){
   let req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json',//image
     (resp) => {
       let data = '';
       resp.on('data', (chunk) => {data += chunk;});
       resp.on('end', () => {
-        let id = JSON.parse(data.match(/"File[\s\S]*"/)[0]);
+        const filey_match = data.match(/"File[\s\S]*"/);
+        if (filey_match === null){
+          console.log("filely_match of the 'pokemon' file name was null, which I didn't even think was possible. Logging this message and returning early...");
+          return;
+        }
+        const id = JSON.parse(filey_match[0]);
         channel.send({files:[{
           attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+encodeURIComponent(id),
           name: 'pokemon'+id.match(/\.\w*?$/)[0].toLowerCase()
@@ -264,12 +281,12 @@ function whos_that_pokemon(original_message_link){
     }
   ).on("error", (err) => { /*retry on error*/
     console.log(err);
-    whos_that_pokemon(original_message_link);
+    whos_that_pokemon(channel, original_message_link);
   });
   req.end();
 }
 
-function think(){
+function think(channel){
   let s = texts[channel.id].shift();
   if(s){
     send_long(channel, s);
@@ -281,7 +298,7 @@ function think(){
   }
 }
 
-function stop_think(){
+function stop_think(channel){
   clearInterval(think_intervals[channel.id]);
   delete think_intervals[channel.id]; //purposefully, I delete the entry for the channel, to allow it to be re-Think!ed
 }
@@ -357,7 +374,7 @@ function the_function_that_does_sending_for_responses(message, for_server=false)
     //Implicitly, the type of r is object mapping from string → int, with each int being the number of "tickets" the string has in the "raffle", so to speak.
     let cumulative_weights = [];
     for(const key of Object.keys(r)){
-      cumulative_weights.push( (+r[key]||0) + (+cumulative_weights.at(-1)||0) );
+      cumulative_weights.push( (+r[key]||0) + (cumulative_weights.at(-1)||0) );
     }
     const random = Math.random() * cumulative_weights.at(-1);
     console.log("random number", random, "cumulative_weights", cumulative_weights);
@@ -411,9 +428,14 @@ function launch_remindmes(remindmes){
 
 function discharge_remindme(remindme){ //Send a remindme, making sure to remove it from the authoritative data structure, and cache that structure to file:
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
-  client.channels.fetch(remindme.message.channelId).then(channel.send(
-    { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} }
-  ));
+  client.channels.fetch(remindme.message.channelId).then( channel => {
+    if (channel === null || channel.type !== ChannelType.GuildText) {
+      console.log("channel I wanted to tell about a remindme was null or not a GuildText, which is surprising, and I can't send the message.");
+      console.log(remindme)
+      return;
+    }
+    channel.send( { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} } );
+  });
   remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
   fs.writeFile("remindmes.json", JSON.stringify(remindmes), console_log_if_not_null); //update record on disk
 }
@@ -442,7 +464,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	}
   // Now the message has been cached and is fully available
   // The reaction is now also fully available and the properties will be reflected accurately
-
+  if(reaction.message.guild === null){return;}
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
       if (reaction.count == 7 || reaction.emoji.id == kl_test_emoji_id) { //if it has 5 emoji (probably: 4 going to 5. Obvious failure mode: if it goes down from 6 or etc. But I'd have to, like, build and manage a hashmap to prevent that. And I already don't like working on this feature.)
         for (const channel_id of starboards[reaction.message.guild.id]){ //forward to starboard channels, with the emoji
