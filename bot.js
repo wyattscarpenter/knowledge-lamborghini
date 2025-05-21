@@ -52,9 +52,8 @@ let remindmes = try_require('./remindmes.json', []); //This loads the remindmes 
 //The type of track_leaves is an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string[]; } in typescript.
 /** @type {{ [guildId: string]: string[] }} */
 let track_leaves = try_require('./track_leaves.json', {});
-//The type of starboards is (TODO) an object mapping from guildIds to an object mapping from channelIds to messageIds (of already-included messages). 
-//Maybe one day this should also map to an integer that is the cutoff for the number of reactions needed to forward to the starboard.
-/** @type {{ [guildId: string]: string[] }} */
+// The type of starboards is an object mapping from guildIds to an object mapping from channelIds to an integer that is the cutoff for the number of reactions needed to forward to the starboard, and an array of messageIds (of already-included messages).
+/** @type {{ [guildId: string]: { [channelId: string]: { quantity_required_in_order_to_forward: number, messageIds: string[] } } }} */
 let starboards = try_require('./starboards.json', {});
 /** @type string */
 const version_number = require('./package.json').version;
@@ -190,13 +189,28 @@ client.on(Events.MessageCreate, message => {
 
   //Track starboard-type functionality
   if (m.startsWith('keep a starboard here')) {
+    const default_n = 7;
+    const n = parseInt(m.split(/\s+/).slice(4).join(' ')) || default_n; //ignoring the "keep a starboard here" beginning of m, try to interpret the next part of it as a number, and assign that or a default value of 7 to a const n
     if ( starboards[message.guild.id] ){
-      starboards[message.guild.id].push(message.channel.id);
+      //This hot-updates a previous format (array) that this data was in (in its development phase). So, eventually this can all be removed (everthing within this first if statement below)
+      if (Array.isArray(starboards[message.guild.id])) {
+        const newStarboard = {};
+        for (const channelId of starboards[message.guild.id]) {
+          newStarboard[channelId] = { quantity_required_in_order_to_forward: default_n, messageIds: [] };
+        }
+        starboards[message.guild.id] = newStarboard;
+      }
+      if ( starboards[message.guild.id][message.channel.id] ){
+        starboards[message.guild.id][message.channel.id]["quantity_required_in_order_to_forward"] = n;
+      } else {
+        starboards[message.guild.id][message.channel.id] = {"quantity_required_in_order_to_forward": n, messageIds: []};
+      }
     } else {
-      starboards[message.guild.id] = [message.channel.id];
+      //remember, this is a "Computed Property Name"
+      starboards[message.guild.id] = {[message.channel.id]: {"quantity_required_in_order_to_forward": n, messageIds: []}};
     }
     fs.writeFile("starboards.json", JSON.stringify(starboards), console_log_if_not_null); //update record on disk
-    message.reply("A starboard will be kept here.");
+    message.reply(`A starboard will be kept here. (Any ${n}-emojied message will be forwarded here.)`);
   }
   if (m.startsWith("don't keep a starboard here")) {
     if ( starboards[message.guild.id] ){
