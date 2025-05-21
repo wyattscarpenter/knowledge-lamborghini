@@ -91,7 +91,8 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
   }
 });
 
-const remindme_regex = /^!?remind ?me!?/i;
+const remindme_regex = /^!? ?remind ?me ?!?/i;
+const howlongago_regex = /^!? ?how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
 
 client.on(Events.MessageCreate, message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
@@ -218,6 +219,9 @@ client.on(Events.MessageCreate, message => {
   }
   if (remindme_regex.test(m)) {
     set_remindme(message);
+  }
+  if (howlongago_regex.test(m)) {
+    howlongago(message);
   }
   if (m === 'enumerate responses') {
     console.log(responses[channel.id]);
@@ -407,7 +411,7 @@ function set_remindme(message){
     d = chrono.parseDate("in "+command_arguments_text);
   }
   if(!d){
-    message.reply("You have used the remindme command with argument `"+command_arguments_text+"`, but I can't understand the date you've tried to specify. I think it's `"+ d_first + "`. I also tried the modified argument `"+"in "+command_arguments_text+"` for good measure, but that also got me `"+ d + "`. My date parsing handles a lot of natural language, but it's not perfect. Try a different tack?");
+    message.reply("You have used the remindme command with argument `"+command_arguments_text+"`, but I can't understand the date you've tried to specify. I think it's `"+ d_first + "`. I also tried the modified argument `"+"in "+command_arguments_text+"` for good measure, but that also got me `"+ d + "`. My date parsing handles a lot of formats and some natural language, but it's not perfect. Try a different tack?");
   } else if (d<=new Date()){ //Because the computer operates with variable speed(?) d<now is SOMETIMES true if you've declared d to be now. But d<=now is ALWAYS true, so we use it for greater consistency.
     message.reply("You have used the remindme command with argument `"+command_arguments_text+"`, but I think you're trying to specify the date `"+ d +"`, which is "+discord_timestamp(d)+" ie "+discord_timestamp(d, true)+". I think this is in the past, and I cannot retroactively remind you of things! Please try a different time specification if need be.");
   } else {
@@ -419,6 +423,22 @@ function set_remindme(message){
     launch_remindmes([remindme]);
   }
 }
+
+function howlongago(message){
+  const command_arguments_text = message.content.split(howlongago_regex)[1]; //this just filters out the "how long ago was " portion. The text does not need to be further split, because the date parser is fine taking extra text.
+  const d = chrono.parseDate(command_arguments_text)
+  const now_d = new Date();
+  if(!d){
+    message.reply("You have used the howlongago command with argument `"+command_arguments_text+"`, but I can't understand the date you've tried to specify. I think it's `"+ d + "`. My date parsing handles a lot of formats and some natural language, but it's not perfect. Try a different tack?");
+  } else { //Because the computer operates with variable speed(?) d<now is SOMETIMES true if you've declared d to be now. But d<=now is ALWAYS true, so we use it for greater consistency.
+    const then = d.getTime();
+    const now = now_d.getTime();
+    // @ts-ignore //Idk what the big deal is; this api is supposed to be in typescript by now.
+    const diff = new Intl.DurationFormat("en", { style: "long" }).format({milliseconds: now - then});
+    message.reply(`${now_d} **(now)** - ${d} **(then)** = ${diff}.`);
+  }
+}
+
 
 function launch_remindmes(remindmes){
   const workaround_wait_ms = 2000000000; // 147,483,647 less than the s32-int-max.
