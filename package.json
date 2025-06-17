@@ -4,7 +4,7 @@
   "version": "2.0.1-dev",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js",
+    "start": "nodemon bot.js --watch bot.js",
     "check": "tsc --version && tsc --checkJs --noEmit --resolveJsonModule --skipLibCheck --lib es2022,dom bot.js --strict --noImplicitAny false",
     "tsc": "tsc --all"
   },
