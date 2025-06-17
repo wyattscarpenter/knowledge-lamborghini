@@ -281,10 +281,12 @@ function whos_that_pokemon(channel, original_message_link){
           return;
         }
         const id = JSON.parse(filey_match[0]);
-        channel.send({files:[{
-          attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+encodeURIComponent(id),
-          name: 'pokemon'+id.match(/\.\w*?$/)[0].toLowerCase()
-        }]});
+        channel.send({
+          files:[{
+            attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+encodeURIComponent(id),
+            name: 'pokemon'+id.match(/\.\w*?$/)[0].toLowerCase()
+          }]
+        });
         //Technically I guess the original_message_link should be what we get returned from channel.send, .url, but that's more trouble than it's worth, so we just use the message that triggered us instead.
         pokemon_answers[channel.id] = {answer: id.match(/File:(.*)\.\w*?$/)[1], original_message_link: original_message_link}
         console.log(pokemon_answers[channel.id]); //console.log answer so I can cheat-- er, I mean, test.
@@ -498,16 +500,23 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
         for (const channel_id of starboards[reaction.message.guild.id]){ //forward to starboard channels, with the emoji
           client.channels.fetch(channel_id).then( channel => {
             if (channel != null && channel.type === ChannelType.GuildText) {
-              //forward the message to the channel, doesn't include embeds or files, unfortunately FOR SOME REASON?! I'm trying to "build" the message to send attachments as well but the docs are hard to look through.
-              //This will error silently out on contents larger than 2000 characters, but we only add a couple of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slight.
-              channel.send(MessagePayload.create(channel, {
+              //I don't know how you're "suppos't" to do this so I've just written a for loop. Geez, what a dumb freaking thing...
+              let dumb_array = [];
+              for (const a of reaction.message.attachments) {
+                //dumb_array.push({"name": a[0], "attachment": a[1]})
+                dumb_array.push(a[1])
+              }
+              //Forward the message to the channel.
+              //This will error silently out on contents larger than 2000 characters, but we only add a couple (dozens?) of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slide. TODO: that can't be the right approach. Surely I should send_long...
+              channel.send({
                 content: `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}${reaction.message.content? "\n>>> ": ""}${reaction.message.content}`,
                 embeds: reaction.message.embeds,
-                //files: reaction.message.files //I guess files aren't real anymore? idk I was just guessing on this one
-              }));
+                files: dumb_array
+              });
             }
           });
         }
       }
   }
 });
+
