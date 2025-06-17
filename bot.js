@@ -500,18 +500,12 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
         for (const channel_id of starboards[reaction.message.guild.id]){ //forward to starboard channels, with the emoji
           client.channels.fetch(channel_id).then( channel => {
             if (channel != null && channel.type === ChannelType.GuildText) {
-              //I don't know how you're "suppos't" to do this so I've just written a for loop. Geez, what a dumb freaking thing...
-              let dumb_array = [];
-              for (const a of reaction.message.attachments) {
-                //dumb_array.push({"name": a[0], "attachment": a[1]})
-                dumb_array.push(a[1])
-              }
               //Forward the message to the channel.
               //This will error silently out on contents larger than 2000 characters, but we only add a couple (dozens?) of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slide. TODO: that can't be the right approach. Surely I should send_long...
               channel.send({
                 content: `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}${reaction.message.content? "\n>>> ": ""}${reaction.message.content}`,
                 embeds: reaction.message.embeds,
-                files: dumb_array
+                files: Array.from(reaction.message.attachments.values())
               });
             }
           });
