@@ -359,16 +359,24 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
   if(is_string(current_guy)){
     response_container[response_container_indexer][keyword] = {[current_guy]: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
   }
+  const attachments = Array.from(message.attachments.values()).flatMap(x => x.attachment);
+  const rs = response? [response].concat(attachments) : attachments;
   if (unset) {
-    if (response) {
-      delete response_container[response_container_indexer][keyword][response];
+    if (rs.length) { //did you know empty arrays are truey in javascript? even though empty strings are falsey? Curious.
+      for (const r of rs) {
+        if (response_container[response_container_indexer][keyword]) { //we will get a "TypeError: Cannot convert undefined or null to object" error if we try to delete but the object doesn't even exist
+          delete response_container[response_container_indexer][keyword][r];
+        }
+      }
     } else {
       delete response_container[response_container_indexer][keyword];
     }
   } else {
-    if (response) {
-      response_container[response_container_indexer][keyword] ??= {};
-      response_container[response_container_indexer][keyword][response] = number;
+    if (rs.length) {
+      for (const r of rs) {
+        response_container[response_container_indexer][keyword] ??= {};
+        response_container[response_container_indexer][keyword][r] = number;
+      }
     } else {
       send_long(message.channel, "What do you want me to set it to?");
       return; //early return for great justice
