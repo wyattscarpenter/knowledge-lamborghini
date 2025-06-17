@@ -23,6 +23,7 @@ This is Knowledge Lamborghini (“kl”), an eclectic discord bot with exactly t
 * NO special sigil, all commands are invoked as they are written here. All commands are case-insensitive.
 * NO uptime, or stability guarantees. I commit broken features directly to master as I work on them. I may or may not have the bot running at any given time.
   * However, this bot is also published as [a package](https://www.npmjs.com/package/knowledge-lamborghini) on npmjs.org, and only non-broken versions should make it up there.
+  * Furthermore, I've been able to secure almost constant uptime for the bot lately.
 * NO particular security guarantees. While there's no particular reason to think data stored in the bot is **in**secure, it is just stored in plaintext on a server somewhere. So I wouldn't recommend putting critical secrets in there.
 * NO automatic testing paradigm, because I didn't think about how easy it would be to do that until I had built all the features.
 
