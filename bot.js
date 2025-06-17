@@ -223,6 +223,7 @@ client.on(Events.MessageCreate, message => {
   if (howlongago_regex.test(m)) {
     howlongago(message);
   }
+
   if (m === 'enumerate responses') {
     console.log(responses[channel.id]);
     send_long( channel, "Channel-specific responses: "+pretty_string(responses[channel.id]) );
@@ -230,17 +231,18 @@ client.on(Events.MessageCreate, message => {
     send_long( channel, "Server-specific responses: "+pretty_string(server_responses[message.guild.id]) );
   }
   if (m.startsWith("set-for-channel ")) {
-    the_function_that_does_setting_for_responses(message);
-  }
-  if (m.startsWith("set-probabilistic-for-channel ")) {
-    the_function_that_does_setting_for_responses(message, true);
+    the_function_that_does_setting_for_responses(message, false);
   }
   if (m.startsWith("set-for-server ") || m.startsWith("set ")) {
+    the_function_that_does_setting_for_responses(message, true);
+  }
+  if (m.startsWith("unset-for-channel ")) {
     the_function_that_does_setting_for_responses(message, false, true);
   }
-  if (m.startsWith("set-probabilistic-for-server ") || m.startsWith("set-probabilistic ")) {
+  if (m.startsWith("unset-for-server ") || m.startsWith("unset ")) {
     the_function_that_does_setting_for_responses(message, true, true);
   }
+
   if (responses[channel.id] && m in responses[channel.id]) { //guard against empty responses set for this channel
     the_function_that_does_sending_for_responses(message);
   }
@@ -334,42 +336,39 @@ function is_string(variable){
   return (typeof variable === 'string')
 }
 
-function the_function_that_does_setting_for_responses(message, probabilistic=false, for_server=false){
+function the_function_that_does_setting_for_responses(message, for_server=false, unset=false){
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild.id : message.channel.id;
   const saving_file_name = for_server? "server_responses.json" : "responses.json";
-  let keyword;
 
-  if(probabilistic){ //Instead of what it does now, should the no-value set-probabilistic remove the option instead of assigning it one ticket? This would be equivalent to assigning it zero tickets, but it would no-longer show up in the listing, either. The idea being that you analogously unset something by typing `set whatever` with no further arguments. Need more empirical observation of user behavior. 
-    let command_arguments_text = message.content.split(/\s(.+)/)[1]; // structural diagram: set-probabilistic (blah, (blah , blah blah blah))
-    let number = command_arguments_text.split(/\s(.+)/)[0];
-    let text_portion = command_arguments_text.split(/\s(.+)/)[1];
-    keyword = text_portion.split(/\s(.+)/)[0];
-    let response = text_portion.split(/\s(.+)/)[1];
-    if(isNaN(number)){ //optional, default to 1 if there's nothing there.
-      //shift everything to the right (consider the eg diagram above for a sketch of what this is working on)
-      response = text_portion;
-      keyword = number;
-      number = 1;
-    }
-    keyword = keyword.toLowerCase(); //lowercase the keyword
-    response_container[response_container_indexer] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
-    //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted for the latter.
-    let current_guy = response_container[response_container_indexer][keyword];
-    if(is_string(current_guy)){
-      response_container[response_container_indexer][keyword] = {[current_guy]: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
-    }
-    response_container[response_container_indexer][keyword] ??= {}
-    response_container[response_container_indexer][keyword][response] = +number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. The latter approach also removes it from enumerate responses, which is cool.
+  // Rough structural diagram of input we're parsing: set (blah, (blah , blah blah blah))
+  const command_arguments_text = message.content.split(/\s(.+)/)[1];
+  const [first_argument, rest_arguments] = command_arguments_text.split(/\s(.+)/);
+  if (unset) { //The number parameter is not allowed for the unset commands, so there is no need to search further.
+    const keyword = first_argument;
+    const response = rest_arguments;
+    const number = null;
   } else {
-    const text_portion = message.content.split(/\s(.+)/)[1];
-    if(text_portion){ //guard against setting the empty set. not sure if this is needed.
-      let thingum = text_portion.split(/\s(.+)/);
-      keyword = thingum[0].toLowerCase();
-      response_container[response_container_indexer] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it in the next line.
-      response_container[response_container_indexer][keyword] = thingum[1];
+    if(isNaN(first_argument)){ //optional, default number to 1 if there's nothing there.
+      //shift everything to the right (consider the eg diagram above for a sketch of what this is working on)
+      const number = 1;
+      const keyword = first_argument;
+      const response = rest_arguments;
+    } else {
+      const number = +first_argument;
+      const [keyword, response] = rest_arguments.split(/\s(.+)/);
     }
   }
+  keyword = keyword.toLowerCase(); //lowercase the keyword
+  response_container[response_container_indexer] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
+  //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted for the latter.
+  let current_guy = response_container[response_container_indexer][keyword];
+  if(is_string(current_guy)){
+    response_container[response_container_indexer][keyword] = {[current_guy]: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
+  }
+  response_container[response_container_indexer][keyword] ??= {}
+  response_container[response_container_indexer][keyword][response] = +number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. The latter approach also removes it from enumerate responses, which is cool.
+ 
   fs.writeFile(saving_file_name, JSON.stringify(response_container), console_log_if_not_null);
   send_long( message.channel, "OK, "+JSON.stringify(keyword)+" is now set to "+pretty_string(response_container[response_container_indexer][keyword]) );
 }
