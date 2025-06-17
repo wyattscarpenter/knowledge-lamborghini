@@ -500,7 +500,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
   // The reaction is now also fully available and the properties will be reflected accurately
   if(reaction.message.guild === null){return;}
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
-      if (reaction.count == 7 || reaction.emoji.id == kl_test_emoji_id) { //if it has 5 emoji (probably: 4 going to 5. Obvious failure mode: if it goes down from 6 or etc. But I'd have to, like, build and manage a hashmap to prevent that. And I already don't like working on this feature.)
+      if (reaction.count == 7 || reaction.emoji.id == kl_test_emoji_id) { //if it has n emoji (probably: n-1 going to n. Obvious failure mode: if it goes down from n back to n-1 then back up. (n+1 to n does not actually trigger this event, which is ReactionAdd, after all.) But I'd have to, like, build and manage a hashmap to prevent that. OK fine...
         for (const channel_id of starboards[reaction.message.guild.id]){ //forward to starboard channels, with the emoji
           client.channels.fetch(channel_id).then( channel => {
             if (channel != null && channel.type === ChannelType.GuildText) {
