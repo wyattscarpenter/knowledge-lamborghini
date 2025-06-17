@@ -344,31 +344,36 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
   // Rough structural diagram of input we're parsing: set (blah, (blah , blah blah blah))
   const command_arguments_text = message.content.split(/\s(.+)/)[1];
   const [first_argument, rest_arguments] = command_arguments_text.split(/\s(.+)/);
-  if (unset) { //The number parameter is not allowed for the unset commands, so there is no need to search further.
-    const keyword = first_argument;
-    const response = rest_arguments;
-    const number = null;
-  } else {
-    if(isNaN(first_argument)){ //optional, default number to 1 if there's nothing there.
-      //shift everything to the right (consider the eg diagram above for a sketch of what this is working on)
-      const number = 1;
-      const keyword = first_argument;
-      const response = rest_arguments;
-    } else {
-      const number = +first_argument;
-      const [keyword, response] = rest_arguments.split(/\s(.+)/);
-    }
-  }
-  keyword = keyword.toLowerCase(); //lowercase the keyword
-  response_container[response_container_indexer] ??= {} //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
-  //Should we replace wholly an existing non-probabilistic response, or make it part of the new possibility range? Here, I've opted for the latter.
+  const [number, keyWord, response] = unset? //The number parameter is not allowed for the unset commands, so there is no need to search further.
+      [0, first_argument, rest_arguments] // 0 is simply a dummy value here, since we don't actually need this number for this route
+    : isNaN(first_argument)?  //optional, default number to 1 if there's nothing there.
+      [1, first_argument, rest_arguments]
+    :
+      [+first_argument].concat(rest_arguments.split(/\s(.+)/)) //this is a silly way to write it but hey we need to structure it to destructure it!
+  ;
+  const keyword = keyWord.toLowerCase();
+  response_container[response_container_indexer] ??= {}; //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
+
+  //For LEGACY JSONs with an existing non-probabilistic response, we make it part of the new possibility range.
   let current_guy = response_container[response_container_indexer][keyword];
   if(is_string(current_guy)){
     response_container[response_container_indexer][keyword] = {[current_guy]: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
   }
-  response_container[response_container_indexer][keyword] ??= {}
-  response_container[response_container_indexer][keyword][response] = +number ; //note that there isn't presently any way to unset responses. They can be set to 0, however, or perhaps the whole object could be `set` to the empty string. The latter approach also removes it from enumerate responses, which is cool.
- 
+  if (unset) {
+    if (response) {
+      delete response_container[response_container_indexer][keyword][response];
+    } else {
+      delete response_container[response_container_indexer][keyword];
+    }
+  } else {
+    if (response) {
+      response_container[response_container_indexer][keyword] ??= {};
+      response_container[response_container_indexer][keyword][response] = number;
+    } else {
+      send_long(message.channel, "What do you want me to set it to?");
+      return; //early return for great justice
+    }
+  }
   fs.writeFile(saving_file_name, JSON.stringify(response_container), console_log_if_not_null);
   send_long( message.channel, "OK, "+JSON.stringify(keyword)+" is now set to "+pretty_string(response_container[response_container_indexer][keyword]) );
 }
