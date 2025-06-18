@@ -1,5 +1,6 @@
 while true; do
-  if [ "`git pull origin master --rebase 2>/dev/null`" != "Already up to date." ]; then
+  if [ "`git pull origin master 2>/dev/null`" != "Already up to date." ]; then
+    git reset origin/master --keep #--keep is like --hard but will abort if there are relevant local changes; this probably will never be helpful for me, and only serve to get in my way, but hey, we'll take the extra safety at the cost of a little possible inconvenience.
     pkill node
     npm start &
   fi
