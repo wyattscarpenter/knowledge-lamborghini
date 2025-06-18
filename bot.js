@@ -11,7 +11,7 @@ const client = new Client({
   partials: [Partials.Message, Partials.Reaction],
 });
 
-const kl_test_emoji_id = "1342850037792772106" //this is a test emoji I created when we need to test an emoji feature.
+const kl_test_emoji_id = "1342850037792772106" //this is a test emoji I created when we need to test an emoji feature. //somehow, this test emoji feature, but not the actual feature, does not work on the production deployment, although it does work on my local deployment of the same exact code. Very odd. I'm not even going to mark this as a task to fix because I have no idea how nor what's even wrong.
 
 // THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
 client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
