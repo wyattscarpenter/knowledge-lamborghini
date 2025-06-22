@@ -254,15 +254,11 @@ client.on(Events.MessageCreate, message => {
     channel.send(global_responses[m]);
   }
 
-  // To Brazil feature
-  if (/^!? ?to ?brazil ?(.*)$/i.test(message.content)) {
-    // Extract [x] if present, otherwise empty string
-    const match = message.content.match(/^!? ?to ?brazil ?(.*)$/i);
-    const x = match && match[1] ? match[1].trim() : "";
-    channel.send(
-      "🇧🇷\n\n\n     " + x + "\n\n\n               🏌️‍♂️"
-    );
-    return;
+  const brazilmatch = message.content.match(/^!? ?to ?bras?z?il ?(.*)$/i)
+  if (brazilmatch) {
+    console.log("tobrazil");
+    console.log(message.content);
+    channel.send("🇧🇷\n\n\n     " + brazilmatch?.[1] + "\n\n\n               🏌️‍♂️");
   }
 });
 
