@@ -100,6 +100,7 @@ client.on(Events.MessageCreate, message => {
   if (!message.guild){return;} //don't consider... uh... I guess this is DMs? IDK I just got a warning from typescript.
   const channel = message.channel;
   const m = message.content.toLowerCase();
+
   if (client.user !== null){ //apparently this could be null. So, guard against that.
     if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
       if(m.includes("version")){
@@ -251,6 +252,17 @@ client.on(Events.MessageCreate, message => {
   }
   if (m in global_responses) {
     channel.send(global_responses[m]);
+  }
+
+  // To Brazil feature
+  if (/^!? ?to ?brazil ?(.*)$/i.test(message.content)) {
+    // Extract [x] if present, otherwise empty string
+    const match = message.content.match(/^!? ?to ?brazil ?(.*)$/i);
+    const x = match && match[1] ? match[1].trim() : "";
+    channel.send(
+      "🇧🇷\n\n\n     " + x + "\n\n\n               🏌️‍♂️"
+    );
+    return;
   }
 });
 
