@@ -47,6 +47,9 @@ let track_leaves = try_require('./track_leaves.json', {});
 //Maybe one day this should also map to an integer that is the cutoff for the number of reactions needed to forward to the starboard.
 /** @type {{ [guildId: string]: string[] }} */
 let starboards = try_require('./starboards.json', {});
+// Add regex response containers
+let regex_responses = try_require('./regex_responses.json', {});
+let server_regex_responses = try_require('./server_regex_responses.json', {});
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
@@ -539,6 +542,31 @@ function the_function_that_does_sending_for_responses(message, for_server=false)
   }
 }
 
+function the_function_that_does_sending_for_regex_responses(message, for_server=false, pattern, match){
+  const response_container = for_server ? server_regex_responses : regex_responses;
+  const response_container_indexer = for_server ? message.guild.id : message.channel.id;
+  const responses = response_container[response_container_indexer]?.[pattern];
+  if (!responses) return;
+  // Weighted random selection
+  const keys = Object.keys(responses);
+  const weights = keys.map(k => +responses[k] || 0);
+  const total = weights.reduce((a, b) => a + b, 0);
+  if (total === 0) return;
+  let r = Math.random() * total;
+  for (let i = 0; i < keys.length; i++) {
+    r -= weights[i];
+    if (r <= 0) {
+      let response = keys[i];
+      // Replace $1, $2, ... with capture groups if present
+      if (match && match.length > 1) {
+        response = response.replace(/\$(\d+)/g, (_, n) => match[n] || '');
+      }
+      message.channel.send(response);
+      break;
+    }
+  }
+}
+
 function discord_timestamp(date, is_relative=false){
   return "<t:"+ Math.trunc(+date/1000) + (is_relative? ":R>" : ">"); //there are other types of discord timestamps but we needn't bother with them here.
 }
@@ -651,3 +679,62 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
       }
   }
 });
+
+function the_function_that_does_setting_for_regex_responses(message, for_server=false, unset=false){
+  // Choose the right containers and file names
+  const response_container = for_server ? server_regex_responses : regex_responses;
+  const response_container_indexer = for_server ? message.guild.id : message.channel.id;
+  const saving_file_name = for_server ? "server_regex_responses.json" : "regex_responses.json";
+
+  // Parse command arguments
+  // Remove the command prefix (e.g., set-regex, unset-regex, etc.)
+  const command_arguments_text = message.content.split(/\s(.+)/)[1];
+  const [first_argument, rest_arguments] = command_arguments_text.split(/\s(.+)/);
+  const [number, pattern, response] = unset ?
+    [0, first_argument, rest_arguments] :
+    isNaN(first_argument) ?
+      [1, first_argument, rest_arguments] :
+      [+first_argument].concat(rest_arguments.split(/\s(.+)/));
+  const regex_pattern = pattern;
+  response_container[response_container_indexer] ??= {};
+
+  // For legacy: if a string, convert to object
+  let current_guy = response_container[response_container_indexer][regex_pattern];
+  if(is_string(current_guy)){
+    response_container[response_container_indexer][regex_pattern] = {[current_guy]: 1};
+  }
+  const attachments = Array.from(message.attachments.values()).flatMap(x => x.attachment);
+  const rs = response ? [response].concat(attachments) : attachments;
+  if (unset) {
+    if (rs.length) {
+      for (const r of rs) {
+        if (response_container[response_container_indexer][regex_pattern] && response_container[response_container_indexer][regex_pattern][r] !== undefined) {
+          delete response_container[response_container_indexer][regex_pattern][r];
+        }
+      }
+      // If no responses left, delete the pattern
+      if (response_container[response_container_indexer][regex_pattern] && Object.keys(response_container[response_container_indexer][regex_pattern]).length === 0) {
+        delete response_container[response_container_indexer][regex_pattern];
+      }
+    } else {
+      // Remove all responses for this pattern
+      delete response_container[response_container_indexer][regex_pattern];
+    }
+    fs.writeFile(saving_file_name, JSON.stringify(response_container), console_log_if_not_null);
+    send_long(message.channel, "OK, regex pattern " + JSON.stringify(regex_pattern) + " is now unset.");
+    return;
+  } else {
+    if (rs.length) {
+      response_container[response_container_indexer][regex_pattern] ??= {};
+      for (const r of rs) {
+        response_container[response_container_indexer][regex_pattern][r] = (response_container[response_container_indexer][regex_pattern][r] || 0) + Number(number);
+      }
+      fs.writeFile(saving_file_name, JSON.stringify(response_container), console_log_if_not_null);
+      send_long(message.channel, "OK, regex pattern " + JSON.stringify(regex_pattern) + " is now set to " + pretty_string(response_container[response_container_indexer][regex_pattern]));
+      return;
+    } else {
+      send_long(message.channel, "No response provided to set for regex pattern " + JSON.stringify(regex_pattern));
+      return;
+    }
+  }
+}
