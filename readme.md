@@ -20,7 +20,7 @@ This is Knowledge Lamborghini (“kl”), an eclectic discord bot with exactly t
 
 ### Negative features
 
-* NO special sigil, all commands are invoked as they are written here. All commands are case-insensitive.
+* NO special sigil, all commands are invoked as they are written here. However, you are allowed to use a prefix `!` or `! ` on any command, which will be largely ignored, since I know some people are in that habit. All commands are case-insensitive.
 * NO uptime, or stability guarantees. I commit broken features directly to master as I work on them. I may or may not have the bot running at any given time.
   * However, this bot is also published as [a package](https://www.npmjs.com/package/knowledge-lamborghini) on npmjs.org, and only non-broken versions should make it up there.
   * Furthermore, I've been able to secure almost constant uptime for the bot lately.
@@ -41,18 +41,17 @@ A note about the commands: all commands are usually just as they are written her
 * `set-for-server` and `unset-for-server` are the server-wide equivalents of the above commands. The banks of server responses and channel responses are different, so if you make overlapping responses kl might double-reply, etc.
 * `set` and `unset` are aliases for `set-for-server` and `unset-for-server`, respectively. Why default to server and not channel? This is because it is funnier in practice to make the default the most intrusive option.
 * `enumerate responses` lists all the responses for the channel.
-* `remindme`, followed by freeform text that includes a date or time of some sort that kl can interpret (I use the chrono-node library to try to parse these), will cause kl to reply to your message at that date. This feature is useful to remind you of things... if you're confident this tech stack will last that long!
-  * `'(!)remind( )me(!)`, where by parenthesized characters I mean they may be optionally included or excluded in all possible combinations, are also aliased to remindme. Furthermore, since the natural language parser rejects commands like "remindme 1 day" but accepts commands like "remindme in 1 day", remindme will insert an "in " automatically at the beginning and retry parsing, if the date parsing fails the first time.
-* `howlongago` is a similar command to `remindme`. Currently, it is not useful.
+* `remind( )me( )(!)`, followed by freeform text that includes a date or time of some sort that kl can interpret (I use the chrono-node library to try to parse these), will cause kl to reply to your message at that date. This feature is useful to remind you of things... if you're confident this tech stack will last that long!
+* `howlongago` (and variants) is a similar command to `remindme`. Currently, it is not useful.
 * `death has many doors` (starting a message; followed by any or no other text) will cause kl to post a message in that channel whenever someone leaves/is kicked from the server, identifying them by mention, tag, and user id. `death has no doors` will turn this feature off for a channel it is posted in.
 * `keep a starboard here` (starting a message; followed by any or no other text) will cause kl to repost messages into that channel whenever it is running and a message gets five (5) reactions of the same type (that is to say, so to speak, 5 of the same "emoji" at once). Note: unlike other starboards, not just the star emoji, but any reaction, will cause this to happen. `don't keep a starboard here` will turn this feature off for a channel it is posted in. Please note that this feature is very bare-bones and not 100% ideally-implemented because I got sick of working on it. But it does work, in its basic functionality.
 * Type `crash` and kl will crash. Please do not do this.
 * Reddit link “oldification”: links to reddit.com pages are immediately reposted as links to old.reddit.com pages.
 * KL displays the time in Los Angeles as its status, updated each minute.
-* `(!)yud(!)` will display yud status (textual).
+* `yud(!)` will display yud status (textual).
 * `Jo(h)n(a)(t)(h)(a)(n)( )Frakes(?)` (anywhere in a message) will display the wisdom of Jonathan Frakes as it applies to your situation.
-* `(!)Frakes(?)` will display the wisdom of Jonathan Frakes as it applies to your situation (but via youtube links).
-* `(!)( )to( )bra(s)(z)il( )[x]` prints the following text (it looks better in Discord):
+* `Frakes(?)` will display the wisdom of Jonathan Frakes as it applies to your situation (but via youtube links).
+* `to( )bra(s)(z)il( )[x]` prints the following text (it looks better in Discord):
 ```
 🇧🇷
 

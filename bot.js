@@ -91,8 +91,18 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
   }
 });
 
-const remindme_regex = /^ ?remind ?me ?!?/i;
-const howlongago_regex = /^ ?how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
+const remindme_regex = /^remind ?me ?!?/i;
+const howlongago_regex = /^how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
+
+function bangstrip(string){
+  if (string.startsWith('! ')) {
+    return string.slice(2);
+  } else if (string.startsWith('!')) {
+    return string.slice(1);
+  } else {
+    return string;
+  }
+}
 
 client.on(Events.MessageCreate, message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
@@ -100,9 +110,7 @@ client.on(Events.MessageCreate, message => {
   if (!message.guild){return;} //don't consider... uh... I guess this is DMs? IDK I just got a warning from typescript.
   const channel = message.channel;
   // Strip leading "!" if present, then lowercase
-  let m = message.content;
-  if (m.startsWith('!')) m = m.slice(1);
-  m = m.toLowerCase();
+  const m = bangstrip(message.content).toLowerCase();
 
   if (client.user !== null){ //apparently this could be null. So, guard against that.
     if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
@@ -257,7 +265,7 @@ client.on(Events.MessageCreate, message => {
     channel.send(global_responses[m]);
   }
 
-  const brazilmatch = m.match(/^ ?to ?bras?z?il ?(.*)$/i)
+  const brazilmatch = m.match(/^to ?bras?z?il ?(.*)$/i)
   if (brazilmatch) {
     console.log("tobrazil", m);
     channel.send("🇧🇷\n\n\n     " + brazilmatch?.[1] + "\n\n\n               🏌️‍♂️");
@@ -301,7 +309,7 @@ client.on(Events.MessageCreate, message => {
       "Have you ever danced with the devil in the pale moonlight?", // Easter egg; this one is actually from Batman.
     ]));
   }
-  if (/^!?frakes\??/i.test(m)) {
+  if (/^frakes\??/i.test(m)) {
     channel.send(random_choice([
       "https://www.youtube.com/watch?v=MCT80HJWQ2A", // jonathan frakes telling you you're right for 41 seconds
       "https://www.youtube.com/watch?v=9S1EzkRpelY", // Jonathan Frakes Asks You Things //this is also the one the "jonathan frakes" responses are drawn from
