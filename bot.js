@@ -274,6 +274,32 @@ client.on(Events.MessageCreate, message => {
       "thiiiiiiiiiiiiiiiiiiiiiiiiiiis much", "long long", "unsigned long long"
     ]) + ".");
   }
+
+  // Jonathan Frakes wisdom
+  if (/jonathan frakes/i.test(m)) {
+    channel.send(random_choice([
+      "Have you ever walked out of a mall into a huge parking area and realized you’d forgotten where you parked your car?",
+      "Ever gone mountain biking?",
+      "What do you want to be when you grow up?",
+      "Have you called a plumber to your home lately?",
+      "How superstitious are you?",
+      "How much money would it take to make you spend a night in a cemetery?",
+      "Do you have a sweet tooth?",
+      "Do you believe in the power of a curse?",
+      "Have you had your hearing tested lately?",
+      "Planning a trip soon?",
+      "Can you remember the tallest man you’ve ever seen?",
+      "Do you love to go a-wanderin’ beneath a clear blue sky?",
+      "Have you noticed what big stars real estate agents have become?",
+      "Are you careful with your personal records?",
+      "Have you ever visited a Chinatown section in a major city?",
+      "Have you ever visited a flea market?",
+      "Ever visited a truck stop?",
+      "Did you ever have a job as a waiter?",
+      "Have you noticed how many successful restaurants are theme-based these days?",
+      "Have you ever had the desire to write your initials in wet cement?"
+    ]));
+  }
 });
 
 //implementation functions
