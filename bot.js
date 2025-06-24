@@ -91,15 +91,18 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
   }
 });
 
-const remindme_regex = /^!? ?remind ?me ?!?/i;
-const howlongago_regex = /^!? ?how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
+const remindme_regex = /^ ?remind ?me ?!?/i;
+const howlongago_regex = /^ ?how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
 
 client.on(Events.MessageCreate, message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
   if (!message.content){return;} //don't even consider empty messages
   if (!message.guild){return;} //don't consider... uh... I guess this is DMs? IDK I just got a warning from typescript.
   const channel = message.channel;
-  const m = message.content.toLowerCase();
+  // Strip leading "!" if present, then lowercase
+  let m = message.content;
+  if (m.startsWith('!')) m = m.slice(1);
+  m = m.toLowerCase();
 
   if (client.user !== null){ //apparently this could be null. So, guard against that.
     if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
@@ -254,14 +257,13 @@ client.on(Events.MessageCreate, message => {
     channel.send(global_responses[m]);
   }
 
-  const brazilmatch = message.content.match(/^!? ?to ?bras?z?il ?(.*)$/i)
+  const brazilmatch = m.match(/^ ?to ?bras?z?il ?(.*)$/i)
   if (brazilmatch) {
-    console.log("tobrazil");
-    console.log(message.content);
+    console.log("tobrazil", m);
     channel.send("🇧🇷\n\n\n     " + brazilmatch?.[1] + "\n\n\n               🏌️‍♂️");
   }
 
-  if (/^!?yud!?$/i.test(m)) {
+  if (/^yud!?$/i.test(m)) {
     channel.send("Yud status: " + random_choice([
       "🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 All yuds operational.",
       "short", "long", "medium", "wide", "narrow", "thin", "slender", "chunky",
@@ -588,4 +590,3 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
       }
   }
 });
-
