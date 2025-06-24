@@ -261,7 +261,6 @@ client.on(Events.MessageCreate, message => {
     channel.send("🇧🇷\n\n\n     " + brazilmatch?.[1] + "\n\n\n               🏌️‍♂️");
   }
 
-  // yud status
   if (/^!?yud!?$/i.test(m)) {
     channel.send("Yud status: " + random_choice([
       "🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 All yuds operational.",
@@ -275,8 +274,7 @@ client.on(Events.MessageCreate, message => {
     ]) + ".");
   }
 
-  // Jonathan Frakes wisdom
-  if (/jonathan frakes/i.test(m)) {
+  if (/joh?na?t?h?a?n? ?frakes\??/i.test(m)) {
     channel.send(random_choice([
       "Have you ever walked out of a mall into a huge parking area and realized you’d forgotten where you parked your car?",
       "Ever gone mountain biking?",
@@ -297,7 +295,18 @@ client.on(Events.MessageCreate, message => {
       "Ever visited a truck stop?",
       "Did you ever have a job as a waiter?",
       "Have you noticed how many successful restaurants are theme-based these days?",
-      "Have you ever had the desire to write your initials in wet cement?"
+      "Have you ever had the desire to write your initials in wet cement?",
+      "Have you ever danced with the devil in the pale moonlight?", // Easter egg; this one is actually from Batman.
+    ]));
+  }
+  if (/^!?frakes\??/i.test(m)) {
+    channel.send(random_choice([
+      "https://www.youtube.com/watch?v=MCT80HJWQ2A", // jonathan frakes telling you you're right for 41 seconds
+      "https://www.youtube.com/watch?v=9S1EzkRpelY", // Jonathan Frakes Asks You Things //this is also the one the "jonathan frakes" responses are drawn from
+      "https://www.youtube.com/watch?v=GxPSApAHakg", // Jonathan Frakes Interrogates You
+      "https://www.youtube.com/watch?v=n-NnxdZqPOE", // Jonathan Frakes Interrogates You With Nonsense 
+      "https://www.youtube.com/watch?v=XPEKayKHwXA", // Commander Riker (Jonathan Frakes) Telling Us It's Fake 
+      "https://www.youtube.com/watch?v=GM-e46xdcUo", // jonathan frakes telling you you're wrong for 47 seconds //the one that started it all :wistful:
     ]));
   }
 });
