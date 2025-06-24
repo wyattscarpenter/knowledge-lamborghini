@@ -256,6 +256,27 @@ client.on(Events.MessageCreate, message => {
     the_function_that_does_setting_for_responses(message, true, true);
   }
 
+  // set-regex/unset-regex for channel/server
+  if (m.startsWith("set-regex-for-channel ")) {
+    the_function_that_does_setting_for_regex_responses(message, false);
+  }
+  if (m.startsWith("set-regex-for-server ")) {
+    the_function_that_does_setting_for_regex_responses(message, true);
+  }
+  if (m.startsWith("set-regex ")) {
+    the_function_that_does_setting_for_regex_responses(message, true);
+  }
+  if (m.startsWith("unset-regex-for-channel ")) {
+    the_function_that_does_setting_for_regex_responses(message, false, true);
+  }
+  if (m.startsWith("unset-regex-for-server ")) {
+    the_function_that_does_setting_for_regex_responses(message, true, true);
+  }
+  if (m.startsWith("unset-regex ")) {
+    the_function_that_does_setting_for_regex_responses(message, true, true);
+  }
+
+  // Responses
   if (responses[channel.id] && m in responses[channel.id]) { //guard against empty responses set for this channel
     the_function_that_does_sending_for_responses(message);
   }
@@ -264,6 +285,37 @@ client.on(Events.MessageCreate, message => {
   }
   if (m in global_responses) {
     channel.send(global_responses[m]);
+  }
+
+  // Regex response matching (channel)
+  if (regex_responses[channel.id]) {
+    for (const [pattern, responses] of Object.entries(regex_responses[channel.id])) {
+      let match;
+      try {
+        match = message.content.match(new RegExp(pattern, "i"));
+      } catch (e) {
+        continue; // skip invalid regex
+      }
+      if (match) {
+        the_function_that_does_sending_for_regex_responses(message, false, pattern, match);
+        break;
+      }
+    }
+  }
+  // Regex response matching (server)
+  if (server_regex_responses[message.guild.id]) {
+    for (const [pattern, responses] of Object.entries(server_regex_responses[message.guild.id])) {
+      let match;
+      try {
+        match = message.content.match(new RegExp(pattern, "i"));
+      } catch (e) {
+        continue;
+      }
+      if (match) {
+        the_function_that_does_sending_for_regex_responses(message, true, pattern, match);
+        break;
+      }
+    }
   }
 
   const brazilmatch = m.match(/^to ?bras?z?il ?(.*)$/i)
