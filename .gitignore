@@ -1,6 +1,8 @@
 token.js*
 responses.json
 server_responses.json
+regex_responses.json
+server_regex_responses.json
 remindmes.json
 track_leaves.json
 node_modules/
