@@ -50,6 +50,7 @@ A note about the commands: all commands are usually just as they are written her
 * Reddit link “oldification”: links to reddit.com pages are immediately reposted as links to old.reddit.com pages.
 * KL displays the time in Los Angeles as its status, updated each minute.
 * (!)yud(!) will display yud status (textual).
+* Jonathan Frakes will display the wisdom of Jonathan Frakes as it applies to your situation.
 * (!)( )to( )bra(s)(z)il( )[x] prints the following text (it looks better in Discord):
 ```
 🇧🇷
