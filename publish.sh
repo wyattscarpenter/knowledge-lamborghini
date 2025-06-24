@@ -1,4 +1,8 @@
 version="$1"
+if [[ -z "$1" ]]; then
+  echo "Error: Version argument required."
+  exit 1
+fi
 if [[ "$version" != v* ]]; then
   version="v$version"
 fi
