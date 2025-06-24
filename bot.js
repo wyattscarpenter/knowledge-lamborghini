@@ -263,7 +263,16 @@ client.on(Events.MessageCreate, message => {
 
   // yud status
   if (/^!?yud!?$/i.test(m)) {
-    channel.send("Yud status: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩\nAll yuds are operational.");
+    channel.send("Yud status: " + random_choice([
+      "🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 All yuds operational.",
+      "short", "long", "medium", "wide", "narrow", "thin", "slender", "chunky",
+      "chonky", "slimthick", "slimthicc", "slimthiccc", "slimthic", "thic",
+      "thicc", "thiccc", "think", "*Aah!*", "murky", "ponderous", "profound",
+      "small", "minuscule", "miniscule", "majuscule", "majestic", "smol",
+      "extra large", "ok", "not doing ok :slight_frown:", "rough", "livid",
+      "lively", "sauntering", "a legend", "pentakill", "*Aaargh!!!*", "a'ight",
+      "thiiiiiiiiiiiiiiiiiiiiiiiiiiis much", "long long", "unsigned long long"
+    ]) + ".");
   }
 });
 
@@ -271,6 +280,12 @@ client.on(Events.MessageCreate, message => {
 
 function pretty_string(object){
   return JSON.stringify(object, null, 4);
+}
+
+function random_choice(array){
+  const a = array;
+  const n = Math.floor(Math.random() * a.length);
+  return a[n];
 }
 
 function update_status_clock(){ //This date is extremely precisely formatted for maximum readability in Discord's tiny area, and also familiarity and explicitness to users.
