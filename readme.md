@@ -49,6 +49,7 @@ A note about the commands: all commands are usually just as they are written her
 * Type `crash` and kl will crash. Please do not do this.
 * Reddit link “oldification”: links to reddit.com pages are immediately reposted as links to old.reddit.com pages.
 * KL displays the time in Los Angeles as its status, updated each minute.
+* (!)yud(!) will display yud status (textual).
 * (!)( )to( )bra(s)(z)il( )[x] prints the following text (it looks better in Discord):
 ```
 🇧🇷
