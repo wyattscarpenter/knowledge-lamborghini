@@ -83,7 +83,7 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
           return;
         }
         channel.send(
-          member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is removed from the server (left or kicked)."
+          member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is gone from the server (left, kicked, or banned)."
         )
       }
       );
