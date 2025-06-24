@@ -260,6 +260,11 @@ client.on(Events.MessageCreate, message => {
     console.log(message.content);
     channel.send("🇧🇷\n\n\n     " + brazilmatch?.[1] + "\n\n\n               🏌️‍♂️");
   }
+
+  // yud status
+  if (/^!?yud!?$/i.test(m)) {
+    channel.send("Yud status: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩\nAll yuds are operational.");
+  }
 });
 
 //implementation functions
