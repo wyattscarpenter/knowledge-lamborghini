@@ -698,11 +698,6 @@ function the_function_that_does_setting_for_regex_responses(message, for_server=
   const regex_pattern = pattern;
   response_container[response_container_indexer] ??= {};
 
-  // For legacy: if a string, convert to object
-  let current_guy = response_container[response_container_indexer][regex_pattern];
-  if(is_string(current_guy)){
-    response_container[response_container_indexer][regex_pattern] = {[current_guy]: 1};
-  }
   const attachments = Array.from(message.attachments.values()).flatMap(x => x.attachment);
   const rs = response ? [response].concat(attachments) : attachments;
   if (unset) {
