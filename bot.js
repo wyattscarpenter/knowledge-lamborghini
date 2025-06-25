@@ -112,9 +112,9 @@ client.on(Events.MessageCreate, message => {
   if (!message.content){return;} //don't even consider empty messages
   if (!message.guild){return;} //don't consider... uh... I guess this is DMs? IDK I just got a warning from typescript.
   const channel = message.channel;
-  const m = bangstrip(message.content).toLowerCase();
-  // We assign m back into message.content so later functions that take message and operate on its content and aren't expecting a ! prefix actually work.
-  message.content = m;
+  // We assign this back into message.content so later functions that take message and operate on its content and aren't expecting a ! prefix actually work.
+  message.content = bangstrip(message.content);
+  const m = message.content.toLowerCase();
 
   if (client.user !== null){ //apparently this could be null. So, guard against that.
     if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
