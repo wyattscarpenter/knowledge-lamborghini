@@ -490,11 +490,17 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
   }
   const attachments = Array.from(message.attachments.values()).flatMap(x => x.attachment);
   const rs = response? [response].concat(attachments) : attachments;
+  let all_ok = true;
+  let any_ok = false;
   if (unset) {
     if (rs.length) { //did you know empty arrays are truey in javascript? even though empty strings are falsey? Curious.
       for (const r of rs) {
         if (response_container[response_container_indexer][keyword]) { //we will get a "TypeError: Cannot convert undefined or null to object" error if we try to delete but the object doesn't even exist
           delete response_container[response_container_indexer][keyword][r];
+          any_ok = true;
+        } else {
+          all_ok = false;
+          send_long(message.channel, r + " not found in " + JSON.stringify(keyword));
         }
       }
     } else {
@@ -505,14 +511,18 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
       for (const r of rs) {
         response_container[response_container_indexer][keyword] ??= {};
         response_container[response_container_indexer][keyword][r] = number;
+        any_ok = true;
       }
     } else {
       send_long(message.channel, "What do you want me to set it to?");
+      all_ok = false; // set this just in case I refactor out the early return later
       return; //early return for great justice
     }
   }
   fs.writeFile(saving_file_name, JSON.stringify(response_container), console_log_if_not_null);
-  send_long( message.channel, "OK, "+JSON.stringify(keyword)+" is now set to "+pretty_string(response_container[response_container_indexer][keyword]) );
+  const possibly_ok_str = all_ok? "OK, " : ""; // This remark indicates that the execution went off without a hitch.
+  const possibly_now_str = any_ok? "now " : ""; // This remark indicates that there was a change.
+  send_long( message.channel, possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+"set to "+pretty_string(response_container[response_container_indexer][keyword]) );
 }
 
 function the_function_that_does_sending_for_responses(message, for_server=false){
@@ -543,6 +553,8 @@ function the_function_that_does_sending_for_responses(message, for_server=false)
 }
 
 function the_function_that_does_sending_for_regex_responses(message, for_server=false, pattern, match){
+  // This function duplicates a number of things from the analogous non-regex function, because it's AI slop,
+  // but, whatever; it's fine.
   const response_container = for_server ? server_regex_responses : regex_responses;
   const response_container_indexer = for_server ? message.guild.id : message.channel.id;
   const responses = response_container[response_container_indexer]?.[pattern];

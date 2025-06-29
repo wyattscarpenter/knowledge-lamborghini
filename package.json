@@ -1,7 +1,7 @@
 {
   "name": "knowledge-lamborghini",
   "description": "But you know what I like a lot more than knowledge? Knowledge. (an eclectic discord bot)",
-  "version": "2.8.1",
+  "version": "2.8.2-dev",
   "main": "bot.js",
   "scripts": {
     "start": "nodemon bot.js --watch bot.js",
