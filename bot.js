@@ -11,7 +11,8 @@ const client = new Client({
   partials: [Partials.Message, Partials.Reaction],
 });
 
-const kl_test_emoji_id = "1342850037792772106" //this is a test emoji I created when we need to test an emoji feature. //somehow, this test emoji feature, but not the actual feature, does not work on the production deployment, although it does work on my local deployment of the same exact code. Very odd. I'm not even going to mark this as a task to fix because I have no idea how nor what's even wrong.
+const kl_test_emoji_id = "1342850037792772106" //this is a test emoji I created when we need to test an emoji feature.
+const kl_test_emoji_static_id = "1389488389673320602"; //as above, but not animated.
 
 // THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
 client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
@@ -677,18 +678,19 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
   // The reaction is now also fully available and the properties will be reflected accurately
   if(reaction.message.guild === null){return;}
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
-      if (reaction.count == 7 || reaction.emoji.id == kl_test_emoji_id) { //if it has n emoji (probably: n-1 going to n. Obvious failure mode: if it goes down from n back to n-1 then back up. (n+1 to n does not actually trigger this event, which is ReactionAdd, after all.) But I'd have to, like, build and manage a hashmap to prevent that. OK fine...
+      if (reaction.count == 7 || reaction.emoji.id == kl_test_emoji_id || reaction.emoji.id == kl_test_emoji_static_id) {
+        //if it has n emoji (probably: n-1 going to n. Obvious failure mode: if it goes down from n back to n-1 then back up. (n+1 to n does not actually trigger this event, which is ReactionAdd, after all.) But I'd have to, like, build and manage a hashmap to prevent that. OK fine...
         for (const channel_id of starboards[reaction.message.guild.id]){ //forward to starboard channels, with the emoji
           client.channels.fetch(channel_id).then( channel => {
             if (channel != null && channel.type === ChannelType.GuildText) {
               //Forward the message to the channel.
-              const content = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}${reaction.message.content? "\n>>> ": ""}${reaction.message.content}`;
-              console.log(content);
-              //This will error silently out on contents larger than 2000 characters, but we only add a couple (dozens?) of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slide.
-              //TODO: I can't use send_long because it doesn't (currently) handle attachments... but it could...
-              send_long(channel, reaction.emoji.imageURL()); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
+              const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
+              const emoji_image = reaction.emoji.imageURL();
+              console.log(metadata);
+              channel.send(emoji_image??""); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information. //It's channel.send because if the image url is over 2000 characters, somehow, then spliting it up will not help, actually.
+              channel.send(metadata);
               channel.send({
-                content: content,
+                content: reaction.message.content ?? "",
                 embeds: reaction.message.embeds,
                 files: Array.from(reaction.message.attachments.values())
               });
