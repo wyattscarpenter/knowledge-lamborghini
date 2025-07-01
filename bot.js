@@ -296,7 +296,6 @@ client.on(Events.MessageCreate, message => {
       }
       if (match) {
         the_function_that_does_sending_for_regex_responses(message, false, pattern, match);
-        break;
       }
     }
   }
@@ -311,7 +310,6 @@ client.on(Events.MessageCreate, message => {
       }
       if (match) {
         the_function_that_does_sending_for_regex_responses(message, true, pattern, match);
-        break;
       }
     }
   }
