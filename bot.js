@@ -698,8 +698,11 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
     for (const [channel_id, starboard_metadata] of Object.entries(starboards[reaction.message.guild.id])){ //forward to starboard channels, with the emoji
       if (
-        ( (reaction.count??0 >= starboard_metadata.quantity_required_in_order_to_forward) && !(reaction.message.id in starboard_metadata.messageIds) )
-        || (reaction.emoji.id??"" in [kl_test_emoji_id, kl_test_emoji_static_id])
+        !(reaction.message.id in starboard_metadata.messageIds)
+        && (
+          (reaction.count??0 >= starboard_metadata.quantity_required_in_order_to_forward)
+          || (reaction.emoji.id??"" in [kl_test_emoji_id, kl_test_emoji_static_id])
+        )
       ) {
         client.channels.fetch(channel_id).then( channel => {
           if (channel != null && channel.type === ChannelType.GuildText) {
@@ -712,7 +715,9 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
             reaction.message.forward(channel);
           }
         });
+        starboards[reaction.message.guild.id][reaction.message.channelId].messageIds.push(reaction.message.id);
       }
     }
+    fs.writeFile("starboards.json", pretty_string(starboards), console_log_if_not_null); //update record on disk
   }
 });
