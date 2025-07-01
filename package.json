@@ -4,7 +4,7 @@
   "version": "2.8.2-dev",
   "main": "bot.js",
   "scripts": {
-    "start": "nodemon bot.js --watch bot.js",
+    "start": "node bot.js --watch bot.js",
     "check": "tsc --version && tsc --checkJs --noEmit --resolveJsonModule --skipLibCheck --lib es2022,dom bot.js --strict --noImplicitAny false",
     "tsc": "tsc --all"
   },
@@ -21,8 +21,7 @@
     "chrono-node": "^2.6.3",
     "discord.js": "^14.18.0",
     "fastest-levenshtein": "1.0.12",
-    "nicedice": "~1.0.2",
-    "nodemon": "^3.1.9"
+    "nicedice": "~1.0.2"
   },
   "engines": {
     "node": ">=23.0.0",
