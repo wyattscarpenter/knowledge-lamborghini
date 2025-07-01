@@ -279,45 +279,22 @@ client.on(Events.MessageCreate, message => {
     set_response(message, true, true, true);
   }
 
-  //TODO: refactor this a little
   //TODO: fix subtle bug (where setting a regex is also detected by the regex), by moving the detection up above the setting. (The converse behavior, where unsetting a regex is also detected by the regex, is acceptable. So long as the response prints before the unset message.)
   // Responses
   if (responses[channel.id] && m in responses[channel.id]) { //guard against empty responses set for this channel
-    possibly_send_responses(message);
+    send_response(message);
   }
   if (server_responses[message.guild.id] && m in server_responses[message.guild.id]) { //guard against empty responses set for this channel
-    possibly_send_responses(message, true);
+    send_response(message, true);
   }
   if (m in global_responses) {
     channel.send(global_responses[m]);
   }
-  // Regex response matching (channel)
   if (regex_responses[channel.id]) {
-    for (const [pattern, responses] of Object.entries(regex_responses[channel.id])) {
-      let match;
-      try {
-        match = message.content.match(new RegExp(pattern, "i"));
-      } catch (e) {
-        continue; // skip invalid regex
-      }
-      if (match) {
-        possibly_send_regex_responses(message, false, pattern, match);
-      }
-    }
+    possibly_send_regex_responses(message, regex_responses[channel.id]);
   }
-  // Regex response matching (server)
   if (server_regex_responses[message.guild.id]) {
-    for (const [pattern, responses] of Object.entries(server_regex_responses[message.guild.id])) {
-      let match;
-      try {
-        match = message.content.match(new RegExp(pattern, "i"));
-      } catch (e) {
-        continue;
-      }
-      if (match) {
-        possibly_send_regex_responses(message, true, pattern, match);
-      }
-    }
+    possibly_send_regex_responses(message, regex_responses[message.guild.id])
   }
 
   const brazilmatch = m.match(/^to ?bras?z?il ?(.*)$/i)
@@ -534,7 +511,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   send_long( message.channel, possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+mode_announcement+"set to "+pretty_string(response_container[response_container_indexer][keyword]) );
 }
 
-function possibly_send_responses(message, for_server=false){
+function send_response(message, for_server=false){
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild.id : message.channel.id;
   
@@ -561,7 +538,21 @@ function possibly_send_responses(message, for_server=false){
   }
 }
 
-function possibly_send_regex_responses(message, for_server=false, pattern, match){
+function possibly_send_regex_responses(message, regexes_object) {
+  for (const [pattern, responses] of Object.entries(regexes_object)) {
+    let match;
+    try {
+      match = message.content.match(new RegExp(pattern, "i"));
+    } catch (e) {
+      continue; // skip invalid regex
+    }
+    if (match) {
+      send_regex_responses(message, false, pattern, match);
+    }
+  }
+}
+
+function send_regex_responses(message, for_server=false, pattern, match){
   // This function duplicates a number of things from the analogous non-regex function, because it's AI slop,
   // but, whatever; it's fine.
   const response_container = for_server ? server_regex_responses : regex_responses;
