@@ -77,19 +77,21 @@ client.on('ready', () => {
 });
 
 client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member leaves a guild, or is kicked."
-  if ( track_leaves[member.guild.id] ) {
-    for (const channelId of track_leaves[member.guild.id]){
-      client.channels.fetch(channelId).then( channel => {
-        if (channel === null || channel.type !== ChannelType.GuildText) {
-          console.log("channel I wanted to tell about a member leaving was null or not a GuildText, which is surprising, and I can't send the message.");
-          console.log(channel, member.guild, member.user.toString())
-          return;
+  if (!member.user.bot) { // If we try to send a message to a server we're kick from, we crash!
+    if ( track_leaves[member.guild.id] ) {
+      for (const channelId of track_leaves[member.guild.id]){
+        client.channels.fetch(channelId).then( channel => {
+          if (channel === null || channel.type !== ChannelType.GuildText) {
+            console.log("channel I wanted to tell about a member leaving was null or not a GuildText, which is surprising, and I can't send the message.");
+            console.log(channel, member.guild, member.user.toString())
+            return;
+          }
+          channel.send(
+            member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is gone from the server (left, kicked, or banned)."
+          )
         }
-        channel.send(
-          member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is gone from the server (left, kicked, or banned)."
-        )
+        );
       }
-      );
     }
   }
 });
