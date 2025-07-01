@@ -682,9 +682,12 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
           client.channels.fetch(channel_id).then( channel => {
             if (channel != null && channel.type === ChannelType.GuildText) {
               //Forward the message to the channel.
-              //This will error silently out on contents larger than 2000 characters, but we only add a couple (dozens?) of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slide. TODO: that can't be the right approach. Surely I should send_long...
+              const content = `${reaction.emoji} (${reaction.emoji.imageURL()}) ${reaction.message.author} ${reaction.message.url}${reaction.message.content? "\n>>> ": ""}${reaction.message.content}`;
+              console.log(content);
+              //This will error silently out on contents larger than 2000 characters, but we only add a couple (dozens?) of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slide.
+              //COULD: I can't use send_long because it doesn't (currently) handle attachments... but it could...
               channel.send({
-                content: `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}${reaction.message.content? "\n>>> ": ""}${reaction.message.content}`,
+                content: content,
                 embeds: reaction.message.embeds,
                 files: Array.from(reaction.message.attachments.values())
               });
