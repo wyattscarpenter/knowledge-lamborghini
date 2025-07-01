@@ -32,7 +32,7 @@ function try_require(require_id, default_value){ // require_id is a bit baroque,
   try{
     return require(require_id);
   } catch (e) {
-    console.log(`I could not find ${require_id} (or perhaps it errored horribly), so I am using the specified default value ${JSON.stringify(default_value)}, which should be fine. Original error message first line: ${error_message_first_line_if_error(e)}`);
+    console.error(`I could not find ${require_id} (or perhaps it errored horribly), so I am using the specified default value ${JSON.stringify(default_value)}, which should be fine. Original error message first line: ${error_message_first_line_if_error(e)}`);
     return default_value;
   }
 }
@@ -87,8 +87,8 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
       for (const channelId of track_leaves[member.guild.id]){
         client.channels.fetch(channelId).then( channel => {
           if (channel === null || channel.type !== ChannelType.GuildText) {
-            console.log("channel I wanted to tell about a member leaving was null or not a GuildText, which is surprising, and I can't send the message.");
-            console.log(channel, member.guild, member.user.toString())
+            console.error("channel I wanted to tell about a member leaving was null or not a GuildText, which is surprising, and I can't send the message.");
+            console.error(channel, member.guild, member.user.toString())
             return;
           }
           channel.send(
@@ -141,7 +141,7 @@ client.on(Events.MessageCreate, message => {
     if (!r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*old\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi)){ //It's already old reddit, do nothing.
       const little_match = r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/([\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*)/ )
       if (little_match === null) {
-        console.log("little_match of the reddit link was null, which I didn't even think was possible. Logging this message and returning early...");
+        console.error("little_match of the reddit link was null, which I didn't even think was possible. Logging this message and returning early...");
         return;
       }
       const target = little_match[1]; // "target" is not here meant to have any precise technical meaning, it's just all the url stuff after the first / (almost, but not quite, a "path").
@@ -274,13 +274,9 @@ client.on(Events.MessageCreate, message => {
     channel.send(global_responses[m]);
   }
   if (regex_responses[channel.id]) {
-    console.log("CHANNEL REGEXING");
-    console.log(regex_responses[channel.id]);
     possibly_send_regex_responses(message, false, regex_responses[channel.id]);
   }
   if (server_regex_responses[message.guild.id]) {
-    console.log("SERVER REGEXING");
-    console.log(server_regex_responses[message.guild.id]);
     possibly_send_regex_responses(message, true, server_regex_responses[message.guild.id])
   }
 
@@ -369,6 +365,7 @@ client.on(Events.MessageCreate, message => {
 //implementation functions
 
 function update_record_on_disk(record_filename, object_value){
+  console.log("Writing updates to", record_filename);
   return fs.writeFile(record_filename, pretty_string(object_value), console_log_if_not_null);
 }
 
@@ -401,7 +398,7 @@ function whos_that_pokemon(channel, original_message_link){
       resp.on('end', () => {
         const filey_match = data.match(/"File[\s\S]*"/);
         if (filey_match === null){
-          console.log("filely_match of the 'pokemon' file name was null, which I didn't even think was possible. Logging this message and returning early...");
+          console.error("filely_match of the 'pokemon' file name was null, which I didn't even think was possible. Logging this message and returning early...");
           return;
         }
         const id = JSON.parse(filey_match[0]);
@@ -418,7 +415,7 @@ function whos_that_pokemon(channel, original_message_link){
       });
     }
   ).on("error", (err) => { /*retry on error*/
-    console.log(err);
+    console.error("Retrying subsequent to the error:", err);
     whos_that_pokemon(channel, original_message_link);
   });
   req.end();
@@ -481,7 +478,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
       new RegExp(keyword, "i")
     } catch(e) {
       const explainer = "Invalid regex " + JSON.stringify(keyword) + ". Here is the problem: " + e;
-      console.log(explainer);
+      console.error(explainer);
       send_long(message.channel, explainer);
       return;
     }
@@ -542,7 +539,7 @@ function send_response(message, for_server=false){
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild.id : message.channel.id;
 
-  const r = response_container[response_container_indexer][message.content.toLowerCase()]; //the response might be a string or an object mapping from strings to weights.
+  const r = response_container[response_container_indexer][message.content.toLowerCase()]; //LEGACY JSON: the response might be a string or an object mapping from strings to weights.
   if(is_string(r)){
     console.log("string response", r);
     r && message.channel.send(r); //guard against sending an empty string (which is a crashing error for us... maybe fix that with a wrapping function later?)
@@ -665,8 +662,8 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
   client.channels.fetch(remindme.message.channelId).then( channel => {
     if (channel === null || channel.type !== ChannelType.GuildText) {
-      console.log("channel I wanted to tell about a remindme was null or not a GuildText, which is surprising, and I can't send the message.");
-      console.log(remindme)
+      console.error("channel I wanted to tell about a remindme was null or not a GuildText, which is surprising, and I can't send the message.");
+      console.error(remindme)
       return;
     }
     channel.send( { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} } );
@@ -678,9 +675,9 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
 function array_but_without(array, undesirable_item) { return array.filter(item => item !== undesirable_item); } // This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
 
 function console_log_if_not_null(object){
-  // fs.writeFile wants us to have a callback for handling errors, and there's no point writing to the console.log if the error is null (no error)
+  // fs.writeFile wants us to have a callback for handling errors, and there's no point logging if the error is null (no error)
   if (object !== null){
-    console.log(object)
+    console.error(object)
   }
 }
 
@@ -702,26 +699,30 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
     for (const [channel_id, starboard_metadata] of Object.entries(starboards[reaction.message.guild.id])){ //forward to starboard channels, with the emoji
       if (
-        !(reaction.message.id in starboard_metadata.messageIds)
+        !starboard_metadata.messageIds.includes(reaction.message.id)
         && (
-          (reaction.count??0 >= starboard_metadata.quantity_required_in_order_to_forward)
-          || (reaction.emoji.id??"" in [kl_test_emoji_id, kl_test_emoji_static_id])
+          (reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward
+          || [kl_test_emoji_id, kl_test_emoji_static_id].includes(reaction.emoji.id??"")
         )
       ) {
         client.channels.fetch(channel_id).then( channel => {
           if (channel != null && channel.type === ChannelType.GuildText) {
+            if(reaction.message.guild === null){return;}
             //Forward the message to the channel.
             const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
             const emoji_image = reaction.emoji.imageURL();
-            console.log(metadata);
+            //console.log(metadata);
             channel.send(emoji_image??""); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information. //It's channel.send because if the image url is over 2000 characters, somehow, then spliting it up will not help, actually.
             channel.send(metadata);
             reaction.message.forward(channel);
+            //console.log("starboards pre", starboards)
+            starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
+            //console.log("starboards post", starboards)
+            update_record_on_disk("starboards.json", starboards);
           }
         });
-        starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
+        
       }
     }
-    update_record_on_disk("starboards.json", starboards);
   }
 });
