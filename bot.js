@@ -38,7 +38,7 @@ function try_require(require_id, default_value){ // require_id is a bit baroque,
 }
 
 //These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
-// the number is the weight. I can't figure out how to label it like you would the key type of an object.
+// The number is the number of "tickets" aka the "weight". I can't figure out how to label it like you would the key type of an object.
 /** @type {{ [channelId: string]: { [keyword: string]: {[response: string] : number} } } }} */
 let responses = try_require("./responses.json", {});
 /** @type {{ [guildId: string]: { [keyword: string]: {[response: string] : number} } } }} */
@@ -482,11 +482,11 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
   const keyword = keyWord.toLowerCase();
   response_container[response_container_indexer] ??= {}; //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
 
-  //For LEGACY JSONs with an existing non-probabilistic response, we make it part of the new possibility range.
+  // For LEGACY JSONs with an existing non-probabilistic response, we make it part of the new possibility range.
   let current_guy = response_container[response_container_indexer][keyword];
   if(is_string(current_guy)){
-    //@ts-ignore //The type annotations don't cover the legacy format, so we must ignore the error on this line.
-    response_container[response_container_indexer][keyword] = {[current_guy]: 1}; //the extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
+    //@ts-ignore // The type annotations don't cover the legacy format, so we must ignore the error on this line.
+    response_container[response_container_indexer][keyword] = {[current_guy]: 1}; // The extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
   }
   const attachments = Array.from(message.attachments.values()).flatMap(x => x.attachment);
   const rs = response? [response].concat(attachments) : attachments;
@@ -505,7 +505,13 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
         }
       }
     } else {
-      delete response_container[response_container_indexer][keyword];
+      if (response_container[response_container_indexer][keyword] === undefined) {
+        send_long(message.channel, JSON.stringify(keyword)+" already wasn't "+regex_announcement+"set.");
+        all_ok = false;
+      } else {
+        delete response_container[response_container_indexer][keyword];
+        any_ok = true;
+      }
     }
   } else {
     if (rs.length) {
