@@ -217,9 +217,7 @@ client.on(Events.MessageCreate, message => {
     message.channel.send(nicedice_roll_result.value+"\n`"+nicedice_roll_result.roll_record+"`");
   }
 
-  //extremely dumb features
-  //who's that pokemon
-  if (/.*wh.*po.?k.?t?\s?mon.*/.test(m)) {
+  if (/.*wh.*po.?k.?t?\s?mon.*/.test(m)) { // "who's that pokemon", and many other strings besides...
     whos_that_pokemon(channel, message.url)
   }
   if(pokemon_answers[channel.id]){
@@ -258,6 +256,28 @@ client.on(Events.MessageCreate, message => {
     console.log(server_responses[message.guild.id]);
     send_long( channel, "Server-specific regex responses: "+pretty_string(server_regex_responses[message.guild.id]) );
   }
+
+  // To prevent a subtle bug (where setting a regex is also detected by the regex), response detection is before setting. (The converse behavior, where unsetting a regex is also detected by the regex, is acceptable. So long as the response prints before the unset message.)
+  if (responses[channel.id] && m in responses[channel.id]) { //guard against empty responses set for this channel
+    send_response(message);
+  }
+  if (server_responses[message.guild.id] && m in server_responses[message.guild.id]) { //guard against empty responses set for this channel
+    send_response(message, true);
+  }
+  if (m in global_responses) {
+    channel.send(global_responses[m]);
+  }
+  if (regex_responses[channel.id]) {
+    console.log("CHANNEL REGEXING");
+    console.log(regex_responses[channel.id]);
+    possibly_send_regex_responses(message, false, regex_responses[channel.id]);
+  }
+  if (server_regex_responses[message.guild.id]) {
+    console.log("SERVER REGEXING");
+    console.log(server_regex_responses[message.guild.id]);
+    possibly_send_regex_responses(message, true, server_regex_responses[message.guild.id])
+  }
+
   if (m.startsWith("set-for-channel ")) {
     set_response(message, false);
   }
@@ -281,28 +301,6 @@ client.on(Events.MessageCreate, message => {
   }
   if (m.startsWith("unset-regex-for-server ") || m.startsWith("unset-regex ")) {
     set_response(message, true, true, true);
-  }
-
-  //TODO: fix subtle bug (where setting a regex is also detected by the regex), by moving the detection up above the setting. (The converse behavior, where unsetting a regex is also detected by the regex, is acceptable. So long as the response prints before the unset message.)
-  // Responses
-  if (responses[channel.id] && m in responses[channel.id]) { //guard against empty responses set for this channel
-    send_response(message);
-  }
-  if (server_responses[message.guild.id] && m in server_responses[message.guild.id]) { //guard against empty responses set for this channel
-    send_response(message, true);
-  }
-  if (m in global_responses) {
-    channel.send(global_responses[m]);
-  }
-  if (regex_responses[channel.id]) {
-    console.log("CHANNEL REGEXING");
-    console.log(regex_responses[channel.id]);
-    possibly_send_regex_responses(message, false, regex_responses[channel.id]);
-  }
-  if (server_regex_responses[message.guild.id]) {
-    console.log("SERVER REGEXING");
-    console.log(server_regex_responses[message.guild.id]);
-    possibly_send_regex_responses(message, true, server_regex_responses[message.guild.id])
   }
 
   const brazilmatch = m.match(/^to ?bras?z?il ?(.*)$/i)
