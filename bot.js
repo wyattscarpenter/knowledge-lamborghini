@@ -52,7 +52,7 @@ let remindmes = try_require('./remindmes.json', []); //This loads the remindmes 
 //The type of track_leaves is an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string[]; } in typescript.
 /** @type {{ [guildId: string]: string[] }} */
 let track_leaves = try_require('./track_leaves.json', {});
-// The type of starboards is an object mapping from guildIds to an object mapping from channelIds to an integer that is the cutoff for the number of reactions needed to forward to the starboard, and an array of messageIds (of already-included messages).
+// The type of starboards is an object mapping from guildIds to an object mapping from channelIds to an object containing an integer that is the cutoff for the number of reactions needed to forward to the starboard, and an array of messageIds (of already-included messages).
 /** @type {{ [guildId: string]: { [channelId: string]: { quantity_required_in_order_to_forward: number, messageIds: string[] } } }} */
 let starboards = try_require('./starboards.json', {});
 /** @type string */
@@ -198,15 +198,15 @@ client.on(Events.MessageCreate, message => {
         starboards[message.guild.id][message.channel.id] = {"quantity_required_in_order_to_forward": n, messageIds: []};
       }
     } else {
-      //remember, this is a "Computed Property Name"
+      //remember, brackets in the property name is a "Computed Property Name"
       starboards[message.guild.id] = {[message.channel.id]: {"quantity_required_in_order_to_forward": n, messageIds: []}};
     }
     fs.writeFile("starboards.json", pretty_string(starboards), console_log_if_not_null); //update record on disk
     message.reply(`A starboard will be kept here. (Any ${n}-emojied message will be forwarded here.)`);
   }
   if (m.startsWith("don't keep a starboard here")) {
-    if ( starboards[message.guild.id] ){
-      starboards[message.guild.id] = array_but_without(starboards[message.guild.id], message.channel.id);
+    if (starboards[message.guild.id]){
+      delete starboards[message.guild.id][message.channel.id];
     }
     fs.writeFile("starboards.json", pretty_string(starboards), console_log_if_not_null); //update record on disk
     message.reply("No starboard will be kept here.");
@@ -696,22 +696,23 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
   // Now the message has been cached and is fully available. The reaction is now also fully available and the properties will be reflected accurately.
   if(reaction.message.guild === null){return;}
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
-    //todo: update this for the new logic.
-    if (reaction.count == 7 || reaction.emoji.id == kl_test_emoji_id || reaction.emoji.id == kl_test_emoji_static_id) {
-      //if it has n emoji (probably: n-1 going to n. Obvious failure mode: if it goes down from n back to n-1 then back up. (n+1 to n does not actually trigger this event, which is ReactionAdd, after all.) But I'd have to, like, build and manage a hashmap to prevent that. OK fine...
-        for (const channel_id of starboards[reaction.message.guild.id]){ //forward to starboard channels, with the emoji
-          client.channels.fetch(channel_id).then( channel => {
-            if (channel != null && channel.type === ChannelType.GuildText) {
-              //Forward the message to the channel.
-              const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
-              const emoji_image = reaction.emoji.imageURL();
-              console.log(metadata);
-              channel.send(emoji_image??""); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information. //It's channel.send because if the image url is over 2000 characters, somehow, then spliting it up will not help, actually.
-              channel.send(metadata);
-              reaction.message.forward(channel);
-            }
-          });
-        }
+    for (const [channel_id, starboard_metadata] of Object.entries(starboards[reaction.message.guild.id])){ //forward to starboard channels, with the emoji
+      if (
+        ( (reaction.count??0 >= starboard_metadata.quantity_required_in_order_to_forward) && !(reaction.message.id in starboard_metadata.messageIds) )
+        || (reaction.emoji.id??"" in [kl_test_emoji_id, kl_test_emoji_static_id])
+      ) {
+        client.channels.fetch(channel_id).then( channel => {
+          if (channel != null && channel.type === ChannelType.GuildText) {
+            //Forward the message to the channel.
+            const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
+            const emoji_image = reaction.emoji.imageURL();
+            console.log(metadata);
+            channel.send(emoji_image??""); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information. //It's channel.send because if the image url is over 2000 characters, somehow, then spliting it up will not help, actually.
+            channel.send(metadata);
+            reaction.message.forward(channel);
+          }
+        });
       }
+    }
   }
 });
