@@ -253,6 +253,10 @@ client.on(Events.MessageCreate, message => {
     send_long( channel, "Channel-specific responses: "+pretty_string(responses[channel.id]) );
     console.log(server_responses[message.guild.id]);
     send_long( channel, "Server-specific responses: "+pretty_string(server_responses[message.guild.id]) );
+    console.log(responses[channel.id]);
+    send_long( channel, "Channel-specific responses: "+pretty_string(regex_responses[channel.id]) );
+    console.log(server_responses[message.guild.id]);
+    send_long( channel, "Server-specific responses: "+pretty_string(server_regex_responses[message.guild.id]) );
   }
   if (m.startsWith("set-for-channel ")) {
     set_response(message, false);
