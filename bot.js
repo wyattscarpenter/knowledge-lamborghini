@@ -255,38 +255,38 @@ client.on(Events.MessageCreate, message => {
     send_long( channel, "Server-specific responses: "+pretty_string(server_responses[message.guild.id]) );
   }
   if (m.startsWith("set-for-channel ")) {
-    the_function_that_does_setting_for_responses(message, false);
+    set_response(message, false);
   }
   if (m.startsWith("set-for-server ") || m.startsWith("set ")) {
-    the_function_that_does_setting_for_responses(message, true);
+    set_response(message, true);
   }
   if (m.startsWith("unset-for-channel ")) {
-    the_function_that_does_setting_for_responses(message, false, true);
+    set_response(message, false, true);
   }
   if (m.startsWith("unset-for-server ") || m.startsWith("unset ")) {
-    the_function_that_does_setting_for_responses(message, true, true);
+    set_response(message, true, true);
   }
   if (m.startsWith("set-regex-for-channel ")) {
-    the_function_that_does_setting_for_responses(message, false, false, true);
+    set_response(message, false, false, true);
   }
   if (m.startsWith("set-regex-for-server ") || m.startsWith("set-regex ")) {
-    the_function_that_does_setting_for_responses(message, true, false, true);
+    set_response(message, true, false, true);
   }
   if (m.startsWith("unset-regex-for-channel ")) {
-    the_function_that_does_setting_for_responses(message, false, true, true);
+    set_response(message, false, true, true);
   }
   if (m.startsWith("unset-regex-for-server ") || m.startsWith("unset-regex ")) {
-    the_function_that_does_setting_for_responses(message, true, true, true);
+    set_response(message, true, true, true);
   }
 
   //TODO: refactor this a little
   //TODO: fix subtle bug (where setting a regex is also detected by the regex), by moving the detection up above the setting. (The converse behavior, where unsetting a regex is also detected by the regex, is acceptable. So long as the response prints before the unset message.)
   // Responses
   if (responses[channel.id] && m in responses[channel.id]) { //guard against empty responses set for this channel
-    the_function_that_does_sending_for_responses(message);
+    possibly_send_responses(message);
   }
   if (server_responses[message.guild.id] && m in server_responses[message.guild.id]) { //guard against empty responses set for this channel
-    the_function_that_does_sending_for_responses(message, true);
+    possibly_send_responses(message, true);
   }
   if (m in global_responses) {
     channel.send(global_responses[m]);
@@ -301,7 +301,7 @@ client.on(Events.MessageCreate, message => {
         continue; // skip invalid regex
       }
       if (match) {
-        the_function_that_does_sending_for_regex_responses(message, false, pattern, match);
+        possibly_send_regex_responses(message, false, pattern, match);
       }
     }
   }
@@ -315,7 +315,7 @@ client.on(Events.MessageCreate, message => {
         continue;
       }
       if (match) {
-        the_function_that_does_sending_for_regex_responses(message, true, pattern, match);
+        possibly_send_regex_responses(message, true, pattern, match);
       }
     }
   }
@@ -465,7 +465,7 @@ function is_string(variable){
   return (typeof variable === 'string')
 }
 
-function the_function_that_does_setting_for_responses(message, for_server=false, unset=false, regex=false){
+function set_response(message, for_server=false, unset=false, regex=false){
   const response_container = regex? (for_server ? server_regex_responses : regex_responses) : (for_server? server_responses : responses);
   const response_container_indexer = regex? (for_server ? message.guild.id : message.channel.id) : (for_server? message.guild.id : message.channel.id);
   const saving_file_name = (for_server? "server_" : "") + (for_server? "regex_" : "") + "responses.json";
@@ -534,7 +534,7 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
   send_long( message.channel, possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+mode_announcement+"set to "+pretty_string(response_container[response_container_indexer][keyword]) );
 }
 
-function the_function_that_does_sending_for_responses(message, for_server=false){
+function possibly_send_responses(message, for_server=false){
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild.id : message.channel.id;
   
@@ -561,7 +561,7 @@ function the_function_that_does_sending_for_responses(message, for_server=false)
   }
 }
 
-function the_function_that_does_sending_for_regex_responses(message, for_server=false, pattern, match){
+function possibly_send_regex_responses(message, for_server=false, pattern, match){
   // This function duplicates a number of things from the analogous non-regex function, because it's AI slop,
   // but, whatever; it's fine.
   const response_container = for_server ? server_regex_responses : regex_responses;
