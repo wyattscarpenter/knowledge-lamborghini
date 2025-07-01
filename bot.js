@@ -506,8 +506,9 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
       }
     } else {
       if (response_container[response_container_indexer][keyword] === undefined) {
-        send_long(message.channel, JSON.stringify(keyword)+" already wasn't "+mode_announcement+"set.");
+        send_long(message.channel, JSON.stringify(keyword)+" already isn't "+mode_announcement+"set.");
         all_ok = false;
+        return; //early return for great justice
       } else {
         delete response_container[response_container_indexer][keyword];
         any_ok = true;
