@@ -254,9 +254,9 @@ client.on(Events.MessageCreate, message => {
     console.log(server_responses[message.guild.id]);
     send_long( channel, "Server-specific responses: "+pretty_string(server_responses[message.guild.id]) );
     console.log(responses[channel.id]);
-    send_long( channel, "Channel-specific responses: "+pretty_string(regex_responses[channel.id]) );
+    send_long( channel, "Channel-specific regex responses: "+pretty_string(regex_responses[channel.id]) );
     console.log(server_responses[message.guild.id]);
-    send_long( channel, "Server-specific responses: "+pretty_string(server_regex_responses[message.guild.id]) );
+    send_long( channel, "Server-specific regex responses: "+pretty_string(server_regex_responses[message.guild.id]) );
   }
   if (m.startsWith("set-for-channel ")) {
     set_response(message, false);
@@ -297,12 +297,12 @@ client.on(Events.MessageCreate, message => {
   if (regex_responses[channel.id]) {
     console.log("CHANNEL REGEXING");
     console.log(regex_responses[channel.id]);
-    possibly_send_regex_responses(message, regex_responses[channel.id]);
+    possibly_send_regex_responses(message, false, regex_responses[channel.id]);
   }
   if (server_regex_responses[message.guild.id]) {
     console.log("SERVER REGEXING");
     console.log(server_regex_responses[message.guild.id]);
-    possibly_send_regex_responses(message, server_regex_responses[message.guild.id])
+    possibly_send_regex_responses(message, true, server_regex_responses[message.guild.id])
   }
 
   const brazilmatch = m.match(/^to ?bras?z?il ?(.*)$/i)
@@ -557,7 +557,7 @@ function send_response(message, for_server=false){
   }
 }
 
-function possibly_send_regex_responses(message, regexes_object) {
+function possibly_send_regex_responses(message, for_server, regexes_object) {
   for (const [pattern, responses] of Object.entries(regexes_object)) {
     let match;
     try {
@@ -566,12 +566,12 @@ function possibly_send_regex_responses(message, regexes_object) {
       continue; // skip invalid regex
     }
     if (match) {
-      send_regex_responses(message, false, pattern, match);
+      send_regex_responses(message, for_server, pattern, match);
     }
   }
 }
 
-function send_regex_responses(message, for_server=false, pattern, match){
+function send_regex_responses(message, for_server, pattern, match){
   // This function duplicates a number of things from the analogous non-regex function, because it's AI slop,
   // but, whatever; it's fine.
   const response_container = for_server ? server_regex_responses : regex_responses;
