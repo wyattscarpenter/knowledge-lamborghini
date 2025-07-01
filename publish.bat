@@ -4,4 +4,3 @@ git tag v%1
 git push
 git push --tag
 npm publish
-

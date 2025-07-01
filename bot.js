@@ -138,7 +138,7 @@ client.on(Events.MessageCreate, message => {
   // Here we "check" if null, using ??, to avoid crash on trying to iterate over null. having done that, we actually do the thing:
   for (let r of m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi ) ?? [] ){
     //huge character list from https://stackoverflow.com/a/1547940
-    //note that it was easier to detect reddit urls and then futz with them each individually than do some crazy capture-jutsu. 
+    //note that it was easier to detect reddit urls and then futz with them each individually than do some crazy capture-jutsu.
     if (!r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*old\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi)){ //It's already old reddit, do nothing.
       const little_match = r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/([\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*)/ )
       if (little_match === null) {
@@ -149,7 +149,7 @@ client.on(Events.MessageCreate, message => {
       channel.send("<https://old.reddit.com/"+target+">"); //note that urls followed by eg a comma might include the comma, since it's technically a valid url to have that character at the end. This is arguably undesireable behavior.
     }
   }
-  
+
   //To post book
   if (m === 'think!') {
     if(texts[channel.id]===undefined){
@@ -353,8 +353,8 @@ client.on(Events.MessageCreate, message => {
       "https://www.youtube.com/watch?v=MCT80HJWQ2A", // jonathan frakes telling you you're right for 41 seconds
       "https://www.youtube.com/watch?v=9S1EzkRpelY", // Jonathan Frakes Asks You Things //this is also the one the "jonathan frakes" responses are drawn from
       "https://www.youtube.com/watch?v=GxPSApAHakg", // Jonathan Frakes Interrogates You
-      "https://www.youtube.com/watch?v=n-NnxdZqPOE", // Jonathan Frakes Interrogates You With Nonsense 
-      "https://www.youtube.com/watch?v=XPEKayKHwXA", // Commander Riker (Jonathan Frakes) Telling Us It's Fake 
+      "https://www.youtube.com/watch?v=n-NnxdZqPOE", // Jonathan Frakes Interrogates You With Nonsense
+      "https://www.youtube.com/watch?v=XPEKayKHwXA", // Commander Riker (Jonathan Frakes) Telling Us It's Fake
       "https://www.youtube.com/watch?v=GM-e46xdcUo", // jonathan frakes telling you you're wrong for 47 seconds //the one that started it all :wistful:
     ]));
   }
@@ -531,7 +531,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
 function send_response(message, for_server=false){
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild.id : message.channel.id;
-  
+
   const r = response_container[response_container_indexer][message.content.toLowerCase()]; //the response might be a string or an object mapping from strings to weights.
   if(is_string(r)){
     console.log("string response", r);
@@ -668,7 +668,7 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
 function array_but_without(array, undesirable_item) { return array.filter(item => item !== undesirable_item); } // This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
 
 function console_log_if_not_null(object){
-  // fs.writeFile wants us to have a callback for handling errors, and there's no point writing to the console.log if the error is null (no error) 
+  // fs.writeFile wants us to have a callback for handling errors, and there's no point writing to the console.log if the error is null (no error)
   if (object !== null){
     console.log(object)
   }
@@ -691,8 +691,19 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
   // The reaction is now also fully available and the properties will be reflected accurately
   if(reaction.message.guild === null){return;}
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
-      if (reaction.count == 7 || reaction.emoji.id == kl_test_emoji_id || reaction.emoji.id == kl_test_emoji_static_id) {
-        //if it has n emoji (probably: n-1 going to n. Obvious failure mode: if it goes down from n back to n-1 then back up. (n+1 to n does not actually trigger this event, which is ReactionAdd, after all.) But I'd have to, like, build and manage a hashmap to prevent that. OK fine...
+    //This hot-updates a previous LEGACY JSON format (array) that this data was in (in its development phase). So, eventually this can all be removed (everthing within this first if statement below). However, I will probably just leave it in indefinitely. Or at least until it annoys me. And at least until a major version bump.
+    //TODO: update this, beat it into the right shape
+    if (Array.isArray(starboards[message.guild.id])) {
+      const newStarboard = {};
+      for (const channelId of starboards[message.guild.id]) {
+        newStarboard[channelId] = { quantity_required_in_order_to_forward: default_n, messageIds: [] };
+      }
+      starboards[message.guild.id] = newStarboard;
+    }
+
+    //todo: update this for the new logic.
+    if (reaction.count == 7 || reaction.emoji.id == kl_test_emoji_id || reaction.emoji.id == kl_test_emoji_static_id) {
+      //if it has n emoji (probably: n-1 going to n. Obvious failure mode: if it goes down from n back to n-1 then back up. (n+1 to n does not actually trigger this event, which is ReactionAdd, after all.) But I'd have to, like, build and manage a hashmap to prevent that. OK fine...
         for (const channel_id of starboards[reaction.message.guild.id]){ //forward to starboard channels, with the emoji
           client.channels.fetch(channel_id).then( channel => {
             if (channel != null && channel.type === ChannelType.GuildText) {
