@@ -492,7 +492,7 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
   const rs = response? [response].concat(attachments) : attachments;
   let all_ok = true;
   let any_ok = false;
-  let regex_announcement = regex? "(regex) " : "";
+  let mode_announcement = "(" + (for_server? "server": "channel") + (regex? " regex" : "")+ ") ";
   if (unset) {
     if (rs.length) { //did you know empty arrays are truey in javascript? even though empty strings are falsey? Curious.
       for (const r of rs) {
@@ -501,12 +501,12 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
           any_ok = true;
         } else {
           all_ok = false;
-          send_long(message.channel, r + " not found in "+regex_announcement + JSON.stringify(keyword));
+          send_long(message.channel, r + " not found in "+mode_announcement + JSON.stringify(keyword));
         }
       }
     } else {
       if (response_container[response_container_indexer][keyword] === undefined) {
-        send_long(message.channel, JSON.stringify(keyword)+" already wasn't "+regex_announcement+"set.");
+        send_long(message.channel, JSON.stringify(keyword)+" already wasn't "+mode_announcement+"set.");
         all_ok = false;
       } else {
         delete response_container[response_container_indexer][keyword];
@@ -521,7 +521,7 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
         any_ok = true;
       }
     } else {
-      send_long(message.channel, "What do you want me to set it to?");
+      send_long(message.channel, "What do you want me to "+mode_announcement+"set it to?");
       all_ok = false; // set this just in case I refactor out the early return later
       return; //early return for great justice
     }
@@ -529,7 +529,7 @@ function the_function_that_does_setting_for_responses(message, for_server=false,
   fs.writeFile(saving_file_name, JSON.stringify(response_container), console_log_if_not_null);
   const possibly_ok_str = all_ok? "OK, " : ""; // This remark indicates that the execution went off without a hitch.
   const possibly_now_str = any_ok? "now " : ""; // This remark indicates that there was a change.
-  send_long( message.channel, possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+regex_announcement+"set to "+pretty_string(response_container[response_container_indexer][keyword]) );
+  send_long( message.channel, possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+mode_announcement+"set to "+pretty_string(response_container[response_container_indexer][keyword]) );
 }
 
 function the_function_that_does_sending_for_responses(message, for_server=false){
