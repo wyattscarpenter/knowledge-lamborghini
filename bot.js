@@ -460,6 +460,15 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const keyword = keyWord.toLowerCase();
   response_container[response_container_indexer] ??= {}; //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
 
+  if (regex) { //validate the regex
+    try {
+      new RegExp(keyword, "i")
+    } catch(e) {
+      send_long(message.channel, "Invalid regex " + JSON.stringify(keyword) + " Here is the problem: " + e);
+      return;
+    }
+  }
+
   // For LEGACY JSONs with an existing non-probabilistic response, we make it part of the new possibility range.
   let current_guy = response_container[response_container_indexer][keyword];
   if(is_string(current_guy)){
