@@ -689,11 +689,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
               console.log(metadata);
               channel.send(emoji_image??""); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information. //It's channel.send because if the image url is over 2000 characters, somehow, then spliting it up will not help, actually.
               channel.send(metadata);
-              channel.send({
-                content: reaction.message.content ?? "",
-                embeds: reaction.message.embeds,
-                files: Array.from(reaction.message.attachments.values())
-              });
+              reaction.message.forward(channel);
             }
           });
         }
