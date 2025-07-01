@@ -176,14 +176,14 @@ client.on(Events.MessageCreate, message => {
     } else {
       track_leaves[message.guild.id] = [message.channel.id];
     }
-    fs.writeFile("track_leaves.json", pretty_string(track_leaves), console_log_if_not_null); //update record on disk
+    update_record_on_disk("track_leaves.json", track_leaves);
     message.reply("A record will be kept here.");
   }
   if (m.startsWith('death has no doors')) {
     if ( track_leaves[message.guild.id] ){
       track_leaves[message.guild.id] = array_but_without(track_leaves[message.guild.id], message.channel.id);
     }
-    fs.writeFile("track_leaves.json", pretty_string(track_leaves), console_log_if_not_null); //update record on disk
+    update_record_on_disk("track_leaves.json", track_leaves);
     message.reply("No record will be kept here.");
   }
 
@@ -201,14 +201,14 @@ client.on(Events.MessageCreate, message => {
       //remember, brackets in the property name is a "Computed Property Name"
       starboards[message.guild.id] = {[message.channel.id]: {"quantity_required_in_order_to_forward": n, messageIds: []}};
     }
-    fs.writeFile("starboards.json", pretty_string(starboards), console_log_if_not_null); //update record on disk
+    update_record_on_disk("starboards.json", starboards);
     message.reply(`A starboard will be kept here. (Any ${n}-emojied message will be forwarded here.)`);
   }
   if (m.startsWith("don't keep a starboard here")) {
     if (starboards[message.guild.id]){
       delete starboards[message.guild.id][message.channel.id];
     }
-    fs.writeFile("starboards.json", pretty_string(starboards), console_log_if_not_null); //update record on disk
+    update_record_on_disk("starboards.json", starboards);
     message.reply("No starboard will be kept here.");
   }
 
@@ -242,7 +242,7 @@ client.on(Events.MessageCreate, message => {
         "Normalized Distance (lower is better): "+normalized_distance+" Threshold: "+distance_threshold
       );
       delete pokemon_answers[channel.id];
-      fs.writeFile("pokemon_answers.json", pretty_string(pokemon_answers), console_log_if_not_null); //update record on disk
+      update_record_on_disk("pokemon_answers.json", pokemon_answers);
     }
   }
   if (remindme_regex.test(m)) {
@@ -368,6 +368,10 @@ client.on(Events.MessageCreate, message => {
 
 //implementation functions
 
+function update_record_on_disk(record_filename, object_value){
+  return fs.writeFile(record_filename, pretty_string(object_value), console_log_if_not_null);
+}
+
 function pretty_string(object){
   return JSON.stringify(object, null, 4);
 }
@@ -410,7 +414,7 @@ function whos_that_pokemon(channel, original_message_link){
         //Technically I guess the original_message_link should be what we get returned from channel.send, .url, but that's more trouble than it's worth, so we just use the message that triggered us instead.
         pokemon_answers[channel.id] = {answer: id.match(/File:(.*)\.\w*?$/)[1], original_message_link: original_message_link}
         console.log(pokemon_answers[channel.id]); //console.log answer so I can cheat-- er, I mean, test.
-        fs.writeFile("pokemon_answers.json", pretty_string(pokemon_answers), console_log_if_not_null); //update record on disk
+        update_record_on_disk("pokemon_answers.json", pokemon_answers);
       });
     }
   ).on("error", (err) => { /*retry on error*/
@@ -528,7 +532,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
       return; //early return for great justice
     }
   }
-  fs.writeFile(saving_file_name, pretty_string(response_container), console_log_if_not_null);
+  update_record_on_disk(saving_file_name, response_container);
   const possibly_ok_str = all_ok? "OK, " : ""; // This remark indicates that the execution went off without a hitch.
   const possibly_now_str = any_ok? "now " : ""; // This remark indicates that there was a change.
   send_long( message.channel, possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+mode_announcement+"set to "+pretty_string(response_container[response_container_indexer][keyword]) );
@@ -622,7 +626,7 @@ function set_remindme(message){
     //Add a remindme, making sure to commit it to the authoritative data structure, and cache that structure to file:
     const remindme = {datestamp: +d, message: message};
     remindmes.push(remindme);
-    fs.writeFile("remindmes.json", pretty_string(remindmes), console_log_if_not_null); //update record on disk
+    update_record_on_disk("remindmes.json", remindmes);
     launch_remindmes([remindme]);
   }
 }
@@ -668,7 +672,7 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
     channel.send( { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} } );
   });
   remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
-  fs.writeFile("remindmes.json", pretty_string(remindmes), console_log_if_not_null); //update record on disk
+  update_record_on_disk("remindmes.json", remindmes);
 }
 
 function array_but_without(array, undesirable_item) { return array.filter(item => item !== undesirable_item); } // This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
@@ -718,6 +722,6 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
         starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
       }
     }
-    fs.writeFile("starboards.json", pretty_string(starboards), console_log_if_not_null); //update record on disk
+    update_record_on_disk("starboards.json", starboards);
   }
 });
