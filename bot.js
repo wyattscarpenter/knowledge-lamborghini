@@ -291,10 +291,14 @@ client.on(Events.MessageCreate, message => {
     channel.send(global_responses[m]);
   }
   if (regex_responses[channel.id]) {
+    console.log("CHANNEL REGEXING");
+    console.log(regex_responses[channel.id]);
     possibly_send_regex_responses(message, regex_responses[channel.id]);
   }
   if (server_regex_responses[message.guild.id]) {
-    possibly_send_regex_responses(message, regex_responses[message.guild.id])
+    console.log("SERVER REGEXING");
+    console.log(server_regex_responses[message.guild.id]);
+    possibly_send_regex_responses(message, server_regex_responses[message.guild.id])
   }
 
   const brazilmatch = m.match(/^to ?bras?z?il ?(.*)$/i)
@@ -464,7 +468,9 @@ function set_response(message, for_server=false, unset=false, regex=false){
     try {
       new RegExp(keyword, "i")
     } catch(e) {
-      send_long(message.channel, "Invalid regex " + JSON.stringify(keyword) + " Here is the problem: " + e);
+      const explainer = "Invalid regex " + JSON.stringify(keyword) + " Here is the problem: " + e;
+      console.log(explainer);
+      send_long(message.channel, explainer);
       return;
     }
   }
