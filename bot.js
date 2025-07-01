@@ -336,7 +336,8 @@ client.on(Events.MessageCreate, message => {
       "small", "minuscule", "miniscule", "majuscule", "majestic", "smol",
       "extra large", "ok", "not doing ok :slight_frown:", "rough", "livid",
       "lively", "sauntering", "a legend", "pentakill", "*Aaargh!!!*", "a'ight",
-      "thiiiiiiiiiiiiiiiiiiiiiiiiiiis much", "long long", "unsigned long long"
+      "thiiiiiiiiiiiiiiiiiiiiiiiiiiis much", "long long", "unsigned long long",
+      "slenderman",
     ]) + ".");
   }
 
