@@ -682,10 +682,11 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
           client.channels.fetch(channel_id).then( channel => {
             if (channel != null && channel.type === ChannelType.GuildText) {
               //Forward the message to the channel.
-              const content = `${reaction.emoji} (${reaction.emoji.imageURL()}) ${reaction.message.author} ${reaction.message.url}${reaction.message.content? "\n>>> ": ""}${reaction.message.content}`;
+              const content = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}${reaction.message.content? "\n>>> ": ""}${reaction.message.content}`;
               console.log(content);
               //This will error silently out on contents larger than 2000 characters, but we only add a couple (dozens?) of characters anyway so it's fine in most cases. Hard to say how to best fix this limitation — maybe we just let this one slide.
-              //COULD: I can't use send_long because it doesn't (currently) handle attachments... but it could...
+              //TODO: I can't use send_long because it doesn't (currently) handle attachments... but it could...
+              send_long(channel, reaction.emoji.imageURL()); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
               channel.send({
                 content: content,
                 embeds: reaction.message.embeds,
