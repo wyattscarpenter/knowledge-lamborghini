@@ -279,6 +279,8 @@ client.on(Events.MessageCreate, message => {
     the_function_that_does_setting_for_responses(message, true, true, true);
   }
 
+  //TODO: refactor this a little
+  //TODO: fix subtle bug (where setting a regex is also detected by the regex), by moving the detection up above the setting. (The converse behavior, where unsetting a regex is also detected by the regex, is acceptable. So long as the response prints before the unset message.)
   // Responses
   if (responses[channel.id] && m in responses[channel.id]) { //guard against empty responses set for this channel
     the_function_that_does_sending_for_responses(message);
@@ -289,7 +291,6 @@ client.on(Events.MessageCreate, message => {
   if (m in global_responses) {
     channel.send(global_responses[m]);
   }
-
   // Regex response matching (channel)
   if (regex_responses[channel.id]) {
     for (const [pattern, responses] of Object.entries(regex_responses[channel.id])) {
