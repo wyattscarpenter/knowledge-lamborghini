@@ -464,11 +464,11 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const keyword = keyWord.toLowerCase();
   response_container[response_container_indexer] ??= {}; //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
 
-  if (regex) { //validate the regex
+  if (regex) { // Validate the regex.
     try {
       new RegExp(keyword, "i")
     } catch(e) {
-      const explainer = "Invalid regex " + JSON.stringify(keyword) + " Here is the problem: " + e;
+      const explainer = "Invalid regex " + JSON.stringify(keyword) + ". Here is the problem: " + e;
       console.log(explainer);
       send_long(message.channel, explainer);
       return;
