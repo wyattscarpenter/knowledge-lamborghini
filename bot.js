@@ -715,7 +715,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
             reaction.message.forward(channel);
           }
         });
-        starboards[reaction.message.guild.id][reaction.message.channelId].messageIds.push(reaction.message.id);
+        starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
       }
     }
     fs.writeFile("starboards.json", pretty_string(starboards), console_log_if_not_null); //update record on disk
