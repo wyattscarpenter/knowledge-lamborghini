@@ -38,8 +38,14 @@ function try_require(require_id, default_value){ // require_id is a bit baroque,
 }
 
 //These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
+/** @type {{ [channelId: string]: { [keyword: string]: string } }} */
 let responses = try_require("./responses.json", {});
+/** @type {{ [guildId: string]: { [keyword: string]: string } }} */
 let server_responses = try_require('./server_responses.json', {});
+/** @type {{ [channelId: string]: { [regex: string]: string } }} */
+let regex_responses = try_require('./regex_responses.json', {});
+/** @type {{ [guildId: string]: { [regex: string]: string } }} */
+let server_regex_responses = try_require('./server_regex_responses.json', {});
 let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
 //The type of track_leaves is an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string[]; } in typescript.
 /** @type {{ [guildId: string]: string[] }} */
@@ -48,9 +54,6 @@ let track_leaves = try_require('./track_leaves.json', {});
 //Maybe one day this should also map to an integer that is the cutoff for the number of reactions needed to forward to the starboard.
 /** @type {{ [guildId: string]: string[] }} */
 let starboards = try_require('./starboards.json', {});
-// Add regex response containers
-let regex_responses = try_require('./regex_responses.json', {});
-let server_regex_responses = try_require('./server_regex_responses.json', {});
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
