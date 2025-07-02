@@ -252,15 +252,17 @@ client.on(Events.MessageCreate, message => {
     howlongago(message);
   }
 
-  if (m === 'enumerate responses') {
-    console.log(responses[channel.id]);
-    send_long( channel, "Channel-specific responses: "+pretty_string(responses[channel.id]) );
-    console.log(server_responses[message.guild.id]);
-    send_long( channel, "Server-specific responses: "+pretty_string(server_responses[message.guild.id]) );
-    console.log(responses[channel.id]);
-    send_long( channel, "Channel-specific regex responses: "+pretty_string(regex_responses[channel.id]) );
-    console.log(server_responses[message.guild.id]);
-    send_long( channel, "Server-specific regex responses: "+pretty_string(server_regex_responses[message.guild.id]) );
+  if (m.startsWith('enumerate responses')) {
+    // If an argument is given, only enumerate responses for that argument (keyword or regex)
+    const filter = message.content.split(/ +/).slice(2).join(' ').toLowerCase();
+    function pick(obj) {
+      if (!obj || !filter) return obj;
+      return { [filter]: obj[filter] };
+    }
+    send_long(channel, "Channel-specific responses: "+pretty_string(pick(responses[channel.id])));
+    send_long(channel, "Server-specific responses: "+pretty_string(pick(server_responses[message.guild.id])));
+    send_long(channel, "Channel-specific regex responses: "+pretty_string(pick(regex_responses[channel.id])));
+    send_long(channel, "Server-specific regex responses: "+pretty_string(pick(server_regex_responses[message.guild.id])));
   }
 
   // To prevent a subtle bug (where setting a regex is also detected by the regex), response detection is before setting. (The converse behavior, where unsetting a regex is also detected by the regex, is acceptable. So long as the response prints before the unset message.)
@@ -683,17 +685,17 @@ function console_log_if_not_null(object){
 
 //the top of this function is example code from https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
-	// When a reaction is received, check if the structure is partial
-	if (reaction.partial) {
-		// If the message this reaction belongs to was removed, the fetching might result in an API error which should be handled
-		try {
-			await reaction.fetch();
-		} catch (error) {
-			console.error('Something went wrong when fetching the message:', error);
-			// Return as `reaction.message.author` may be undefined/null
-			return;
-		}
-	}
+  // When a reaction is received, check if the structure is partial
+  if (reaction.partial) {
+    // If the message this reaction belongs to was removed, the fetching might result in an API error which should be handled
+    try {
+      await reaction.fetch();
+    } catch (error) {
+      console.error('Something went wrong when fetching the message:', error);
+      // Return as `reaction.message.author` may be undefined/null
+      return;
+    }
+  }
   // Now the message has been cached and is fully available. The reaction is now also fully available and the properties will be reflected accurately.
   if(reaction.message.guild === null){return;}
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
