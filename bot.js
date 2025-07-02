@@ -255,7 +255,7 @@ client.on(Events.MessageCreate, message => {
   if (m.startsWith('enumerate responses')) {
     // If an argument is given, only enumerate responses for that argument (keyword or regex)
     const filter = message.content.split(/ +/).slice(2).join(' ').toLowerCase();
-    function pick(obj) {
+    const pick = (obj) => {
       if (!obj || !filter) return obj;
       return { [filter]: obj[filter] };
     }
