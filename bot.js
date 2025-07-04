@@ -1,5 +1,5 @@
 // @ts-check //This instructs typescript to also check this file, and provide diagnostics, in vscode. I also have `"js/ts.implicitProjectConfig.checkJs": true` in my user `settings.json`, which does the same thing for all js files.
-const { Client, Events, GatewayIntentBits, ChannelType, MessagePayload, Partials} = require('discord.js');
+const {Client, Events, GatewayIntentBits, ChannelType, Partials} = require('discord.js');
 const nicedice = require('nicedice');
 const {distance} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
