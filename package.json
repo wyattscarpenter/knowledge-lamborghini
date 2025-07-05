@@ -1,7 +1,7 @@
 {
   "name": "knowledge-lamborghini",
   "description": "But you know what I like a lot more than knowledge? Knowledge. (an eclectic discord bot)",
-  "version": "3.3.7",
+  "version": "3.3.8",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js --watch bot.js",
@@ -12,7 +12,7 @@
     "type": "git",
     "url": "git+https://github.com/wyattscarpenter/knowledge-lamborghini.git"
   },
-  "license": "CC0-1.0",
+  "license": "Unlicense",
   "devDependencies": {
     "@types/node": "^20.1.7",
     "typescript": "^5.8.3"
