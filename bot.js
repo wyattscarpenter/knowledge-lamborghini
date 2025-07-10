@@ -460,7 +460,7 @@ function is_string(variable){
 function set_response(message, for_server=false, unset=false, regex=false){
   const response_container = regex? (for_server ? server_regex_responses : regex_responses) : (for_server? server_responses : responses);
   const response_container_indexer = regex? (for_server ? message.guild.id : message.channel.id) : (for_server? message.guild.id : message.channel.id);
-  const saving_file_name = (for_server? "server_" : "") + (for_server? "regex_" : "") + "responses.json";
+  const saving_file_name = (for_server? "server_" : "") + (regex? "regex_" : "") + "responses.json";
 
   // Rough structural diagram of input we're parsing: set (blah, (blah , blah blah blah))
   const command_arguments_text = message.content.split(/\s(.+)/)[1];
