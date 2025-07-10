@@ -492,7 +492,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
     //@ts-ignore // The type annotations don't cover the legacy format, so we must ignore the error on this line.
     response_container[response_container_indexer][keyword] = {[current_guy]: 1}; // The extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
   }
-  const attachments = Array.from(message.attachments.values()).flatMap(x => x.attachment);
+  const attachments = Array.from(message.attachments.values()).flatMap(x => x.attachment); //bug: because of the way we handle this (?), music files are always set as a link instead of a playable attachment, which is annoying. My hunch is you have to send them as really attachments, instead. TODO: try that out.
   const rs = response? [response].concat(attachments) : attachments;
   let all_ok = true;
   let any_ok = false;
