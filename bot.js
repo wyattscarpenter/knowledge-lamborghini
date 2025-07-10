@@ -440,7 +440,7 @@ function stop_think(channel){
   delete think_intervals[channel.id]; //purposefully, I delete the entry for the channel, to allow it to be re-Think!ed
 }
 
-function send_long(channel, string){ //.send() Just Fails for messages over discord's 2000 character limit, and discordjs is not going to fix this.
+function send_long(channel, string){ //.send() Just Fails for messages over discord's 2000 character limit, and discordjs is not going to fix this. send_long also guards against sending an empty string (which is a crashing error otherwise).
   for(let l of string.split("\n\n")){ //break lines into separate messages if they're separated by two newlines
     while(l){
       channel.send(l.slice(0,2000)); //note that this is 0-indexed and excludes the specified end character
@@ -537,29 +537,30 @@ function set_response(message, for_server=false, unset=false, regex=false){
   send_long( message.channel, possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+mode_announcement+"set to "+pretty_string(response_container[response_container_indexer][keyword]) );
 }
 
-function send_response(message, for_server=false){
+function send_response(message, for_server=false) {
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild.id : message.channel.id;
 
-  const r = response_container[response_container_indexer][message.content.toLowerCase()]; //LEGACY JSON: the response might be a string or an object mapping from strings to weights.
+  let r = response_container[response_container_indexer][message.content.toLowerCase()];
+
+  // LEGACY JSON: the response might be a string instead of an object mapping from strings to weights.
   if(is_string(r)){
     console.log("string response", r);
-    r && message.channel.send(r); //guard against sending an empty string (which is a crashing error for us... maybe fix that with a wrapping function later?)
-  } else {
-    console.log("random response", r);
-    //Pick by weighted randomness
-    //Implicitly, the type of r is object mapping from string → int, with each int being the number of "tickets" the string has in the "raffle", so to speak.
-    let cumulative_weights = [];
-    for(const key of Object.keys(r)){
-      cumulative_weights.push( (+r[key]||0) + (cumulative_weights.at(-1)||0) );
-    }
-    const random = Math.random() * cumulative_weights.at(-1);
-    console.log("random number", random, "cumulative_weights", cumulative_weights);
-    for(const key of Object.keys(r)){
-      if (random - cumulative_weights.shift() <= 0) {
-        key && message.channel.send(key);
-        break;
-      }
+    r = {[r]: 1}; 
+  }
+
+  // Pick by weighted randomness. Implicitly (and also to the typechecker), the type of r is object mapping from string → number, with each number being the count of "tickets" the string has in the "raffle", so to speak.
+  // This algorithm is pretty simple, and obscured only by javascript syntax.
+  let cumulative_weights = [];
+  for(const response of Object.keys(r)){
+    cumulative_weights.push( (+r[response]||0) + (cumulative_weights.at(-1)||0) );
+  }
+  const random = Math.random() * cumulative_weights.at(-1);
+  console.log("random number", random, "cumulative_weights", cumulative_weights);
+  for(const key of Object.keys(r)){
+    if (random - cumulative_weights.shift() <= 0) {
+        send_long(message.channel, key); // We'll never need to send something longer than the character limit (how would it have gotten in here...?), but send_long also guards against sending an empty string (which is a crashing error otherwise). I think it isn't possible to get an empty string in here as a response anymore, anyway, but whatever.
+      break;
     }
   }
 }
