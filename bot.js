@@ -82,7 +82,7 @@ client.on('ready', () => {
 });
 
 client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member leaves a guild, or is kicked."
-  if (!member.user.bot) { // If we try to send a message to a server we're kick from, we crash!
+  if (!member.user.bot) { // If we try to send a message to a server we're not in (ie if we've just been removed), we crash! So, avoid that by checking if it is us who got kicked out.
     if ( track_leaves[member.guild.id] ) {
       for (const channelId of track_leaves[member.guild.id]){
         client.channels.fetch(channelId).then( channel => {
@@ -385,10 +385,11 @@ function update_status_clock(){ //This date is extremely precisely formatted for
   let date = new Date(); //Want to avoid edge cases so we use the same Date object in each format call.
   if(date.getSeconds()){return false;} //only update with minute resolution, on 00 seconds of each minute (Discord can't handle us using second resolution)
   if(!client.user){return false;} // I guess this could be null sometimes somehow.
-  client.user.setActivity( new Intl.DateTimeFormat('en-US', {timeStyle: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " PT " //time with hard-coded zone. Looks like 4:20 PM PT
-                         + new Intl.DateTimeFormat('en-US', {weekday: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " " //day of week (short name). Looks like Mon
-                         + new Intl.DateTimeFormat('en-GB', {dateStyle: 'medium', timeZone: 'America/Los_Angeles'}).format(date) //date, with day first. Looks like 9 Aug, 2021
-                         );
+  client.user.setActivity(
+    new Intl.DateTimeFormat('en-US', {timeStyle: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " PT " //time with hard-coded zone. Looks like 4:20 PM PT
+    + new Intl.DateTimeFormat('en-US', {weekday: 'short', timeZone: 'America/Los_Angeles'}).format(date) + " " //day of week (short name). Looks like Mon
+    + new Intl.DateTimeFormat('en-GB', {dateStyle: 'medium', timeZone: 'America/Los_Angeles'}).format(date) //date, with day first. Looks like 9 Aug, 2021
+  );
   return true; //nota bene: the return value indicates if the function decided to update, but I don't use the return value anywhere else in the program so far.
 }
 
