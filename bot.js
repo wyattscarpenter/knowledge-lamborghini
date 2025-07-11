@@ -691,41 +691,38 @@ function console_log_if_not_null(object){
 }
 
 
+
 /**
- * Normalize a Discord attachment URL:
- * - Forces https
- * - Strips Discord timing parameters (ex, is, hm) from query string
- * - Leaves other parameters (like width, height) intact
- * - Only normalizes Discord CDN attachment URLs (cdn.discordapp.com, media.discordapp.net)
- * - Keeps the original domain (cdn or media)
- * - Strips trailing '?' or '&' if present after removing params
- * @param {string} url
+ * Normalize all Discord attachment URLs in a string.
+ * - Finds all cdn.discordapp.com and media.discordapp.net /attachments/ URLs
+ * - For each, strips Discord timing params (ex, is, hm), forces https, keeps other params
+ * - Leaves other text and non-attachment URLs untouched
+ * @param {string} text
  * @returns {string}
  */
-function normalize_discord_attachment_url(url) {
-  try {
-    const u = new URL(url, 'https://cdn.discordapp.com');
-    // Only process Discord CDN attachment URLs
-    if (!u.hostname.match(/^(cdn\.discord(app)?\.com|media\.discordapp\.net)$/i)) return url;
-    // Only normalize /attachments/ URLs
-    if (!u.pathname.startsWith('/attachments/')) return url;
-    // Force https
-    u.protocol = 'https:';
-    // Remove Discord timing params (ex, is, hm)
-    const params = u.searchParams;
-    params.delete('ex');
-    params.delete('is');
-    params.delete('hm');
-    // Rebuild the search string, keeping only non-empty params
-    let search = params.toString();
-    let normalized = u.origin + u.pathname + (search ? ('?' + search) : '');
-    // Remove trailing '?' or '&' if present (shouldn't be, but just in case)
-    normalized = normalized.replace(/[?&]+$/, '');
-    return normalized;
-  } catch (e) {
-    // If anything goes wrong, return the original URL
-    return url;
-  }
+function normalize_discord_attachment_urls(text) {
+  //AI-generated, so, you know, is that URL regex technically correct? Prob'ly not. Is that hostname match check redundant? Prob'ly. But it probably mostly works, which is enough for this.
+  // Regex to match Discord CDN/media attachment URLs (greedy up to whitespace or end)
+  const urlRegex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/[\w\/-]+\.[\w]+(?:\?[^\s]*)?/gi;
+  return text.replace(urlRegex, (url) => {
+    try {
+      const u = new URL(url, 'https://cdn.discordapp.com');
+      // Only process Discord CDN attachment URLs
+      if (!u.hostname.match(/^(cdn\.discord(app)?\.com|media\.discordapp\.net)$/i)) return url;
+      if (!u.pathname.startsWith('/attachments/')) return url;
+      u.protocol = 'https:';
+      const params = u.searchParams;
+      params.delete('ex');
+      params.delete('is');
+      params.delete('hm');
+      let search = params.toString();
+      let normalized = u.origin + u.pathname + (search ? ('?' + search) : '');
+      normalized = normalized.replace(/[?&]+$/, '');
+      return normalized;
+    } catch (e) {
+      return url;
+    }
+  });
 }
 
 //the top of this function is example code from https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
