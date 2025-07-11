@@ -51,6 +51,8 @@ let server_responses = try_require('./server_responses.json', {});
 let regex_responses = try_require('./regex_responses.json', {});
 /** @type {{ [guildId: string]: { [regex: string]: {[response: string] : number} } }} */
 let server_regex_responses = try_require('./server_regex_responses.json', {});
+let batphone = try_require('./batphone.json', []);
+//COULD: combine regexes and regular responses into the same data structure — relatively easy to hot-update that backwards compatibly
 
 let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
 //The type of track_leaves is an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string[]; } in typescript.
@@ -113,7 +115,7 @@ const command_prefix = first_arg === undefined ? '!' : first_arg;
 const remindme_regex = /^remind ?me ?!?/i;
 const howlongago_regex = /^how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
 
-function command_prefix_strip(string){
+function command_prefix_strip(string){ //TODO: also use this on the keyword for responses
   if (string.startsWith(command_prefix + ' ')) {
     return string.slice(command_prefix.length + 1);
   } else if (string.startsWith(command_prefix)) {
@@ -131,6 +133,36 @@ client.on(Events.MessageCreate, message => {
   // We assign this back into message.content so later functions that take message and operate on its content and aren't expecting a ! prefix actually work.
   message.content = command_prefix_strip(message.content);
   const m = message.content.toLowerCase();
+
+  // Batphone: store a message for the developer
+  if (m.startsWith('batphone')) {
+    const batmsg = message.content.slice('batphone'.length).trim();
+    if (batmsg.length === 0) {
+      message.reply('Please provide a message after "batphone" (if, indeed, you intend to leave a message for the developer on the batphone).');
+    } else {
+      batphone.push({
+        user: message.author.tag,
+        userId: message.author.id,
+        channelId: message.channel.id,
+        guildId: message.guild?.id,
+        content: batmsg,
+        timestamp: new Date().toISOString(),
+        messageId: message.id
+      });
+      update_record_on_disk('batphone.json', batphone);
+      message.reply('Your message has been left in the batphone for perusal by the the developer. Thank you!');
+    }
+  }
+
+  if (m === 'enumerate batphone') {
+    if (!batphone.length) {
+      send_long(channel, 'The batphone is currently empty.');
+    } else {
+      batphone.map((entry, i) =>
+        send_long(channel, `#${i+1} from ${entry.user} (${entry.userId}) at ${entry.timestamp}\n> ${entry.content}`)
+      )
+    }
+  }
 
   if (client.user !== null){ //apparently this could be null. So, guard against that.
     if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
@@ -718,7 +750,7 @@ function console_log_if_not_null(object){
 function normalize_discord_attachment_urls(text) {
   //You know, is that URL regex technically correct? Prob'ly not. Is that hostname match check redundant? Prob'ly. But it probably mostly works, which is enough for this.
   // Regex to match Discord CDN/media attachment URLs (greedy up to whitespace or end)
-  const urlRegex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*/gi;
+  const urlRegex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*/gi; // TODO: possibly use [\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]* instead of \S here?
   return text.replace(urlRegex, (url) => {
     try {
       const u = new URL(url, 'https://cdn.discordapp.com');

@@ -27,6 +27,7 @@ This is Knowledge Lamborghini (“kl”), an eclectic discord bot with exactly t
   * However, this bot is also published as [a package](https://www.npmjs.com/package/knowledge-lamborghini) on npmjs.org, and only non-broken versions should make it up there.
   * Furthermore, I've been able to secure almost constant uptime for the bot lately.
 * NO particular security guarantees. While there's no particular reason to think data stored in the bot is **in**secure, it is just stored in plaintext on a server somewhere. So I wouldn't recommend putting critical secrets in there.
+  * I (the developer) generally do not look at, nor arbitrarily manipulate, this data, but I reserve the absolute right to.
   * I *will* comply with any government demands about this data I am legally compelled to. I *may or may not* inform anyone about instances of this. I *may or may not* proactively coöperate with the authorities in the absence of a mandate to, depending on how I'm feeling about your data and you as a person, on the day when I consider it.
 * MINIMAL automatic feature testing, because I didn't think about how easy it would be to do that until I had built all the features. (And discord is hard to meaningfully mock, for some features.)
 
@@ -37,6 +38,7 @@ A note about the commands: all commands are usually just as they are written her
 * @ the bot with a message containing "help" to get a link to this help document.
 * @ the bot with a message containing "version" to get the current version.
   * this is also includes, for utility's sake, the current git hash. It would include the current git message, but that was harder to get.
+* You may leave a message for the developer using `batphone`; whatever follows `batphone` will be stored into an array, which I will check (and remove items from) infrequently. In fact, everyone can check what's in the batphone, using the command `enumerate batphone`. This is generally for bug reports. Please do not spam the batphone.
 * Type `think!` and kl begins to recite the book located in text.json, one unit per hour in the channel in which you made the command. `stop!` ceases the madness.
 * Type a phrase that's something like `who's that pokemon?` and kl posts an image from wikimedia for you to guess the file name of. The first successful guess for any picture is acknowledged.
 * Using the power of NiceDice (https://github.com/wyattscarpenter/nicedice), kl interprets any message consisting solely of a dnd-style dice expression, generates random numbers to simulate dice rolls, and outputs the result.
