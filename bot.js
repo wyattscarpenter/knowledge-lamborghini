@@ -6,6 +6,10 @@ const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
 
+module.exports = {
+  normalize_discord_attachment_urls
+}
+
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessageReactions],
   partials: [Partials.Message, Partials.Reaction],
@@ -689,8 +693,6 @@ function console_log_if_not_null(object){
     console.error(object)
   }
 }
-
-
 
 /**
  * Normalize all Discord attachment URLs in a string.

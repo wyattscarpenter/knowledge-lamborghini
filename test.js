@@ -1,6 +1,7 @@
 // Tests for normalize_discord_attachment_urls
 const assert = require('assert');
 const { normalize_discord_attachment_urls } = require('./bot.js');
+const { exit } = require('process');
 
 function test_normalize_discord_attachment_urls() {
   // 1. Basic timing params strip
@@ -66,8 +67,13 @@ function test_normalize_discord_attachment_urls() {
     normalize_discord_attachment_urls('https://cdn.discordapp.com/attachments/1/2/a.png'),
     'https://cdn.discordapp.com/attachments/1/2/a.png'
   );
-
-  console.log('All tests passed!');
 }
 
+function _bad_test_tee_hee_hee() {
+    //Not sure if the tests are actually running? Just uncomment this failing test to soothe your mind.
+    assert.strictEqual(0,'0');
+}
+//_bad_test_tee_hee_hee();
 test_normalize_discord_attachment_urls();
+console.log('All tests passed!');
+exit(); // Since we require the bot, we must exit the process once we are done with our tests or, like, the bot will just start running.

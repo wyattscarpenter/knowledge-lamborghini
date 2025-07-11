@@ -28,7 +28,7 @@ This is Knowledge Lamborghini (“kl”), an eclectic discord bot with exactly t
   * Furthermore, I've been able to secure almost constant uptime for the bot lately.
 * NO particular security guarantees. While there's no particular reason to think data stored in the bot is **in**secure, it is just stored in plaintext on a server somewhere. So I wouldn't recommend putting critical secrets in there.
   * I *will* comply with any government demands about this data I am legally compelled to. I *may or may not* inform anyone about instances of this. I *may or may not* proactively coöperate with the authorities in the absence of a mandate to, depending on how I'm feeling about your data and you as a person, on the day when I consider it.
-* NO automatic testing paradigm, because I didn't think about how easy it would be to do that until I had built all the features.
+* MINIMAL automatic feature testing, because I didn't think about how easy it would be to do that until I had built all the features. (And discord is hard to meaningfully mock, for some features.)
 
 ### Positive features
 
