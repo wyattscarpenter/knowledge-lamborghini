@@ -497,13 +497,26 @@ function set_response(message, for_server=false, unset=false, regex=false){
   }
 
   // For LEGACY JSONs with an existing non-probabilistic response, we make it part of the new possibility range.
-  let current_guy = response_container[response_container_indexer][keyword];
+  const current_guy = response_container[response_container_indexer][keyword];
   if(is_string(current_guy)){
     //@ts-ignore // The type annotations don't cover the legacy format, so we must ignore the error on this line.
     response_container[response_container_indexer][keyword] = {[current_guy]: 1}; // The extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
   }
-  const attachments = Array.from(message.attachments.values()).flatMap(x => x.attachment); //bug: because of the way we handle this (?), music files are always set as a link instead of a playable attachment, which is annoying. My hunch is you have to send them as really attachments, instead. TODO: try that out.
-  const rs = response? [response].concat(attachments) : attachments;
+  //For LEGACY, uh, non-normalized attachement urls:
+  const oldObj = response_container[response_container_indexer][keyword];
+  /** @type {{ [response: string]: number; }} */
+  const newObj = {};
+  if (oldObj) {
+    for (const [k, v] of Object.entries(oldObj)) {
+      newObj[normalize_discord_attachment_urls(k)] = v;
+    }
+  }
+  response_container[response_container_indexer][keyword] = newObj;
+
+  const attachments = Array.from(message.attachments.values()).map(x => x.attachment); //bug: because of the way we handle this (?), music files are always set as a link instead of a playable attachment, which is annoying. My hunch is you have to send them as attachments, instead. TODO: try that out.
+  const raw_rs = response? [response].concat(attachments) : attachments;
+  const rs = raw_rs.map(normalize_discord_attachment_urls);
+  console.log("HERRO", rs);
   let all_ok = true;
   let any_ok = false;
   let mode_announcement = "(" + (for_server? "server": "channel") + (regex? " regex" : "")+ ") ";
@@ -569,7 +582,7 @@ function send_response(message, for_server=false) {
   console.log("random number", random, "cumulative_weights", cumulative_weights);
   for(const key of Object.keys(r)){
     if (random - cumulative_weights.shift() <= 0) {
-        send_long(message.channel, key); // We'll never need to send something longer than the character limit (how would it have gotten in here...?), but send_long also guards against sending an empty string (which is a crashing error otherwise). I think it isn't possible to get an empty string in here as a response anymore, anyway, but whatever.
+      send_long(message.channel, normalize_discord_attachment_urls(key));
       break;
     }
   }
@@ -610,7 +623,7 @@ function send_regex_responses(message, for_server, pattern, match){
       if (match && match.length > 1) {
         response = response.replace(/\$(\d+)/g, (_, n) => match[n] || '');
       }
-      message.channel.send(response);
+      message.channel.send(normalize_discord_attachment_urls(response));
       break;
     }
   }
@@ -703,14 +716,14 @@ function console_log_if_not_null(object){
  * @returns {string}
  */
 function normalize_discord_attachment_urls(text) {
-  //AI-generated, so, you know, is that URL regex technically correct? Prob'ly not. Is that hostname match check redundant? Prob'ly. But it probably mostly works, which is enough for this.
+  //You know, is that URL regex technically correct? Prob'ly not. Is that hostname match check redundant? Prob'ly. But it probably mostly works, which is enough for this.
   // Regex to match Discord CDN/media attachment URLs (greedy up to whitespace or end)
-  const urlRegex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/[\w\/-]+\.[\w]+(?:\?[^\s]*)?/gi;
+  const urlRegex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*/gi;
   return text.replace(urlRegex, (url) => {
     try {
       const u = new URL(url, 'https://cdn.discordapp.com');
       // Only process Discord CDN attachment URLs
-      if (!u.hostname.match(/^(cdn\.discord(app)?\.com|media\.discordapp\.net)$/i)) return url;
+      if (!u.hostname.match(/^(cdn\.discordapp\.com|media\.discordapp\.net)$/i)) return url;
       if (!u.pathname.startsWith('/attachments/')) return url;
       u.protocol = 'https:';
       const params = u.searchParams;
