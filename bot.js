@@ -76,7 +76,7 @@ const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 
 
 client.on('ready', () => {
-  console.log('I am ready! Logged in as '+client.user?.tag);
+  console.log('I am ready! Logged in as', client.user?.tag, "with optional command prefix", command_prefix);
   setInterval(update_status_clock, 1000);
   launch_remindmes(remindmes);
 });
@@ -101,14 +101,19 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
   }
 });
 
+
+// Prefix handling: allow a custom prefix, defaulting to '!'. If a prefix is provided as the first argument, use it.
+const first_arg = process.argv[2];
+const command_prefix = first_arg === undefined ? '!' : first_arg;
+
 const remindme_regex = /^remind ?me ?!?/i;
 const howlongago_regex = /^how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
 
-function bangstrip(string){
-  if (string.startsWith('! ')) {
-    return string.slice(2);
-  } else if (string.startsWith('!')) {
-    return string.slice(1);
+function command_prefix_strip(string){
+  if (string.startsWith(command_prefix + ' ')) {
+    return string.slice(command_prefix.length + 1);
+  } else if (string.startsWith(command_prefix)) {
+    return string.slice(command_prefix.length);
   } else {
     return string;
   }
@@ -120,7 +125,7 @@ client.on(Events.MessageCreate, message => {
   if (!message.guild){return;} //don't consider... uh... I guess this is DMs? IDK I just got a warning from typescript.
   const channel = message.channel;
   // We assign this back into message.content so later functions that take message and operate on its content and aren't expecting a ! prefix actually work.
-  message.content = bangstrip(message.content);
+  message.content = command_prefix_strip(message.content);
   const m = message.content.toLowerCase();
 
   if (client.user !== null){ //apparently this could be null. So, guard against that.

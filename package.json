@@ -1,10 +1,10 @@
 {
   "name": "knowledge-lamborghini",
   "description": "But you know what I like a lot more than knowledge? Knowledge. (an eclectic discord bot)",
-  "version": "3.4.0-dev",
+  "version": "3.4.0",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js --watch bot.js",
+    "start": "node bot.js",
     "check": "tsc --version && tsc --checkJs --noEmit --resolveJsonModule --skipLibCheck --lib es2022,dom bot.js --strict --noImplicitAny false",
     "tsc": "tsc --all"
   },

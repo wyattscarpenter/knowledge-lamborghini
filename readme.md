@@ -21,7 +21,7 @@ This is Knowledge Lamborghini (“kl”), an eclectic discord bot with exactly t
 ### Negative features
 
 * NO special sigil, all commands are invoked as they are written here.
-  * However, you are allowed to use a prefix `!` or `! ` on any command, which will be largely ignored, since I know some people are in that habit. (TODO:) This prefix can also be set with the first argument to kl on the command line; this is largely for testing purposes.
+  * However, you are allowed to use a prefix `!` or `! ` on any command, which will be largely ignored, since I know some people are in that habit. This prefix can also be set with the first argument to kl on the command line; this is largely for testing purposes.
   * All commands are case-insensitive.
 * NO uptime, or stability guarantees. I commit broken features directly to master as I work on them. I may or may not have the bot running at any given time.
   * However, this bot is also published as [a package](https://www.npmjs.com/package/knowledge-lamborghini) on npmjs.org, and only non-broken versions should make it up there.
