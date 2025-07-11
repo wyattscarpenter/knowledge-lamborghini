@@ -690,6 +690,44 @@ function console_log_if_not_null(object){
   }
 }
 
+
+/**
+ * Normalize a Discord attachment URL:
+ * - Forces https
+ * - Strips Discord timing parameters (ex, is, hm) from query string
+ * - Leaves other parameters (like width, height) intact
+ * - Only normalizes Discord CDN attachment URLs (cdn.discordapp.com, media.discordapp.net)
+ * - Keeps the original domain (cdn or media)
+ * - Strips trailing '?' or '&' if present after removing params
+ * @param {string} url
+ * @returns {string}
+ */
+function normalize_discord_attachment_url(url) {
+  try {
+    const u = new URL(url, 'https://cdn.discordapp.com');
+    // Only process Discord CDN attachment URLs
+    if (!u.hostname.match(/^(cdn\.discord(app)?\.com|media\.discordapp\.net)$/i)) return url;
+    // Only normalize /attachments/ URLs
+    if (!u.pathname.startsWith('/attachments/')) return url;
+    // Force https
+    u.protocol = 'https:';
+    // Remove Discord timing params (ex, is, hm)
+    const params = u.searchParams;
+    params.delete('ex');
+    params.delete('is');
+    params.delete('hm');
+    // Rebuild the search string, keeping only non-empty params
+    let search = params.toString();
+    let normalized = u.origin + u.pathname + (search ? ('?' + search) : '');
+    // Remove trailing '?' or '&' if present (shouldn't be, but just in case)
+    normalized = normalized.replace(/[?&]+$/, '');
+    return normalized;
+  } catch (e) {
+    // If anything goes wrong, return the original URL
+    return url;
+  }
+}
+
 //the top of this function is example code from https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
   // When a reaction is received, check if the structure is partial
