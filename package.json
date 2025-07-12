@@ -24,7 +24,8 @@
     "chrono-node": "^2.6.3",
     "discord.js": "^14.18.0",
     "fastest-levenshtein": "1.0.12",
-    "nicedice": "~1.0.2"
+    "nicedice": "~1.0.2",
+    "simple-markdown": "github:discord/simple-markdown"
   },
   "engines": {
     "node": ">=23.0.0",
