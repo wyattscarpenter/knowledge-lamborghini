@@ -5,7 +5,76 @@ const {distance} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
+const simple_markdown = require("simple-markdown"); //Discord has a particular, non-url-standard idea of what things to consider links and highlight. For instance, "https://example.com/hello." is detected as a link to "https://example.com/hello" and the period is not highlighted, even though that would be a valid url technically. Many such cases. This being a discord project, we try to agree with discord, and so import discord's markdown library and use its link function.
 
+function linkers(string) {
+  // Given a link, what does it actually link to in the eyes of discord?
+  // Note that this is insufficient for our actual purposes. It's just here to document the api to myself.
+  simple_markdown.defaultBlockParse(string)[0].content[0].target;
+}
+/*
+//Example. Find way to round-trip? or just steal internal autolink code? Maybe it's accessible somehow, even?
+for (x of s.defaultBlockParse("omg **k** https://example.com/hello. \n\n> hello\n\n>hello")) { console.log(JSON.stringify(x, null, 4)) }
+{
+    "content": [
+        {
+            "content": "omg ",
+            "type": "text"
+        },
+        {
+            "content": [
+                {
+                    "content": "k",
+                    "type": "text"
+                }
+            ],
+            "type": "strong"
+        },
+        {
+            "content": " ",
+            "type": "text"
+        },
+        {
+            "type": "link",
+            "content": [
+                {
+                    "type": "text",
+                    "content": "https://example.com/hello"
+                }
+            ],
+            "target": "https://example.com/hello"
+        },
+        {
+            "content": ". ",
+            "type": "text"
+        }
+    ],
+    "type": "paragraph"
+}
+{
+    "content": [
+        {
+            "content": [
+                {
+                    "content": "hello",
+                    "type": "text"
+                }
+            ],
+            "type": "paragraph"
+        },
+        {
+            "content": [
+                {
+                    "content": "hello",
+                    "type": "text"
+                }
+            ],
+            "type": "paragraph"
+        }
+    ],
+    "type": "blockQuote"
+}
+*/
 module.exports = {
   normalize_discord_attachment_urls
 }
