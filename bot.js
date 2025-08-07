@@ -159,7 +159,7 @@ client.on(Events.MessageCreate, message => {
       send_long(channel, 'The batphone is currently empty.');
     } else {
       batphone.map((entry, i) =>
-        send_long(channel, `#${i+1} from ${entry.user} (${entry.userId}) at ${entry.timestamp}\n> ${entry.content}`)
+        send_long(channel, `#${i+1} from ${entry.user} (${entry.userId}) at ${entry.timestamp}\n>>> ${entry.content}`)
       )
     }
   }

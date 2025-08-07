@@ -1,7 +1,7 @@
 {
   "name": "knowledge-lamborghini",
   "description": "But you know what I like a lot more than knowledge? Knowledge. (an eclectic discord bot)",
-  "version": "3.6.1-dev",
+  "version": "3.6.1",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
@@ -9,6 +9,7 @@
     "tsc": "tsc --all",
     "test": "node test.js"
   },
+  "remark upon the check": "I don't think there's any particular reason to require es2022 there. Maybe it was the most recent one when I tried to require one in particular to fix some other problem.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wyattscarpenter/knowledge-lamborghini.git"
