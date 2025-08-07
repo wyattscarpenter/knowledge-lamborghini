@@ -51,9 +51,9 @@ let server_responses = try_require('./server_responses.json', {});
 let regex_responses = try_require('./regex_responses.json', {});
 /** @type {{ [guildId: string]: { [regex: string]: {[response: string] : number} } }} */
 let server_regex_responses = try_require('./server_regex_responses.json', {});
-let batphone = try_require('./batphone.json', []);
-//COULD: combine regexes and regular responses into the same data structure — relatively easy to hot-update that backwards compatibly
+//TODO(?): combine regexes and regular responses into the same data structure — relatively easy to hot-update that backwards compatibly
 
+let batphone = try_require('./batphone.json', []); //I never bothered to document the type of this data structure.
 let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
 //The type of track_leaves is an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string[]; } in typescript.
 /** @type {{ [guildId: string]: string[] }} */
@@ -61,6 +61,7 @@ let track_leaves = try_require('./track_leaves.json', {});
 // The type of starboards is an object mapping from guildIds to an object mapping from channelIds to an object containing an integer that is the cutoff for the number of reactions needed to forward to the starboard, and an array of messageIds (of already-included messages).
 /** @type {{ [guildId: string]: { [channelId: string]: { quantity_required_in_order_to_forward: number, messageIds: string[] } } }} */
 let starboards = try_require('./starboards.json', {});
+
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
@@ -106,7 +107,6 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
     }
   }
 });
-
 
 // Prefix handling: allow a custom prefix, defaulting to '!'. If a prefix is provided as the first argument, use it.
 const first_arg = process.argv[2];
@@ -700,7 +700,6 @@ function howlongago(message){
     message.reply(`${now_d} **(now)** - ${d} **(then)** = ${diff}.`);
   }
 }
-
 
 function launch_remindmes(remindmes){
   const workaround_wait_ms = 2000000000; // 147,483,647 less than the s32-int-max.
