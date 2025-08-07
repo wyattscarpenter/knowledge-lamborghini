@@ -21,6 +21,8 @@ const kl_test_emoji_static_id = "1389488389673320602"; //as above, but not anima
 // THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
 client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
 
+const DISCORD_URL_REGEX = /^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/ //I extracted this regex from the js of the discord app webpage. This is the regex discord uses to detect urls, which explains why it — actually this doesn't explain how it captures https://en.wikipedia.org/wiki/God_(disambiguation) correctly. That should be left out, according to https://regex101.com/?flavor=javascript. It seems to count matching parens, and then if you add more stuff after a non-matching paren, resume being a hyperlink. 
+
 /** @type string[] */
 let text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 
