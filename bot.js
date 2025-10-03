@@ -548,7 +548,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const attachments = Array.from(message.attachments.values()).map(x => x.attachment); //bug: because of the way we handle this (?), music files are always set as a link instead of a playable attachment, which is annoying. My hunch is you have to send them as attachments, instead. TODO: try that out.
   const raw_rs = response? [response].concat(attachments) : attachments;
   const rs = raw_rs.map(normalize_discord_attachment_urls);
-  console.log("HERRO", rs);
+  console.log("Here are the attachments of the message (normalized)", rs);
   let all_ok = true;
   let any_ok = false;
   let mode_announcement = "(" + (for_server? "server": "channel") + (regex? " regex" : "")+ ") ";
