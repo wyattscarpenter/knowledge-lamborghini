@@ -159,7 +159,7 @@ client.on(Events.MessageCreate, message => {
       send_long(channel, 'The batphone is currently empty.');
     } else {
       batphone.map((entry, i) =>
-        send_long(channel, `#${i+1} from ${entry.user} (${entry.userId}) at ${entry.timestamp}\n>>> ${entry.content}`)
+        send_long(channel, `#${i+1} from ${entry.user} (${entry.userId}) at ${entry.timestamp}\n>>> ${entry.content}`, true)
       )
     }
   }
@@ -482,11 +482,17 @@ function stop_think(channel){
   delete think_intervals[channel.id]; //purposefully, I delete the entry for the channel, to allow it to be re-Think!ed
 }
 
-function send_long(channel, string){ //.send() Just Fails for messages over discord's 2000 character limit, and discordjs is not going to fix this. send_long also guards against sending an empty string (which is a crashing error otherwise).
+function send_long(channel, string, resume_quotatively=false){ //.send() Just Fails for messages over discord's 2000 character limit, and discordjs is not going to fix this. send_long also guards against sending an empty string (which is a crashing error otherwise).
+  const resumptor_prefix = resume_quotatively? ">>> " : "";
+  const upper_limit = 2000 - resumptor_prefix.length; //2000 is the limit given from on-high. Note that slice, which we use later, is 0-indexed and excludes the specified end character index.
+  let we_are_first = true;
   for(let l of string.split("\n\n")){ //break lines into separate messages if they're separated by two newlines
     while(l){
-      channel.send(l.slice(0,2000)); //note that this is 0-indexed and excludes the specified end character
-      l = l.slice(2000); //going over is fine, you know how it is
+      const prefix = we_are_first? "": resumptor_prefix;
+      const content = prefix + l.slice(0, upper_limit);
+      channel.send(content);
+      l = l.slice(upper_limit); //going past the end of the source string here is fine, you know how it is
+      we_are_first = false
     }
   }
 }
