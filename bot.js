@@ -482,7 +482,18 @@ function stop_think(channel){
   delete think_intervals[channel.id]; //purposefully, I delete the entry for the channel, to allow it to be re-Think!ed
 }
 
-function send_long(channel, string, resume_quotatively=false){ //.send() Just Fails for messages over discord's 2000 character limit, and discordjs is not going to fix this. send_long also guards against sending an empty string (which is a crashing error otherwise).
+/** Our internal replacement for channel's .send().
+ * .send() Just Fails for messages over discord's 2000 character limit, and discordjs is not going to fix this.
+ * So, this function splits up the message before sending. It also does the following:
+ * * if a message is just a discord attachment url, send that as an attachment instead of as the text of a message
+ *    * typically this makes no difference, due to auto-embedding, but it allows you to play music using the in-built player
+ * * guards against sending an empty string (which is a crashing error otherwise)
+*/
+function send_long(channel, string, resume_quotatively=false){
+  if (discord_attachment_url_ONLY_regex.test(string)) {
+    channel.send({files: [string]});
+    return;
+  }
   const resumptor_prefix = resume_quotatively? ">>> " : "";
   const upper_limit = 2000 - resumptor_prefix.length; //2000 is the limit given from on-high. Note that slice, which we use later, is 0-indexed and excludes the specified end character index.
   let we_are_first = true;
@@ -551,7 +562,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   }
   response_container[response_container_indexer][keyword] = newObj;
 
-  const attachments = Array.from(message.attachments.values()).map(x => x.attachment); //bug: because of the way we handle this (?), music files are always set as a link instead of a playable attachment, which is annoying. My hunch is you have to send them as attachments, instead. TODO: try that out.
+  const attachments = Array.from(message.attachments.values()).map(x => x.attachment);
   const raw_rs = response? [response].concat(attachments) : attachments;
   const rs = raw_rs.map(normalize_discord_attachment_urls);
   console.log("Here are the attachments of the message (normalized)", rs);
@@ -744,6 +755,12 @@ function console_log_if_not_null(object){
   }
 }
 
+/** Regex to match Discord CDN/media attachment URLs (greedy up to whitespace or end) */
+// TODO: possibly use [\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]* instead of \S here? Or possibly a library that matches the current URL highlighting precisely.
+const discord_attachment_url_regex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*/gi;
+/**discord_attachment_url_regex, but for purposes of actually matching/testing, because .match()/test() actually checks if a string *contains* text that matches a regex. */
+const discord_attachment_url_ONLY_regex = /^https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*$/i;
+
 /**
  * Normalize all Discord attachment URLs in a string.
  * - Finds all cdn.discordapp.com and media.discordapp.net /attachments/ URLs
@@ -754,9 +771,7 @@ function console_log_if_not_null(object){
  */
 function normalize_discord_attachment_urls(text) {
   //You know, is that URL regex technically correct? Prob'ly not. Is that hostname match check redundant? Prob'ly. But it probably mostly works, which is enough for this.
-  // Regex to match Discord CDN/media attachment URLs (greedy up to whitespace or end)
-  const urlRegex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*/gi; // TODO: possibly use [\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]* instead of \S here?
-  return text.replace(urlRegex, (url) => {
+  return text.replace(discord_attachment_url_regex, (url) => {
     try {
       const u = new URL(url, 'https://cdn.discordapp.com');
       // Only process Discord CDN attachment URLs
