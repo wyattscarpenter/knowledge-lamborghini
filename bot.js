@@ -817,8 +817,8 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
             //Forward the message to the channel.
             const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
             const emoji_image_url = reaction.emoji.imageURL();
-            //It doesn't harm a non-animated emoji to be marked animated=true, although it does convert it to webp, degrading it slightly.
-            const emoji_image = emoji_image_url? emoji_image_url + "?animated=true" : "";
+            // marking a non-gif as .gif prevents it from showing; but at least it doesn't convert gifs to webp, which would degrade them slightly.
+            const emoji_image = emoji_image_url? emoji_image_url + ".gif" : "";
             console.log(emoji_image);
             send_long(channel, emoji_image); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
             send_long(channel, metadata);
