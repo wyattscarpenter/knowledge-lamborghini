@@ -91,3 +91,14 @@ A note about the commands: all commands are usually just as they are written her
 I don't have a lot of advice for you if you're trying to deploy this script. For one thing, you will need a bot token from discord, which you will then put in token.json as a quoted string (ie: the json file contains only one value: a string; no object (that means, no curly braces!))
 
 If you'd like to deploy the bot in a conventional way, on a linux/unix machine with npm and git already installed, example_bot_setup_and_run_script_one_could_use.sh could fit your needs (um, that script clones this git repo for you, so keep that in mind and don't... create a git repo in another git repo by mistake). As for myself, I want the bot to receive constant updates whenever I push to the git master, so I prefer to use constantly-try-to-update, a great script (also requires unix shell, npm, git, node).
+
+### Feature requests
+
+The following was written by the developer to a user reguarding a request for a new feature, something about an oracle ("do not let people reroll the words of the oracle"). It still stands as the developer's current attitude towards feature requests:
+
+    I hope this missive finds you well. How are you? I am fine. Anyway, I'm honored my bot is being used to reveal, presumably, the true words of God; presumably using the "raffle" feature of set. However, at the moment (and indefinitely) the only thing that keeps me working on (for some low sense of "working on") this bot is my violated pride because of the variety of bugs in the features I did add. If you want to add a new feature (such as a set that can't be retriggered arbitrarily), I encourage you to code it up yourself and open a pull request on the github.
+
+    I was thinking about merging set and set-regex into one data structure, with an is_regex boolean flag in there, so you could add a set-oracle command with an is_oracle flag as well, if you get my meaning. (Here I'm tricking you into doing my refactor if you want your feature mwahaha.) While I'm on the topic, I was also musing about if the set-regex-for-channel type stuff should actually just be unix-style flags, like set --regex --channel. Undecided on that.
+
+    Peace and love, peace and love,
+    Your old pal Wyatt
