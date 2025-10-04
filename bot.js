@@ -484,16 +484,11 @@ function stop_think(channel){
 
 /** Our internal replacement for channel's .send().
  * .send() Just Fails for messages over discord's 2000 character limit, and discordjs is not going to fix this.
- * So, this function splits up the message before sending. It also does the following:
- * * if a message is just a discord attachment url, send that as an attachment instead of as the text of a message
- *    * typically this makes no difference, due to auto-embedding, but it allows you to play music using the in-built player
- * * guards against sending an empty string (which is a crashing error otherwise)
+ * So, this function splits up the message before sending.
+ * It also guards against sending an empty string (which is a crashing error otherwise(?!)).
+ * Someday I might make an internal rule that we always use send_long instead of .send, but I haven't bothered yet.
 */
 function send_long(channel, string, resume_quotatively=false){
-  if (discord_attachment_url_ONLY_regex.test(string)) {
-    channel.send({files: [string]});
-    return;
-  }
   const resumptor_prefix = resume_quotatively? ">>> " : "";
   const upper_limit = 2000 - resumptor_prefix.length; //2000 is the limit given from on-high. Note that slice, which we use later, is 0-indexed and excludes the specified end character index.
   let we_are_first = true;
