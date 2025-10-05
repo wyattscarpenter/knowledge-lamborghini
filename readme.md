@@ -30,6 +30,7 @@ This is Knowledge Lamborghini (“kl”), an eclectic discord bot with exactly t
   * I (the developer) generally do not look at, nor arbitrarily manipulate, this data, but I reserve the absolute right to.
   * I *will* comply with any government demands about this data I am legally compelled to. I *may or may not* inform anyone about instances of this. I *may or may not* proactively coöperate with the authorities in the absence of a mandate to, depending on how I'm feeling about your data and you as a person, on the day when I consider it.
 * MINIMAL automatic feature testing, because I didn't think about how easy it would be to do that until I had built all the features. (And discord is hard to meaningfully mock, for some features.)
+* For everything except remindmes and starboards (features where this would be extremely annoying), this bot has a sort of loosey-goosey attitude towards correctness, and usually doesn't do anything in particular to catch errors; so, if there are transitory networking issues between the bot and discord, a couple of messages might get dropped here and there. (This is on top of the normal downtime the bot occasionally experiences, during which it also cannot receive any messages, naturally.) Feel free to bring these incidents up as issues on GitHub or batphone if they annoy you, and/or fix my code.
 
 ### Positive features
 

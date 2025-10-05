@@ -735,10 +735,14 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
       console.error(remindme)
       return;
     }
-    channel.send( { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} } );
+    channel.send( { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} } )
+      .then(message => {
+        console.log(`Sent message: ${message.content}`);
+        remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
+        update_record_on_disk("remindmes.json", remindmes);
+      })
+      .catch(console.error);
   });
-  remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
-  update_record_on_disk("remindmes.json", remindmes);
 }
 
 function array_but_without(array, undesirable_item) { return array.filter(item => item !== undesirable_item); } // This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
@@ -824,9 +828,13 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
             console.log(emoji_image);
             send_long(channel, emoji_image); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
             send_long(channel, metadata);
-            reaction.message.forward(channel);
-            starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
-            update_record_on_disk("starboards.json", starboards);
+            reaction.message.forward(channel)
+              .then(message => {
+                console.log(`forwarded message to starboard: ${message.content}`);
+                starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
+                update_record_on_disk("starboards.json", starboards);
+              })
+              .catch(console.error);
           }
         });
       }
