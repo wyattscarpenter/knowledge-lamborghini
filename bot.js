@@ -613,7 +613,7 @@ function send_response(message, for_server=false) {
   // LEGACY JSON: the response might be a string instead of an object mapping from strings to weights.
   if(is_string(r)){
     console.log("string response", r);
-    r = {[r]: 1}; 
+    r = {[r]: 1};
   }
 
   // Pick by weighted randomness. Implicitly (and also to the typechecker), the type of r is object mapping from string → number, with each number being the count of "tickets" the string has in the "raffle", so to speak.
@@ -829,7 +829,6 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
             update_record_on_disk("starboards.json", starboards);
           }
         });
-        
       }
     }
   }
