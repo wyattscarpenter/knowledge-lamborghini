@@ -115,7 +115,7 @@ const command_prefix = first_arg === undefined ? '!' : first_arg;
 const remindme_regex = /^remind ?me ?!?/i;
 const howlongago_regex = /^how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
 
-function command_prefix_strip(string){ //TODO: also use this on the keyword for responses
+function command_prefix_strip(string){
   if (string.startsWith(command_prefix + ' ')) {
     return string.slice(command_prefix.length + 1);
   } else if (string.startsWith(command_prefix)) {
@@ -295,7 +295,7 @@ client.on(Events.MessageCreate, message => {
 
   if (m.startsWith('enumerate responses')) {
     // If an argument is given, only enumerate responses for that argument (keyword or regex)
-    const filter = message.content.split(/ +/).slice(2).join(' ').toLowerCase();
+    const filter = command_prefix_strip(message.content.split(/ +/).slice(2).join(' ').toLowerCase());
     const pick = (obj) => {
       if (!obj || !filter) return obj;
       return { [filter]: obj[filter] };
@@ -519,14 +519,14 @@ function set_response(message, for_server=false, unset=false, regex=false){
   // Rough structural diagram of input we're parsing: set (blah, (blah , blah blah blah))
   const command_arguments_text = message.content.split(/\s(.+)/)[1];
   const [first_argument, rest_arguments] = command_arguments_text.split(/\s(.+)/);
-  const [number, keyWord, response] = unset? //The number parameter is not allowed for the unset commands, so there is no need to search further.
+  const [number, keyword_raw, response] = unset? //The number parameter is not allowed for the unset commands, so there is no need to search further.
       [0, first_argument, rest_arguments] // 0 is simply a dummy value here, since we don't actually need this number for this route
     : isNaN(first_argument)?  //optional, default number to 1 if there's nothing there.
       [1, first_argument, rest_arguments]
     :
       [+first_argument].concat(rest_arguments.split(/\s(.+)/)) //this is a silly way to write it but hey we need to structure it to destructure it!
   ;
-  const keyword = keyWord.toLowerCase();
+  const keyword = command_prefix_strip(keyword_raw.toLowerCase());
   response_container[response_container_indexer] ??= {}; //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
 
   if (regex) { // Validate the regex.
