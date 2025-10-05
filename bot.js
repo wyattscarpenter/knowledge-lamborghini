@@ -15,9 +15,6 @@ const client = new Client({
   partials: [Partials.Message, Partials.Reaction],
 });
 
-const kl_test_emoji_id = "1342850037792772106" //this is a test emoji I created when we need to test an emoji feature.
-const kl_test_emoji_static_id = "1389488389673320602"; //as above, but not animated.
-
 // THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
 client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
 
@@ -820,11 +817,8 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
     for (const [channel_id, starboard_metadata] of Object.entries(starboards[reaction.message.guild.id])){ //forward to starboard channels, with the emoji
       if (
-        !starboard_metadata.messageIds.includes(reaction.message.id)
-        && (
-          (reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward
-          || [kl_test_emoji_id, kl_test_emoji_static_id].includes(reaction.emoji.id??"")
-        )
+        (!starboard_metadata.messageIds.includes(reaction.message.id))
+        && ((reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward)
       ) {
         client.channels.fetch(channel_id).then( channel => {
           if (channel != null && channel.type === ChannelType.GuildText) {
