@@ -544,23 +544,6 @@ function set_response(message, for_server=false, unset=false, regex=false){
     }
   }
 
-  // For LEGACY JSONs with an existing non-probabilistic response, we make it part of the new possibility range.
-  const current_guy = response_container[response_container_indexer][keyword];
-  if(is_string(current_guy)){
-    //@ts-ignore // The type annotations don't cover the legacy format, so we must ignore the error on this line.
-    response_container[response_container_indexer][keyword] = {[current_guy]: 1}; // The extra square brackets are because it's a computed property: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Missing_colon_after_property_id#computed_properties
-  }
-  //For LEGACY, uh, non-normalized attachement urls:
-  const oldObj = response_container[response_container_indexer][keyword];
-  /** @type {{ [response: string]: number; }} */
-  const newObj = {};
-  if (oldObj) {
-    for (const [k, v] of Object.entries(oldObj)) {
-      newObj[normalize_discord_attachment_urls(k)] = v;
-    }
-  }
-  response_container[response_container_indexer][keyword] = newObj;
-
   const attachments = Array.from(message.attachments.values()).map(x => x.attachment);
   const raw_rs = response? [response].concat(attachments) : attachments;
   const rs = raw_rs.map(normalize_discord_attachment_urls);
@@ -613,12 +596,6 @@ function send_response(message, for_server=false) {
   const response_container_indexer = for_server? message.guild.id : message.channel.id;
 
   let r = response_container[response_container_indexer][message.content.toLowerCase()];
-
-  // LEGACY JSON: the response might be a string instead of an object mapping from strings to weights.
-  if(is_string(r)){
-    console.log("string response", r);
-    r = {[r]: 1};
-  }
 
   // Pick by weighted randomness. Implicitly (and also to the typechecker), the type of r is object mapping from string → number, with each number being the count of "tickets" the string has in the "raffle", so to speak.
   // This algorithm is pretty simple, and obscured only by javascript syntax.
