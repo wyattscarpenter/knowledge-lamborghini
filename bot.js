@@ -805,7 +805,11 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     }
   }
   // Now the message has been cached and is fully available. The reaction is now also fully available and the properties will be reflected accurately.
-  if(reaction.message.guild === null){return;}
+  if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
+    console.error("channel I wanted to examine for starboarding was null (or not a GuildText?), which is surprising, and I can't send the message.");
+    console.error(reaction.message);
+    return;
+  }
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
     for (const [channel_id, starboard_metadata] of Object.entries(starboards[reaction.message.guild.id])){ //forward to starboard channels, with the emoji
       if (
@@ -830,6 +834,11 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
             send_long(channel, metadata);
             reaction.message.forward(channel)
               .then(message => {
+                  if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
+                  console.error("channel I wanted to update the starboard record of was null (or not a GuildText?), which is surprising, and I can't do that.");
+                  console.error(reaction.message);
+                  return;
+                }
                 console.log(`forwarded message to starboard: ${message.content}`);
                 starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
                 update_record_on_disk("starboards.json", starboards);
