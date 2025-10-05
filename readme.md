@@ -38,7 +38,7 @@ A note about the commands: all commands are usually just as they are written her
 * @ the bot with a message containing "help" to get a link to this help document.
 * @ the bot with a message containing "version" to get the current version.
   * this is also includes, for utility's sake, the current git hash. It would include the current git message, but that was harder to get.
-* You may leave a message for the developer using `batphone`; whatever follows `batphone` will be stored into an array, which I will check (and remove items from) infrequently. In fact, everyone can check what's in the batphone, using the command `enumerate batphone`. This is generally for bug reports. Please do not spam the batphone.
+* You may leave a message for the developer using `batphone`; whatever follows `batphone` will be stored into an array, which I will check (and remove items from) extremely infrequently. In fact, everyone can check what's in the batphone, using the command `enumerate batphone`. This is generally for bug reports. Please do not spam the batphone. Furthermore, it is far better to raise an issue on github than in the batphone, if you can be bothered.
 * Type `think!` and kl begins to recite the book located in text.json, one unit per hour in the channel in which you made the command. `stop!` ceases the madness.
 * Type a phrase that's something like `who's that pokemon?` and kl posts an image from wikimedia for you to guess the file name of. The first successful guess for any picture is acknowledged.
 * Using the power of NiceDice (https://github.com/wyattscarpenter/nicedice), kl interprets any message consisting solely of a dnd-style dice expression, generates random numbers to simulate dice rolls, and outputs the result.
