@@ -42,6 +42,7 @@ function try_require(require_id, default_value){ // require_id is a bit baroque,
 }
 
 //These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
+//On a similar note, could combine regexes and regular responses into the same data structure, just with a boolean flag indicating regexness — relatively easy to hot-update that backwards compatibly. (I already don't really like how nested this object is, but realistically speaking it's no problem to nest it further.) An incremental possibility for "someday".
 // The number is the number of "tickets" aka the "weight". I can't figure out how to label it like you would the key type of an object.
 /** @type {{ [channelId: string]: { [keyword: string]: {[response: string] : number} } }} */
 let responses = try_require("./responses.json", {});
@@ -51,7 +52,6 @@ let server_responses = try_require('./server_responses.json', {});
 let regex_responses = try_require('./regex_responses.json', {});
 /** @type {{ [guildId: string]: { [regex: string]: {[response: string] : number} } }} */
 let server_regex_responses = try_require('./server_regex_responses.json', {});
-//TODO(?): combine regexes and regular responses into the same data structure — relatively easy to hot-update that backwards compatibly
 
 let batphone = try_require('./batphone.json', []); //I never bothered to document the type of this data structure.
 let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
