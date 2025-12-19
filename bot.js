@@ -134,6 +134,13 @@ client.on(Events.MessageCreate, message => {
   message.content = command_prefix_strip(message.content);
   const m = message.content.toLowerCase();
 
+  if (m.startsWith('echo')) {
+    //echo feature for great goofs
+    //Will also echo messages like "echolocation". But this is a feature, because that's also funny.
+    const msg = message.content.slice('echo'.length).trim();
+    channel.send(msg);
+  }
+
   // Batphone: store a message for the developer
   if (m.startsWith('batphone')) {
     const batmsg = message.content.slice('batphone'.length).trim();
