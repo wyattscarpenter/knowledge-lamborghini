@@ -100,6 +100,10 @@ I don't have a lot of advice for you if you're trying to deploy this script. For
 
 If you'd like to deploy the bot in a conventional way, on a linux/unix machine with npm and git already installed, example_bot_setup_and_run_script_one_could_use.sh could fit your needs (um, that script clones this git repo for you, so keep that in mind and don't... create a git repo in another git repo by mistake). As for myself, I want the bot to receive constant updates whenever I push to the git master, so I prefer to use constantly-try-to-update, a great script (also requires unix shell, npm, git, node).
 
+### Editorializing
+
+This project is written in javascript, which I don't really recommend, using discordjs, which I don't recommend, because when you google "how to make discord bot" that's one of the things that comes up first. Back in the day that seemed easiest to me, and now here we are all of these years later. This project also uses typescript (run as a check on our mostly-vanilla js) to do a bit of static analysis on the code to prevent some late-arising errors, which is better than nothing, I suppose!
+
 ### Feature requests
 
 The following was written by the developer to a user (@neophos) regarding a request for a new feature, something about an oracle ("do not let people reroll the words of the oracle"). It still stands as the developer's current attitude towards feature requests:
