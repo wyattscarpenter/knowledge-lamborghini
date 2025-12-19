@@ -1,3 +1,10 @@
+# This script runs the bot, in a particular way.
+
+# Sporadically (and for that, all the more confusingly) there is a git lock conflict. I don't know what the heck its problem is. I have deliberately tried to set up this system so that git will just act like a download and it won't be a federal issue every time. Alas!
+# Anyway, presumably there's some kind of git unlock command I can run first which will unbreak things prophylactically.
+# Or maybe I can fix the git command somehow, figuring out what I'm actually supposed to run.
+# I will only deal with this issue if I actually run into the problem again at some point. It hasn't happened for quite a while. If this occurs again and I figure it out and fix it, I'll remove this whole comment block.
+
 git config --global --add safe.directory .
 while true; do
   if [ "`git pull origin master 2>/dev/null`" != "Already up to date." ]; then
