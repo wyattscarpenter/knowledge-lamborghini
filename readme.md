@@ -104,7 +104,7 @@ If you'd like to deploy the bot in a conventional way, on a linux/unix machine w
 
 The following was written by the developer to a user (@neophos) reguarding a request for a new feature, something about an oracle ("do not let people reroll the words of the oracle"). It still stands as the developer's current attitude towards feature requests:
 
-<code>
+<pre><code style="white-space: pre-wrap !important;">
   Dear user @neophos,
   I hope this missive finds you well. How are you? I am fine. Anyway, I'm honored my bot is being used to reveal, presumably, the true words of God; presumably using the "raffle" feature of set. However, at the moment (and indefinitely) the only thing that keeps me working on (for some low sense of "working on") this bot is my violated pride because of the variety of bugs in the features I did add. If you want to add a new feature (such as a set that can't be retriggered arbitrarily), I encourage you to code it up yourself and open a pull request on the github.
 
@@ -112,4 +112,4 @@ The following was written by the developer to a user (@neophos) reguarding a req
 
   Peace and love, peace and love,
   Your old pal Wyatt
-</code>
+</code></pre>
