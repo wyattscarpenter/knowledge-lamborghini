@@ -39,7 +39,7 @@ A note about the commands: all commands are usually just as they are written her
 * @ the bot with a message containing "help" to get a link to this help document.
 * @ the bot with a message containing "version" to get the current version.
   * this is also includes, for utility's sake, the current git hash. It would include the current git message, but that was harder to get.
-* Type a message beginning with `echo` and kl will respond with the message (stripping the `echo`) immediately, once. This can be useful for doing jokes in the bot's voice. For instance, you can command it to echo and then delete your command message. Please note that this means anyone can easily spoof messages "from the bot" and you shouldn't rely on that for bot annoucements, things not being a scam, etc.
+* Type a message beginning with `echo` and kl will respond with the message (stripping the `echo`) immediately, once. This can be useful for doing jokes in the bot's voice. For instance, you can command it to echo and then delete your command message. Please note that this means anyone can easily spoof messages "from the bot" and you shouldn't rely on that for bot announcements, things not being a scam, etc.
 * You may leave a message for the developer using `batphone`; whatever follows `batphone` will be stored into an array, which I will check (and remove items from) **extremely infrequently**. In fact, everyone can check what's in the batphone, using the command `enumerate batphone`. This is generally for bug reports. Please do not spam the batphone. Furthermore, it is far better to raise an issue on github than in the batphone, if you can be bothered.
 * Type `think!` and kl begins to recite the book located in text.json, one unit per hour in the channel in which you made the command. `stop!` ceases the madness.
 * Type a phrase that's something like `who's that pokemon?` and kl posts an image from wikimedia for you to guess the file name of. The first successful guess for any picture is acknowledged.
@@ -102,7 +102,7 @@ If you'd like to deploy the bot in a conventional way, on a linux/unix machine w
 
 ### Feature requests
 
-The following was written by the developer to a user (@neophos) reguarding a request for a new feature, something about an oracle ("do not let people reroll the words of the oracle"). It still stands as the developer's current attitude towards feature requests:
+The following was written by the developer to a user (@neophos) regarding a request for a new feature, something about an oracle ("do not let people reroll the words of the oracle"). It still stands as the developer's current attitude towards feature requests:
 
 <blockquote>
   Dear user @neophos,
