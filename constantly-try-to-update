@@ -8,7 +8,7 @@
 
 git config --global --add safe.directory .
 while true; do
-  rm .git/*.lock
+  rm -f .git/*.lock # -f lets us avoid complaining if the file doesn't exist
   if [ "`git pull origin master 2>/dev/null`" != "Already up to date." ]; then
     git reset origin/master --hard
     pkill node
