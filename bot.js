@@ -22,11 +22,7 @@ client.login(require("./token.json"));//this file is probably missing from your 
 let text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 
 function error_message_first_line_if_error(e){
-  if (e instanceof Error) {
-    const error_message = e.message.split('\n')[0];
-  } else {
-    const error_message = e;
-  }
+  return (e instanceof Error) ? e.message.split('\n')[0] : e;
 }
 
 function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
