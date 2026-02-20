@@ -90,11 +90,12 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
     if ( track_leaves[member.guild.id] ) {
       for (const channelId of track_leaves[member.guild.id]){
         client.channels.fetch(channelId).then( channel => {
-          if (channel === null || channel.type !== ChannelType.GuildText) {
-            console.error("channel I wanted to tell about a member leaving was null or not a GuildText, which is surprising, and I can't send the message.");
+          if (channel === null) {
+            console.error("channel I wanted to tell about a member leaving was null, which is surprising, and I can't send the message.");
             console.error(channel, member.guild, member.user.toString())
             return;
           }
+          //@ts-ignore //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
           channel.send(
             member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is gone from the server (left, kicked, or banned)."
           )
@@ -711,11 +712,12 @@ function launch_remindmes(remindmes){
 function discharge_remindme(remindme){ //Send a remindme, making sure to remove it from the authoritative data structure, and cache that structure to file:
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
   client.channels.fetch(remindme.message.channelId).then( channel => {
-    if (channel === null || channel.type !== ChannelType.GuildText) {
-      console.error("channel I wanted to tell about a remindme was null or not a GuildText, which is surprising, and I can't send the message.");
+    if (channel === null) {
+      console.error("channel I wanted to tell about a remindme was null, which is surprising, and I can't send the message.");
       console.error(remindme)
       return;
     }
+    //@ts-ignore //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
     channel.send( { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} } )
       .then(message => {
         console.log(`Sent message: ${message.content}`);
@@ -787,7 +789,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
   }
   // Now the message has been cached and is fully available. The reaction is now also fully available and the properties will be reflected accurately.
   if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
-    console.error("channel I wanted to examine for starboarding was null (or not a GuildText?), which is surprising, and I can't send the message.");
+    console.error("channel I wanted to examine for starboarding was null, which is surprising, and I can't send the message.");
     console.error(reaction.message);
     return;
   }
@@ -798,7 +800,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
         && ((reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward)
       ) {
         client.channels.fetch(channel_id).then( channel => {
-          if (channel != null && channel.type === ChannelType.GuildText) {
+          if (channel != null) {
             if(reaction.message.guild === null){return;}
             //Forward the message to the channel.
             const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
@@ -810,10 +812,11 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
             console.log(emoji_image);
             send_long(channel, emoji_image); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
             send_long(channel, metadata);
+            //@ts-ignore //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
             reaction.message.forward(channel)
               .then(message => {
                   if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
-                  console.error("channel I wanted to update the starboard record of was null (or not a GuildText?), which is surprising, and I can't do that.");
+                  console.error("channel I wanted to update the starboard record of was null, which is surprising, and I can't do that.");
                   console.error(reaction.message);
                   return;
                 }
