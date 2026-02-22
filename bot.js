@@ -583,9 +583,15 @@ function set_response(message, for_server=false, unset=false, regex=false){
     }
   }
   update_record_on_disk(saving_file_name, response_container);
+  const krs = response_container[response_container_indexer][keyword];
+  const response_count = Object.keys(krs).length
+  const ticket_count = Object.values(krs).reduce( (l, r) => l+r );
   const possibly_ok_str = all_ok? "OK, " : ""; // This remark indicates that the execution went off without a hitch.
   const possibly_now_str = any_ok? "now " : ""; // This remark indicates that there was a change.
-  send_long( message.channel, possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+mode_announcement+"set to "+pretty_string(response_container[response_container_indexer][keyword]) );
+  send_long( message.channel,
+    possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+mode_announcement+"set to "+response_count+" response(s) with "+ticket_count+" total tickets between them."
+    //It's kind of annoying to repeat back the user's input to them here due to the multiple image attachments thing, so we just don't bother to do that.
+  );
 }
 
 function send_response(message, for_server=false) {
