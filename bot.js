@@ -1,5 +1,5 @@
 // @ts-check //This instructs typescript to also check this file, and provide diagnostics, in vscode. I also have `"js/ts.implicitProjectConfig.checkJs": true` in my user `settings.json`, which does the same thing for all js files.
-const {Client, Events, GatewayIntentBits, ChannelType, Partials} = require('discord.js');
+const {Client, Events, GatewayIntentBits, ChannelType, Partials, RESTJSONErrorCodes} = require('discord.js');
 const nicedice = require('nicedice');
 const {distance} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
@@ -489,15 +489,24 @@ function stop_think(channel){
  * It also guards against sending an empty string (which is a crashing error otherwise(?!)).
  * Someday I might make an internal rule that we always use send_long instead of .send, but I haven't bothered yet.
 */
-function send_long(channel, string, resume_quotatively=false){
+function send_long(channel, string, resume_quotatively=false, message_id_to_reply_to=null){
   const resumptor_prefix = resume_quotatively? ">>> " : "";
   const upper_limit = 2000 - resumptor_prefix.length; //2000 is the limit given from on-high. Note that slice, which we use later, is 0-indexed and excludes the specified end character index.
   let we_are_first = true;
   for(let l of string.split("\n\n")){ //break lines into separate messages if they're separated by two newlines
     while(l){
-      const prefix = we_are_first? "": resumptor_prefix;
+      const prefix = we_are_first? "" : resumptor_prefix;
       const content = prefix + l.slice(0, upper_limit);
-      channel.send(content);
+      const reply = we_are_first? message_id_to_reply_to : null; //if null, this just posts and does not reply to anyone
+      channel.send({ content: content, reply: {messageReference: reply} })
+      .catch((error) => {
+	      if (error.code == RESTJSONErrorCodes.InvalidFormBodyOrContentType) { //It's not completely obvious, but this seems to be the way to check for this. Possibly one could specify it more exactly.
+		      console.error("Failed to send_long a message, probably because a message I would reply to was later deleted. Will now just send my message as a regular message. Here is the original error:", error);
+          channel.send(content);
+        } else {
+          console.error("Failed to send_long a message, for unanticipated reasons. I'm just giving up on that send. Here is the original error:", error);
+        }
+      });
       l = l.slice(upper_limit); //going past the end of the source string here is fine, you know how it is
       we_are_first = false
     }
@@ -577,7 +586,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
         any_ok = true;
       }
     } else {
-      send_long(message.channel, "What do you want me to "+mode_announcement+"set it to?");
+      send_long(message.channel, "What do you want me to "+mode_announcement+"set it to?", false, message.id);
       all_ok = false; // set this just in case I refactor out the early return later
       return; //early return for great justice
     }
@@ -720,13 +729,10 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
       return;
     }
     //@ts-ignore //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
-    channel.send( { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} } ) //TODO: this really should be send_long, which should be updated to be able to handle replies as well.
-      .then(message => {
-        console.log(`Sent message: ${message.content}`);
-        remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
-        update_record_on_disk("remindmes.json", remindmes);
-      })
-      .catch(console.error);
+    send_long(channel, "It is time:\n"+remindme.message.content, false, remindme.message.id);
+    console.log(`Sent (or attempted to send) message: ${remindme.message.content}`);
+    remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
+    update_record_on_disk("remindmes.json", remindmes);
   });
 }
 
