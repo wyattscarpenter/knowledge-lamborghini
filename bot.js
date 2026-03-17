@@ -700,7 +700,7 @@ function howlongago(message){
   } else { //Because the computer operates with variable speed(?) d<now is SOMETIMES true if you've declared d to be now. But d<=now is ALWAYS true, so we use it for greater consistency.
     const then = d.getTime();
     const now = now_d.getTime();
-    //@ts-ignore //Idk what the big deal is; this api is supposed to be in typescript by now.
+    //@ts-expect-error //Idk what the big deal is; this api is supposed to be in typescript by now.
     const diff = new Intl.DurationFormat("en", { style: "long" }).format({milliseconds: now - then});
     message.reply(`${now_d} **(now)** - ${d} **(then)** = ${diff}.`);
   }
@@ -812,7 +812,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
             console.log(emoji_image);
             send_long(channel, emoji_image); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
             send_long(channel, metadata);
-            //@ts-ignore //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
+            //@ts-expect-error //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
             reaction.message.forward(channel)
               .then(message => {
                   if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
