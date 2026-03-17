@@ -5,6 +5,7 @@ const {distance} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
 const https = require('https');
 const fs = require('fs');
+const writeFileAtomicSync = require('write-file-atomic').sync //Note that you MUST use this to write all files, because the default non-atomic behavior is garbage for non-serious people, and will probably occasionally corrupt the json files (my power does go out occasionally). There is a rule about this in npm run check. //I've never really evalutated all/any of the atomic file writing options out there, I just picked this one since I guess npm made it so it's probably trustworthy.
 
 module.exports = {
   normalize_discord_attachment_urls
@@ -410,13 +411,12 @@ client.on(Events.MessageCreate, message => {
 
 function update_record_on_disk(record_filename, object_value){
   console.log("Writing updates to", record_filename);
-  //TODO: this should actually use atomic writing primitives, like from https://github.com/npm/write-file-atomic or https://github.com/fabiospampinato/atomically, because my power does go out occasionally, and this will corrupt the JSON otherwise. Currently it's just "synchronous", and (as far as I know) just in a javascript sense, anyway.
   const data_backups_folder = "data_backups/";
   fs.mkdirSync(data_backups_folder, { recursive: true }); //The use of "recursive" here is just to keep it from crashing if the folder already exists.
   const backup_date_string = new Date().toISOString().replaceAll(':', '-'); //Example of how this comes out: 2026-03-17T11-18-42.678Z
   const payload = pretty_string(object_value);
-  fs.writeFileSync(data_backups_folder+backup_date_string+record_filename, payload);
-  return fs.writeFileSync(record_filename, payload);
+  writeFileAtomicSync(data_backups_folder+backup_date_string+record_filename, payload);
+  writeFileAtomicSync(record_filename, payload);
 }
 
 function pretty_string(object){
