@@ -443,7 +443,7 @@ function whos_that_pokemon(channel, original_message_link){
       resp.on('end', () => {
         const filey_match = data.match(/"File[\s\S]*"/);
         if (filey_match === null){
-          console.error("filely_match of the 'pokemon' file name was null, which I didn't even think was possible. Logging this message and returning early...");
+          console.error("filely_match of the 'pokemon' file name was null, which I didn't even think was possible. Logging this message and returning early... Original data value:", data);
           return;
         }
         const id = JSON.parse(filey_match[0]);
