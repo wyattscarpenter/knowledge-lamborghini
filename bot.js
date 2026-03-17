@@ -83,19 +83,16 @@ client.on('clientReady', () => {
 });
 
 client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member leaves a guild, or is kicked."
-  if (!member.user.bot) { // If we try to send a message to a server we're not in (ie if we've just been removed), we crash! So, avoid that by checking if it is us who got kicked out.
+  if (!member.user.bot) { // If we naively try to send a message to a server we're not in (ie if we've just been removed), we may crash! So, avoid that by checking if it is us who got kicked out.
     if ( track_leaves[member.guild.id] ) {
       for (const channelId of track_leaves[member.guild.id]){
         client.channels.fetch(channelId).then( channel => {
           if (channel === null) {
             console.error("channel I wanted to tell about a member leaving was null, which is surprising, and I can't send the message.");
-            console.error(channel, member.guild, member.user.toString())
+            console.error(channel, member.guild, member.user.toString());
             return;
           }
-          //@ts-ignore //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
-          channel.send(
-            member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is gone from the server (left, kicked, or banned)."
-          )
+          send_long(channel, member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is gone from the server (left, kicked, or banned).");
         }
         );
       }
