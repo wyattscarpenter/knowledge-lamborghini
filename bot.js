@@ -410,7 +410,7 @@ client.on(Events.MessageCreate, message => {
 
 function update_record_on_disk(record_filename, object_value){
   console.log("Writing updates to", record_filename);
-  return fs.writeFile(record_filename, pretty_string(object_value), console_log_if_not_null);
+  return fs.writeFileSync(record_filename, pretty_string(object_value));
 }
 
 function pretty_string(object){
@@ -593,7 +593,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   }
   update_record_on_disk(saving_file_name, response_container);
   const krs = response_container[response_container_indexer][keyword];
-  const response_count = Object.keys(krs).length
+  const response_count = Object.keys(krs).length //TODO: krs can be undefined or null here, perhaps when the response was multi-line (TODO: which might not be handled right)? And currently that just crashes. Weird that typescript doesn't indicate that possibility. Maybe that means the data was just corrupted, thus violating the type annotations? Somehow? 
   const ticket_count = Object.values(krs).reduce( (l, r) => l+r );
   const possibly_ok_str = all_ok? "OK, " : ""; // This remark indicates that the execution went off without a hitch.
   const possibly_now_str = any_ok? "now " : ""; // This remark indicates that there was a change.
@@ -737,13 +737,6 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
 }
 
 function array_but_without(array, undesirable_item) { return array.filter(item => item !== undesirable_item); } // This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
-
-function console_log_if_not_null(object){
-  // fs.writeFile wants us to have a callback for handling errors, and there's no point logging if the error is null (no error)
-  if (object !== null){
-    console.error(object)
-  }
-}
 
 /** Regex to match Discord CDN/media attachment URLs (greedy up to whitespace or end) */
 // TODO: possibly use [\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]* instead of \S here? Or possibly a library that matches the current URL highlighting precisely.
