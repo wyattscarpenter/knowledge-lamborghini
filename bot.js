@@ -720,7 +720,7 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
       return;
     }
     //@ts-ignore //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
-    channel.send( { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} } )
+    channel.send( { content: "It is time:\n"+remindme.message.content, reply: {messageReference: remindme.message.id} } ) //TODO: this really should be send_long, which should be updated to be able to handle replies as well.
       .then(message => {
         console.log(`Sent message: ${message.content}`);
         remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
