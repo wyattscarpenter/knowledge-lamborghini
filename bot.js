@@ -411,7 +411,12 @@ client.on(Events.MessageCreate, message => {
 function update_record_on_disk(record_filename, object_value){
   console.log("Writing updates to", record_filename);
   //TODO: this should actually use atomic writing primitives, like from https://github.com/npm/write-file-atomic or https://github.com/fabiospampinato/atomically, because my power does go out occasionally, and this will corrupt the JSON otherwise. Currently it's just "synchronous", and (as far as I know) just in a javascript sense, anyway.
-  return fs.writeFileSync(record_filename, pretty_string(object_value));
+  const data_backups_folder = "data_backups/";
+  fs.mkdirSync(data_backups_folder, { recursive: true }); //The use of "recursive" here is just to keep it from crashing if the folder already exists.
+  const backup_date_string = new Date().toISOString().replaceAll(':', '-'); //Example of how this comes out: 2026-03-17T11-18-42.678Z
+  const payload = pretty_string(object_value);
+  fs.writeFileSync(data_backups_folder+backup_date_string+record_filename, payload);
+  return fs.writeFileSync(record_filename, payload);
 }
 
 function pretty_string(object){

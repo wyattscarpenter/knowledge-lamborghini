@@ -5,7 +5,8 @@ regex_responses.json
 server_regex_responses.json
 remindmes.json
 track_leaves.json
-node_modules/
 pokemon_answers.json
 starboards.json
 batphone.json
+data_backups/
+node_modules/
