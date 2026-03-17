@@ -410,6 +410,7 @@ client.on(Events.MessageCreate, message => {
 
 function update_record_on_disk(record_filename, object_value){
   console.log("Writing updates to", record_filename);
+  //TODO: this should actually use atomic writing primitives, like from https://github.com/npm/write-file-atomic or https://github.com/fabiospampinato/atomically, because my power does go out occasionally, and this will corrupt the JSON otherwise. Currently it's just "synchronous", and (as far as I know) just in a javascript sense, anyway.
   return fs.writeFileSync(record_filename, pretty_string(object_value));
 }
 
@@ -517,16 +518,13 @@ function crash(){
   throw "crash"; //do not catch this, if you really want to crash
 }
 
-function is_string(variable){
-  return (typeof variable === 'string')
-}
-
 function set_response(message, for_server=false, unset=false, regex=false){
   const response_container = regex? (for_server ? server_regex_responses : regex_responses) : (for_server? server_responses : responses);
   const response_container_indexer = regex? (for_server ? message.guild.id : message.channel.id) : (for_server? message.guild.id : message.channel.id);
   const saving_file_name = (for_server? "server_" : "") + (regex? "regex_" : "") + "responses.json";
 
   // Rough structural diagram of input we're parsing: set (blah, (blah , blah blah blah))
+  // TODO: I don't think this handles mutli-line responses right.
   const command_arguments_text = message.content.split(/\s(.+)/)[1];
   const [first_argument, rest_arguments] = command_arguments_text.split(/\s(.+)/);
   const [number, keyword_raw, response] = unset? //The number parameter is not allowed for the unset commands, so there is no need to search further.
@@ -592,9 +590,9 @@ function set_response(message, for_server=false, unset=false, regex=false){
     }
   }
   update_record_on_disk(saving_file_name, response_container);
-  const krs = response_container[response_container_indexer][keyword];
-  const response_count = Object.keys(krs).length //TODO: krs can be undefined or null here, perhaps when the response was multi-line (TODO: which might not be handled right)? And currently that just crashes. Weird that typescript doesn't indicate that possibility. Maybe that means the data was just corrupted, thus violating the type annotations? Somehow? 
-  const ticket_count = Object.values(krs).reduce( (l, r) => l+r );
+  const krs = response_container[response_container_indexer][keyword] ?? {}; //If you unset this above (thus `delete`ing it), it will now be undefined, which sadly is not tracked by the type information even though it results in a "TypeError: Cannot convert undefined or null to object" error. So, we have to fall back to an empty object.
+  const response_count = Object.keys(krs).length;
+  const ticket_count = Object.values(krs).reduce( (l, r) => l+r , 0 ); //We need the initial value (0) here because otherwise an empty array is a crash, sigh...
   const possibly_ok_str = all_ok? "OK, " : ""; // This remark indicates that the execution went off without a hitch.
   const possibly_now_str = any_ok? "now " : ""; // This remark indicates that there was a change.
   send_long( message.channel,
