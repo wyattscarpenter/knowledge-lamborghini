@@ -75,7 +75,7 @@ var pokemon_answers = try_require("./pokemon_answers.json", {});
 const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 
 
-client.on('ready', () => {
+client.on('clientReady', () => {
   console.log('I am ready! Logged in as', client.user?.tag, "with optional command prefix", command_prefix);
   setInterval(update_status_clock, 1000);
   launch_remindmes(remindmes);
