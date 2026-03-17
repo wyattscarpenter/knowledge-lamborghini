@@ -1,5 +1,5 @@
 // @ts-check //This instructs typescript to also check this file, and provide diagnostics, in vscode. I also have `"js/ts.implicitProjectConfig.checkJs": true` in my user `settings.json`, which does the same thing for all js files.
-const {Client, Events, GatewayIntentBits, ChannelType, Partials, RESTJSONErrorCodes} = require('discord.js');
+const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes} = require('discord.js');
 const nicedice = require('nicedice');
 const {distance} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
@@ -629,7 +629,7 @@ function send_response(message, for_server=false) {
 }
 
 function possibly_send_regex_responses(message, for_server, regexes_object) {
-  for (const [pattern, responses] of Object.entries(regexes_object)) {
+  for (const [pattern, _responses] of Object.entries(regexes_object)) {
     let match;
     try {
       match = message.content.match(new RegExp(pattern, "i"));
@@ -703,7 +703,7 @@ function howlongago(message){
   } else { //Because the computer operates with variable speed(?) d<now is SOMETIMES true if you've declared d to be now. But d<=now is ALWAYS true, so we use it for greater consistency.
     const then = d.getTime();
     const now = now_d.getTime();
-    // @ts-ignore //Idk what the big deal is; this api is supposed to be in typescript by now.
+    //@ts-ignore //Idk what the big deal is; this api is supposed to be in typescript by now.
     const diff = new Intl.DurationFormat("en", { style: "long" }).format({milliseconds: now - then});
     message.reply(`${now_d} **(now)** - ${d} **(then)** = ${diff}.`);
   }
@@ -731,7 +731,6 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
       console.error(remindme)
       return;
     }
-    //@ts-ignore //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
     send_long(channel, "It is time:\n"+remindme.message.content, false, remindme.message.id);
     console.log(`Sent (or attempted to send) message: ${remindme.message.content}`);
     remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
