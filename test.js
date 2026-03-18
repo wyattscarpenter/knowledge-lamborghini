@@ -80,10 +80,10 @@ function test_split_once() {
     split_once("a  b", "q"),
     null
   );
-  // eq( //COULD: support regex eventually
-  //   split_once("a  b", /\s/),
-  //   ["a", "b"]
-  // );
+  eq(
+    split_once("a  b", /\s/),
+    ["a", "b"]
+  );
 }
 
 function _bad_test_tee_hee_hee() {

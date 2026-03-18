@@ -37,18 +37,16 @@ function pl(quantity, label){
   return quantity + " " + label + marker;
 }
 
+/** ("a  b", /\s/) ⇒ ["a", " b"]; accepts both strings and RegExps (anything with a Symbol.match method returning a string, actually)*/
 function split_once(source_string, splitter){
-  //Based on the suggestion in https://stackoverflow.com/a/2878746/, but elaborated a bit.
+  const s = source_string.match(splitter); //Since splitter could be not a string, make it array of string instead (or null)
+  const head = source_string.split(splitter, 1)[0];
   const i = source_string.indexOf(splitter);
   if (i === -1) { //-1 indicates not found, and so the right behavior here is to return a sentinel value, null
     return null;
   } else {
     return [source_string.slice(0,i), source_string.slice(i+splitter.length)];
   }
-}
-
-function pop_split_once(source_string, splitter){
-  //... Hold on a minute...
 }
 
 function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
