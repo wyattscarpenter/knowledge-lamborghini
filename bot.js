@@ -8,7 +8,7 @@ const fs = require('fs');
 const writeFileAtomicSync = require('write-file-atomic').sync //Note that you MUST use this to write all files, because the default non-atomic behavior is garbage for non-serious people, and will probably occasionally corrupt the json files (my power does go out occasionally). There is a rule about this in npm run check. //I've never really evalutated all/any of the atomic file writing options out there, I just picked this one since I guess npm made it so it's probably trustworthy.
 
 module.exports = {
-  normalize_discord_attachment_urls
+  normalize_discord_attachment_urls, split_once
 }
 
 const client = new Client({
@@ -35,6 +35,20 @@ function pl(quantity, label){
   const pl = label.slice(-1).toLowerCase() === "s"? "es" : "s"; //if it ends in s, use es instead. Note that if it ends in uppercase S, we also do this (motivating example: OSes)
   const marker = quantity !==1 ? pl : "";
   return quantity + " " + label + marker;
+}
+
+function split_once(source_string, splitter){
+  //Based on the suggestion in https://stackoverflow.com/a/2878746/, but elaborated a bit.
+  const i = source_string.indexOf(splitter);
+  if (i === -1) { //-1 indicates not found, and so the right behavior here is to return a sentinel value, null
+    return null;
+  } else {
+    return [source_string.slice(0,i), source_string.slice(i+splitter.length)];
+  }
+}
+
+function pop_split_once(source_string, splitter){
+  //... Hold on a minute...
 }
 
 function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
@@ -305,7 +319,7 @@ client.on(Events.MessageCreate, message => {
 
   if (m.startsWith('enumerate responses')) {
     // If an argument is given, only enumerate responses for that argument (keyword or regex)
-    const filter = command_prefix_strip(message.content.split(/ +/).slice(2).join(' ').toLowerCase());
+    const filter = command_prefix_strip(message.content.split(/\s+/).slice(2).join(' ').toLowerCase());
     const pick = (obj) => {
       if (!obj || !filter) return obj;
       return { [filter]: obj[filter] };
@@ -682,7 +696,7 @@ function discord_timestamp(date, is_relative=false){
 }
 
 function set_remindme(message){
-  const command_arguments_text = message.content.split(remindme_regex)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text.
+  const command_arguments_text = message.content.split(remindme_regex)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text. //Fun fact: this will actually split multiple times, if you type stuff that matches the regex multiple times.
   let d = chrono.parseDate(command_arguments_text);
   const d_first = d;
   if(!d){ //try again, once, with "in "

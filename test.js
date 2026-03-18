@@ -1,7 +1,9 @@
 // Tests for normalize_discord_attachment_urls
 const assert = require('assert');
-const { normalize_discord_attachment_urls } = require('./bot.js');
+const { normalize_discord_attachment_urls, split_once } = require('./bot.js');
 const { exit } = require('process');
+
+const eq = assert.deepStrictEqual; //We have to use this due to the funny fact that, eg, []==[] is false in js
 
 function test_normalize_discord_attachment_urls() {
   // 1. Basic timing params strip
@@ -69,11 +71,27 @@ function test_normalize_discord_attachment_urls() {
   );
 }
 
+function test_split_once() {
+  eq(
+    split_once("a  b", " "),
+    ["a", " b"]
+  );
+   eq(
+    split_once("a  b", "q"),
+    null
+  );
+  // eq( //COULD: support regex eventually
+  //   split_once("a  b", /\s/),
+  //   ["a", "b"]
+  // );
+}
+
 function _bad_test_tee_hee_hee() {
     //Not sure if the tests are actually running? Just uncomment this failing test to soothe your mind.
     assert.strictEqual(0,'0');
 }
 //_bad_test_tee_hee_hee();
 test_normalize_discord_attachment_urls();
+test_split_once();
 console.log('All tests passed!');
 exit(); // Since we require the bot, we must exit the process once we are done with our tests or, like, the bot will just start running.
