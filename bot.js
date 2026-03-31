@@ -26,6 +26,17 @@ function error_message_first_line_if_error(e){
   return (e instanceof Error) ? e.message.split('\n')[0] : e;
 }
 
+/** Naïve pluralization fn. Returns a string that is the quantity, a space, the label, and then (an s (or es) iff the quantity !== 1).
+ * Obviously, it doesn't work in more complicated linguistic edge cases like "cherry".
+ * This also means that -1 is treated as taking a plural, which I'm ambivalent about.
+ * You might be worried that floating point will somehow ruin this, but actually the equality and display truncation logic in js seem to work the same way so it's apparently fine.
+ */
+function pl(quantity, label){
+  const pl = label.slice(-1).toLowerCase() === "s"? "es" : "s"; //if it ends in s, use es instead. Note that if it ends in uppercase S, we also do this (motivating example: OSes)
+  const marker = quantity !==1 ? pl : "";
+  return quantity + " " + label + marker;
+}
+
 function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
   try{
     return require(require_id);
@@ -598,7 +609,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const possibly_ok_str = all_ok? "OK, " : ""; // This remark indicates that the execution went off without a hitch.
   const possibly_now_str = any_ok? "now " : ""; // This remark indicates that there was a change.
   send_long( message.channel,
-    possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+mode_announcement+"set to "+response_count+" response(s) with "+ticket_count+" total tickets between them."
+    possibly_ok_str+JSON.stringify(keyword)+" is "+possibly_now_str+mode_announcement+"set to "+pl(response_count, "response")+" with a cumulative pool of "+pl(ticket_count, "total ticket")+"."
     //It's kind of annoying to repeat back the user's input to them here due to the multiple image attachments thing, so we just don't bother to do that.
   );
 }
