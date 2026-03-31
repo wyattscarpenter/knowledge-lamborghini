@@ -1,7 +1,9 @@
 // Tests for normalize_discord_attachment_urls
 const assert = require('assert');
-const { normalize_discord_attachment_urls } = require('./bot.js');
+const { normalize_discord_attachment_urls, set_response, split_once } = require('./bot.js');
 const { exit } = require('process');
+
+const eq = assert.deepStrictEqual; //We have to use this due to the funny fact that, eg, []==[] is false in js
 
 function test_normalize_discord_attachment_urls() {
   // 1. Basic timing params strip
@@ -69,11 +71,64 @@ function test_normalize_discord_attachment_urls() {
   );
 }
 
+function test_split_once() {
+  eq(
+    split_once("a  b", " "),
+    ["a", " b"]
+  );
+   eq(
+    split_once("a  b", "q"),
+    ["a  b", ""]
+  );
+  eq(
+    split_once("", "q"),
+    ["", ""]
+  );
+  eq(
+    split_once("a  b", /\s/),
+    ["a", " b"]
+  );
+  eq(
+    split_once("a\n\nb", /\s/),
+    ["a", "\nb"]
+  );
+}
+let reply_mock = undefined;
+function fake_channel_send(x){
+  reply_mock = x.content;
+  return {catch: () => {}} 
+}
+/** Non-comprehensive tests for set_responses. Note that these do write to disk */
+function test_set_responses() {
+  const test_msg = {
+    content: "set test_boy hm\nm", //It seems inconvenient to test this actual value, alas.
+    guild: {id: "test_guild_id"},
+    channel: {id: "test_channel_id", send: fake_channel_send},
+    attachments: {values: ()=> []}
+  };
+  set_response(test_msg);
+  eq(reply_mock, 'OK, "test_boy" is now (channel) set to 1 response with a cumulative pool of 1 total ticket.');
+  test_msg.content = "set "
+  set_response(test_msg);
+  eq(reply_mock, 'What do you want me to (channel) set it to?');
+  test_msg.content = "set test_boy"
+  set_response(test_msg);
+  eq(reply_mock, 'What do you want me to (channel) set it to?');
+  test_msg.content = "set 2 test_boy"
+  set_response(test_msg);
+  eq(reply_mock, 'What do you want me to (channel) set it to?');
+  test_msg.content = "unset test_boy"
+  set_response(test_msg, false, true);
+  eq(reply_mock, 'OK, "test_boy" is now (channel) set to 0 responses with a cumulative pool of 0 total tickets.');
+}
+
 function _bad_test_tee_hee_hee() {
     //Not sure if the tests are actually running? Just uncomment this failing test to soothe your mind.
     assert.strictEqual(0,'0');
 }
 //_bad_test_tee_hee_hee();
 test_normalize_discord_attachment_urls();
+test_split_once();
+test_set_responses();
 console.log('All tests passed!');
 exit(); // Since we require the bot, we must exit the process once we are done with our tests or, like, the bot will just start running.

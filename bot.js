@@ -7,8 +7,9 @@ const https = require('https');
 const fs = require('fs');
 const writeFileAtomicSync = require('write-file-atomic').sync //Note that you MUST use this to write all files, because the default non-atomic behavior is garbage for non-serious people, and will probably occasionally corrupt the json files (my power does go out occasionally). There is a rule about this in npm run check. //I've never really evalutated all/any of the atomic file writing options out there, I just picked this one since I guess npm made it so it's probably trustworthy.
 
+/** These are exported merely for our testing purposes, and aren't expected to be generally useful. */
 module.exports = {
-  normalize_discord_attachment_urls
+  normalize_discord_attachment_urls, set_response, split_once
 }
 
 const client = new Client({
@@ -35,6 +36,21 @@ function pl(quantity, label){
   const pl = label.slice(-1).toLowerCase() === "s"? "es" : "s"; //if it ends in s, use es instead. Note that if it ends in uppercase S, we also do this (motivating example: OSes)
   const marker = quantity !==1 ? pl : "";
   return quantity + " " + label + marker;
+}
+
+/** ("a\n\nb", /\s/) ⇒ ["a", "\nb"]; accepts both strings and RegExps (anything with a Symbol.match method returning a string, actually).
+ * @param {string} source_string
+ * @param {{ [Symbol.match](string: string): RegExpMatchArray | null }} splitter
+ * @returns {[string, string]} the part of the string before the found instance of the splitter, and then the part of the string after the found instance of the splitter. The actual found splitter value is lost in the process (who cares?). Returns [source_string, ""] if splitter not found; this is impossible to distinguish from cases where the splitter is detected at the end, which can happen — but this definition was most useful for this application.
+ */
+function split_once(source_string, splitter){
+  const array_of_matched_strings_or_null = source_string.match(splitter); //Since splitter could be not a string, make it array of string instead (or null)
+  if (array_of_matched_strings_or_null === null){
+    return [source_string, ""];
+  }
+  const s = array_of_matched_strings_or_null[0];
+  const i = source_string.indexOf(s);
+  return [source_string.slice(0,i), source_string.slice(i+s.length)];
 }
 
 function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
@@ -118,6 +134,7 @@ const command_prefix = first_arg === undefined ? '!' : first_arg;
 const remindme_regex = /^remind ?me ?!?/i;
 const howlongago_regex = /^how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
 
+/** @param {string} string */
 function command_prefix_strip(string){
   if (string.startsWith(command_prefix + ' ')) {
     return string.slice(command_prefix.length + 1);
@@ -305,7 +322,7 @@ client.on(Events.MessageCreate, message => {
 
   if (m.startsWith('enumerate responses')) {
     // If an argument is given, only enumerate responses for that argument (keyword or regex)
-    const filter = command_prefix_strip(message.content.split(/ +/).slice(2).join(' ').toLowerCase());
+    const filter = command_prefix_strip(message.content.split(/\s+/).slice(2).join(' ').toLowerCase());
     const pick = (obj) => {
       if (!obj || !filter) return obj;
       return { [filter]: obj[filter] };
@@ -536,25 +553,26 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const response_container_indexer = regex? (for_server ? message.guild.id : message.channel.id) : (for_server? message.guild.id : message.channel.id);
   const saving_file_name = (for_server? "server_" : "") + (regex? "regex_" : "") + "responses.json";
 
-  // Rough structural diagram of input we're parsing: set (blah, (blah , blah blah blah))
-  // TODO: I don't think this handles mutli-line responses right.
-  const command_arguments_text = message.content.split(/\s(.+)/)[1];
-  const [first_argument, rest_arguments] = command_arguments_text.split(/\s(.+)/);
+  // Rough structural diagram of input we're parsing: set-command [number] first_arg rest_args...
+  const command_arguments_text = split_once(message.content, /\s/)[1];
+  // So now we're at: [number] first_arg rest_args...
+  const [first_argument, rest_arguments] = split_once(command_arguments_text, /\s/);
+  /** @type {[number, string, string]} */ //We don't *need* this type annotation, but it might help you follow the code. The code is structured oddly because of const; sorry.
   const [number, keyword_raw, response] = unset? //The number parameter is not allowed for the unset commands, so there is no need to search further.
       [0, first_argument, rest_arguments] // 0 is simply a dummy value here, since we don't actually need this number for this route
-    : isNaN(first_argument)?  //optional, default number to 1 if there's nothing there.
-      [1, first_argument, rest_arguments]
-    :
-      [+first_argument].concat(rest_arguments.split(/\s(.+)/)) //this is a silly way to write it but hey we need to structure it to destructure it!
+    : isNaN(+first_argument)? //optional, default number to 1 if there's nothing there. //Note that whitespace-only strings get converted by js to 0. They crazy for that one, but whatever. //The + prefix is just to appease typescript.
+        [1, first_argument, rest_arguments]
+      :
+        [+first_argument, ...split_once(rest_arguments, /\s/)]
   ;
   const keyword = command_prefix_strip(keyword_raw.toLowerCase());
   response_container[response_container_indexer] ??= {}; //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
 
   if (regex) { // Validate the regex.
     try {
-      new RegExp(keyword, "i")
+      new RegExp(keyword, "i");
     } catch(e) {
-      const explainer = "Invalid regex " + JSON.stringify(keyword) + ". Here is the problem: " + e;
+      const explainer = "Invalid regex " + JSON.stringify;(keyword) + ". Here is the problem: " + e;
       console.error(explainer);
       send_long(message.channel, explainer);
       return;
@@ -564,7 +582,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const attachments = Array.from(message.attachments.values()).map(x => x.attachment);
   const raw_rs = response? [response].concat(attachments) : attachments;
   const rs = raw_rs.map(normalize_discord_attachment_urls);
-  console.log("Here are the attachments of the message (normalized)", rs);
+  console.log("Here are the attachments of the message (normalized)(includes regular response):", rs);
   let all_ok = true;
   let any_ok = false;
   let mode_announcement = "(" + (for_server? "server": "channel") + (regex? " regex" : "")+ ") ";
@@ -682,7 +700,7 @@ function discord_timestamp(date, is_relative=false){
 }
 
 function set_remindme(message){
-  const command_arguments_text = message.content.split(remindme_regex)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text.
+  const command_arguments_text = split_once(message.content, remindme_regex)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text.
   let d = chrono.parseDate(command_arguments_text);
   const d_first = d;
   if(!d){ //try again, once, with "in "
@@ -703,7 +721,7 @@ function set_remindme(message){
 }
 
 function howlongago(message){
-  const command_arguments_text = message.content.split(howlongago_regex)[1]; //this just filters out the "how long ago was " portion. The text does not need to be further split, because the date parser is fine taking extra text.
+  const command_arguments_text = split_once(message.content, howlongago_regex)[1]; //this just filters out the "how long ago was " portion. The text does not need to be further split, because the date parser is fine taking extra text.
   const d = chrono.parseDate(command_arguments_text)
   const now_d = new Date();
   if(!d){
