@@ -41,7 +41,7 @@ function pl(quantity, label){
 /** ("a\n\nb", /\s/) ⇒ ["a", "\nb"]; accepts both strings and RegExps (anything with a Symbol.match method returning a string, actually).
  * @param {string} source_string
  * @param {{ [Symbol.match](string: string): RegExpMatchArray | null }} splitter
- * @returns {[string, string]} the part of the string before the found instance of the splitter, and then the part of the string after the found instance of the splitter. "Loses" the actual found splitter value in the process (who cares?). Returns [source_string, ""] if splitter not found; this is impossible to distinguish from cases where the splitter is detected at the end, which can happen — but this definition was most useful for this application.
+ * @returns {[string, string]} the part of the string before the found instance of the splitter, and then the part of the string after the found instance of the splitter. The actual found splitter value is lost in the process (who cares?). Returns [source_string, ""] if splitter not found; this is impossible to distinguish from cases where the splitter is detected at the end, which can happen — but this definition was most useful for this application.
  */
 function split_once(source_string, splitter){
   const array_of_matched_strings_or_null = source_string.match(splitter); //Since splitter could be not a string, make it array of string instead (or null)

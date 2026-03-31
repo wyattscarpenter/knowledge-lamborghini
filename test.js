@@ -78,11 +78,11 @@ function test_split_once() {
   );
    eq(
     split_once("a  b", "q"),
-    null
+    ["a  b", ""]
   );
   eq(
     split_once("", "q"),
-    null
+    ["", ""]
   );
   eq(
     split_once("a  b", /\s/),
