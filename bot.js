@@ -134,6 +134,7 @@ const command_prefix = first_arg === undefined ? '!' : first_arg;
 const remindme_regex = /^remind ?me ?!?/i;
 const howlongago_regex = /^how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
 
+/** @param {string} string */
 function command_prefix_strip(string){
   if (string.startsWith(command_prefix + ' ')) {
     return string.slice(command_prefix.length + 1);
@@ -553,26 +554,25 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const saving_file_name = (for_server? "server_" : "") + (regex? "regex_" : "") + "responses.json";
 
   // Rough structural diagram of input we're parsing: set-command [number] first_arg rest_args...
-  //no longer useful...: // @ts-expect-error //This one is because we know there is a space, since we don't dispatch here unless we've detected a space in the startwith in the main body. COULD: refactor to make this guarantee more evident.
   const command_arguments_text = split_once(message.content, /\s/)[1];
   // So now we're at: [number] first_arg rest_args...
-  const all_arguments = split_once(command_arguments_text, /\s/);
-  const [first_argument, rest_arguments] = all_arguments;
+  const [first_argument, rest_arguments] = split_once(command_arguments_text, /\s/);
+  /** @type {[number, string, string]} */ //We don't *need* this type annotation, but it might help you follow the code. The code is structured oddly because of const; sorry.
   const [number, keyword_raw, response] = unset? //The number parameter is not allowed for the unset commands, so there is no need to search further.
       [0, first_argument, rest_arguments] // 0 is simply a dummy value here, since we don't actually need this number for this route
-    : isNaN(first_argument)? //optional, default number to 1 if there's nothing there.
-      [1, first_argument, rest_arguments]
-    :
-      [+first_argument].concat(split_once(rest_arguments, /\s/)) //this is a silly way to write it but hey we need to structure it to destructure it!
+    : isNaN(+first_argument)? //optional, default number to 1 if there's nothing there. //Note that whitespace-only strings get converted by js to 0. They crazy for that one, but whatever. //The + prefix is just to appease typescript.
+        [1, first_argument, rest_arguments]
+      :
+        [+first_argument, ...split_once(rest_arguments, /\s/)]
   ;
   const keyword = command_prefix_strip(keyword_raw.toLowerCase());
   response_container[response_container_indexer] ??= {}; //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
 
   if (regex) { // Validate the regex.
     try {
-      new RegExp(keyword, "i")
+      new RegExp(keyword, "i");
     } catch(e) {
-      const explainer = "Invalid regex " + JSON.stringify(keyword) + ". Here is the problem: " + e;
+      const explainer = "Invalid regex " + JSON.stringify;(keyword) + ". Here is the problem: " + e;
       console.error(explainer);
       send_long(message.channel, explainer);
       return;
