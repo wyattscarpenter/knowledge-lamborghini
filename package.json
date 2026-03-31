@@ -1,13 +1,11 @@
 {
   "name": "knowledge-lamborghini",
   "description": "But you know what I like a lot more than knowledge? Knowledge. (an eclectic discord bot)",
-  "version": "7.2.8",
+  "version": "7.2.9",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
-    "check": "tsc --version && tsc --checkJs --noEmit --resolveJsonModule --skipLibCheck --lib es2022,dom bot.js --strict --noImplicitAny false && echo These rules are implemented braindeadly in package.json using git grep. If there are no other results for them then the rule is satistfied: && git grep fs.write",
-    "tsc": "tsc --all",
-    "test": "node test.js"
+    "test": "node test.js && tsc --version && tsc --checkJs --noEmit --resolveJsonModule --skipLibCheck --lib es2022,dom bot.js --strict --noImplicitAny false && echo These rules are implemented braindeadly in package.json using git grep. If there are no other results for them then the rule is satistfied: && git grep fs.write"
   },
   "remark upon the check": "I don't think there's any particular reason to require es2022 there. Maybe it was the most recent one when I tried to require one in particular to fix some other problem.",
   "repository": {
