@@ -108,6 +108,15 @@ function test_set_responses() {
   };
   set_response(test_msg);
   eq(reply_mock, 'OK, "test_boy" is now (channel) set to 1 response with a cumulative pool of 1 total ticket.');
+  test_msg.content = "set "
+  set_response(test_msg);
+  eq(reply_mock, 'What do you want me to (channel) set it to?');
+  test_msg.content = "set test_boy"
+  set_response(test_msg);
+  eq(reply_mock, 'What do you want me to (channel) set it to?');
+  test_msg.content = "set 2 test_boy"
+  set_response(test_msg);
+  eq(reply_mock, 'What do you want me to (channel) set it to?');
   test_msg.content = "unset test_boy"
   set_response(test_msg, false, true);
   eq(reply_mock, 'OK, "test_boy" is now (channel) set to 0 responses with a cumulative pool of 0 total tickets.');

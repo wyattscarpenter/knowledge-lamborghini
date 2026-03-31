@@ -582,7 +582,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const attachments = Array.from(message.attachments.values()).map(x => x.attachment);
   const raw_rs = response? [response].concat(attachments) : attachments;
   const rs = raw_rs.map(normalize_discord_attachment_urls);
-  console.log("Here are the attachments of the message (normalized)", rs);
+  console.log("Here are the attachments of the message (normalized)(includes regular response):", rs);
   let all_ok = true;
   let any_ok = false;
   let mode_announcement = "(" + (for_server? "server": "channel") + (regex? " regex" : "")+ ") ";
