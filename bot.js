@@ -711,6 +711,9 @@ function discord_timestamp(date, is_relative=false){
 
 function set_remindme(message){
   const command_arguments_text = split_once(message.content, remindme_regex)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text.
+  if (!command_arguments_text){ //The message was just the prompt phrase, not actually a well-formed prompt for us to do this thing; so, early return.
+    return;
+  }
   let d = chrono.parseDate(command_arguments_text);
   const d_first = d;
   if(!d){ //try again, once, with "in "
@@ -732,6 +735,9 @@ function set_remindme(message){
 
 function howlongago(message){
   const command_arguments_text = split_once(message.content, howlongago_regex)[1]; //this just filters out the "how long ago was " portion. The text does not need to be further split, because the date parser is fine taking extra text.
+  if (!command_arguments_text){ //The message was just the prompt phrase, not actually a well-formed prompt for us to do this thing; so, early return.
+    return;
+  }
   const d = chrono.parseDate(command_arguments_text)
   const now_d = new Date();
   if(!d){
