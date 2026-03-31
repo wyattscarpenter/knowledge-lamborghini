@@ -39,12 +39,14 @@ function pl(quantity, label){
 }
 
 /** ("a\n\nb", /\s/) ⇒ ["a", "\nb"]; accepts both strings and RegExps (anything with a Symbol.match method returning a string, actually).
- * Returns null if splitter not found. This is important to distinguish from cases where the splitter is detected at the beginning or end, which can happen.
+ * @param {string} source_string
+ * @param {{ [Symbol.match](string: string): RegExpMatchArray | null }} splitter
+ * @returns {[string, string]} the part of the string before the found instance of the splitter, and then the part of the string after the found instance of the splitter. "Loses" the actual found splitter value in the process (who cares?). Returns [source_string, ""] if splitter not found; this is impossible to distinguish from cases where the splitter is detected at the end, which can happen — but this definition was most useful for this application.
  */
 function split_once(source_string, splitter){
   const array_of_matched_strings_or_null = source_string.match(splitter); //Since splitter could be not a string, make it array of string instead (or null)
   if (array_of_matched_strings_or_null === null){
-    return null;
+    return [source_string, ""];
   }
   const s = array_of_matched_strings_or_null[0];
   const i = source_string.indexOf(s);
@@ -550,16 +552,18 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const response_container_indexer = regex? (for_server ? message.guild.id : message.channel.id) : (for_server? message.guild.id : message.channel.id);
   const saving_file_name = (for_server? "server_" : "") + (regex? "regex_" : "") + "responses.json";
 
-  // Rough structural diagram of input we're parsing: set (blah, (blah , blah blah blah))
-  // TODO: I don't think this handles mutli-line responses right.
-  const command_arguments_text = message.content.split(/\s(.+)/)[1];
-  const [first_argument, rest_arguments] = command_arguments_text.split(/\s(.+)/);
+  // Rough structural diagram of input we're parsing: set-command [number] first_arg rest_args...
+  //no longer useful...: // @ts-expect-error //This one is because we know there is a space, since we don't dispatch here unless we've detected a space in the startwith in the main body. COULD: refactor to make this guarantee more evident.
+  const command_arguments_text = split_once(message.content, /\s/)[1];
+  // So now we're at: [number] first_arg rest_args...
+  const all_arguments = split_once(command_arguments_text, /\s/);
+  const [first_argument, rest_arguments] = all_arguments;
   const [number, keyword_raw, response] = unset? //The number parameter is not allowed for the unset commands, so there is no need to search further.
       [0, first_argument, rest_arguments] // 0 is simply a dummy value here, since we don't actually need this number for this route
-    : isNaN(first_argument)?  //optional, default number to 1 if there's nothing there.
+    : isNaN(first_argument)? //optional, default number to 1 if there's nothing there.
       [1, first_argument, rest_arguments]
     :
-      [+first_argument].concat(rest_arguments.split(/\s(.+)/)) //this is a silly way to write it but hey we need to structure it to destructure it!
+      [+first_argument].concat(split_once(rest_arguments, /\s/)) //this is a silly way to write it but hey we need to structure it to destructure it!
   ;
   const keyword = command_prefix_strip(keyword_raw.toLowerCase());
   response_container[response_container_indexer] ??= {}; //Gotta populate this entry, if need be, with an empty object to avoid an error in assigning to it later
