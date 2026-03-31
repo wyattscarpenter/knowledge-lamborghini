@@ -1,5 +1,5 @@
 // @ts-check //This instructs typescript to also check this file, and provide diagnostics, in vscode. I also have `"js/ts.implicitProjectConfig.checkJs": true` in my user `settings.json`, which does the same thing for all js files.
-const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes} = require('discord.js');
+const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, TextChannel, DMChannel, NewsChannel, StageChannel, VoiceChannel} = require('discord.js');
 const nicedice = require('nicedice');
 const {distance} = require('fastest-levenshtein');
 const chrono = require('chrono-node');
@@ -293,7 +293,7 @@ client.on(Events.MessageCreate, message => {
   }
 
   if (/.*wh.*po.?k.?t?\s?mon.*/.test(m)) { // "who's that pokemon", and many other strings besides...
-    whos_that_pokemon(channel, message.url)
+    whos_that_pokemon(channel);
   }
   if(pokemon_answers[channel.id]){
     let target = pokemon_answers[channel.id].answer.toLowerCase();
@@ -467,15 +467,17 @@ function update_status_clock(){ //This date is extremely precisely formatted for
   return true; //nota bene: the return value indicates if the function decided to update, but I don't use the return value anywhere else in the program so far.
 }
 
-function whos_that_pokemon(channel, original_message_link){
+///** @param {TextChannel} channel */ //This actually is not general enough of a type to pass real typechecking with our current caller calling it, apparently. But the real type is long so I'm not super stoked about writing it out for real. As I now must:
+/** @param {DMChannel | import('discord.js').PartialDMChannel | NewsChannel | StageChannel | TextChannel | import('discord.js').PublicThreadChannel<boolean> | import('discord.js').PrivateThreadChannel | VoiceChannel} channel */
+function whos_that_pokemon(channel){
   //Sort of comply with https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy to avoid getting this error message: filely_match of the 'pokemon' file name was null, which I didn't even think was possible. Logging this message and returning early... Original data value: Please set a user-agent and respect our robot policy https://w.wiki/4wJS. See also https://phabricator.wikimedia.org/T400119.
   const options = {
     headers: {
       "User-Agent": "It's me, Knowledge Lamborghini!"
     }
   };
-  //The image is gotten from this URL:
-  let req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json', options,
+  const url_the_image_is_gotten_from = 'https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json';
+  const req = https.request(url_the_image_is_gotten_from, options,
     (resp) => {
       let data = '';
       resp.on('data', (chunk) => {data += chunk;});
@@ -491,16 +493,16 @@ function whos_that_pokemon(channel, original_message_link){
             attachment: "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/"+encodeURIComponent(id),
             name: 'pokemon'+id.match(/\.\w*?$/)[0].toLowerCase()
           }]
+        }).then( (x) => {
+          pokemon_answers[channel.id] = {answer: id.match(/File:(.*)\.\w*?$/)[1], original_message_link: x.url};
+          console.log(pokemon_answers[channel.id]); //console.log answer so I can cheat-- er, I mean, test.
+          update_record_on_disk("pokemon_answers.json", pokemon_answers);
         });
-        //Technically I guess the original_message_link should be what we get returned from channel.send, .url, but that's more trouble than it's worth, so we just use the message that triggered us instead.
-        pokemon_answers[channel.id] = {answer: id.match(/File:(.*)\.\w*?$/)[1], original_message_link: original_message_link}
-        console.log(pokemon_answers[channel.id]); //console.log answer so I can cheat-- er, I mean, test.
-        update_record_on_disk("pokemon_answers.json", pokemon_answers);
       });
     }
   ).on("error", (err) => { /*retry on error*/
-    console.error("Retrying subsequent to the error:", err);
-    whos_that_pokemon(channel, original_message_link);
+    console.error("Retrying pokemon whoing subsequent to the error:", err);
+    whos_that_pokemon(channel);
   });
   req.end();
 }
