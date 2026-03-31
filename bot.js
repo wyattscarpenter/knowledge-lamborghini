@@ -468,7 +468,14 @@ function update_status_clock(){ //This date is extremely precisely formatted for
 }
 
 function whos_that_pokemon(channel, original_message_link){
-  let req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json',//image
+  //Sort of comply with https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy to avoid getting this error message: filely_match of the 'pokemon' file name was null, which I didn't even think was possible. Logging this message and returning early... Original data value: Please set a user-agent and respect our robot policy https://w.wiki/4wJS. See also https://phabricator.wikimedia.org/T400119.
+  const options = {
+    headers: {
+      "User-Agent": "It's me, Knowledge Lamborghini!"
+    }
+  };
+  //The image is gotten from this URL:
+  let req = https.request('https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json', options,
     (resp) => {
       let data = '';
       resp.on('data', (chunk) => {data += chunk;});
