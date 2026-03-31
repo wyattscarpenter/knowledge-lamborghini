@@ -7,8 +7,9 @@ const https = require('https');
 const fs = require('fs');
 const writeFileAtomicSync = require('write-file-atomic').sync //Note that you MUST use this to write all files, because the default non-atomic behavior is garbage for non-serious people, and will probably occasionally corrupt the json files (my power does go out occasionally). There is a rule about this in npm run check. //I've never really evalutated all/any of the atomic file writing options out there, I just picked this one since I guess npm made it so it's probably trustworthy.
 
+/** These are exported merely for our testing purposes, and aren't expected to be generally useful. */
 module.exports = {
-  normalize_discord_attachment_urls, split_once
+  normalize_discord_attachment_urls, set_response, split_once
 }
 
 const client = new Client({
