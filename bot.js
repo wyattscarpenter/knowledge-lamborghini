@@ -88,6 +88,7 @@ const version_number = require('./package.json').version;
 /** @type string */
 const git_commit_hash = (() => {
   //This gets us the git commit hash, assuming you're on branch master, which we assume. Unfortunately, this doesn't get you the commit message, but this is an easy 80% solution.
+  //At some point in Git 3.0 this is going to stop working, because of reftables becoming the new format instead of this loose ref file format. Cf https://lwn.net/Articles/1057561/#:~:text=As%20with,command; a straight replacement would be `git rev-parse HEAD` but another option would be `git log --oneline HEAD`, which would have richer information about the version. But we'll cross that bridge when we get to it. COULD: cross this bridge before we get to it.
   try {
     return fs.readFileSync(".git/refs/heads/master").toString().trim();
   } catch (e) {
