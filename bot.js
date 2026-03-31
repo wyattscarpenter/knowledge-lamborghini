@@ -37,16 +37,17 @@ function pl(quantity, label){
   return quantity + " " + label + marker;
 }
 
-/** ("a  b", /\s/) ⇒ ["a", " b"]; accepts both strings and RegExps (anything with a Symbol.match method returning a string, actually)*/
+/** ("a\n\nb", /\s/) ⇒ ["a", "\nb"]; accepts both strings and RegExps (anything with a Symbol.match method returning a string, actually).
+ * Returns null if splitter not found. This is important to distinguish from cases where the splitter is detected at the beginning or end, which can happen.
+ */
 function split_once(source_string, splitter){
-  const s = source_string.match(splitter); //Since splitter could be not a string, make it array of string instead (or null)
-  const head = source_string.split(splitter, 1)[0];
-  const i = source_string.indexOf(splitter);
-  if (i === -1) { //-1 indicates not found, and so the right behavior here is to return a sentinel value, null
+  const array_of_matched_strings_or_null = source_string.match(splitter); //Since splitter could be not a string, make it array of string instead (or null)
+  if (array_of_matched_strings_or_null === null){
     return null;
-  } else {
-    return [source_string.slice(0,i), source_string.slice(i+splitter.length)];
   }
+  const s = array_of_matched_strings_or_null[0];
+  const i = source_string.indexOf(s);
+  return [source_string.slice(0,i), source_string.slice(i+s.length)];
 }
 
 function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
