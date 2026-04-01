@@ -22,7 +22,7 @@ const client = new Client({
 client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
 
 /** @type string[] */
-let text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
+const text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 
 function error_message_first_line_if_error(e){
   return (e instanceof Error) ? e.message.split('\n')[0] : e;
@@ -63,26 +63,27 @@ function try_require(require_id, default_value){ // require_id is a bit baroque,
   }
 }
 
+//Keep in mind that most of these top-level variables are const, but they're object const, which means their internals change all the time — it's almost meaningless that they're const'd.
 //These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
 //On a similar note, could combine regexes and regular responses into the same data structure, just with a boolean flag indicating regexness — relatively easy to hot-update that backwards compatibly. (I already don't really like how nested this object is, but realistically speaking it's no problem to nest it further.) An incremental possibility for "someday".
 // The number is the number of "tickets" aka the "weight". I can't figure out how to label it like you would the key type of an object.
 /** @type {{ [channelId: string]: { [keyword: string]: {[response: string] : number} } }} */
-let responses = try_require("./responses.json", {});
+const responses = try_require("./responses.json", {});
 /** @type {{ [guildId: string]: { [keyword: string]: {[response: string] : number} } }} */
-let server_responses = try_require('./server_responses.json', {});
+const server_responses = try_require('./server_responses.json', {});
 /** @type {{ [channelId: string]: { [regex: string]: {[response: string] : number} } }} */
-let regex_responses = try_require('./regex_responses.json', {});
+const regex_responses = try_require('./regex_responses.json', {});
 /** @type {{ [guildId: string]: { [regex: string]: {[response: string] : number} } }} */
-let server_regex_responses = try_require('./server_regex_responses.json', {});
+const server_regex_responses = try_require('./server_regex_responses.json', {});
 
-let batphone = try_require('./batphone.json', []); //I never bothered to document the type of this data structure.
+const batphone = try_require('./batphone.json', []); //I never bothered to document the type of this data structure.
 let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
 //The type of track_leaves is an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string[]; } in typescript.
 /** @type {{ [guildId: string]: string[] }} */
-let track_leaves = try_require('./track_leaves.json', {});
+const track_leaves = try_require('./track_leaves.json', {});
 // The type of starboards is an object mapping from guildIds to an object mapping from channelIds to an object containing an integer that is the cutoff for the number of reactions needed to forward to the starboard, and an array of messageIds (of already-included messages).
 /** @type {{ [guildId: string]: { [channelId: string]: { quantity_required_in_order_to_forward: number, messageIds: string[] } } }} */
-let starboards = try_require('./starboards.json', {});
+const starboards = try_require('./starboards.json', {});
 
 /** @type string */
 const version_number = require('./package.json').version;
@@ -98,9 +99,9 @@ const git_commit_logline = (() => {
 /** @type string */
 const version_string = "Version "+version_number+", git commit "+git_commit_logline;
 
-let texts = {};
-var think_intervals = {};
-var pokemon_answers = try_require("./pokemon_answers.json", {});
+const texts = {};
+const think_intervals = {};
+const pokemon_answers = try_require("./pokemon_answers.json", {});
 const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 
 
@@ -204,7 +205,7 @@ client.on(Events.MessageCreate, message => {
   }
   //To oldify reddit links.
   // Here we "check" if null, using ??, to avoid crash on trying to iterate over null. having done that, we actually do the thing:
-  for (let r of m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi ) ?? [] ){
+  for (const r of m.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi ) ?? [] ){
     //huge character list from https://stackoverflow.com/a/1547940
     //note that it was easier to detect reddit urls and then futz with them each individually than do some crazy capture-jutsu.
     if (!r.match( /[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*old\.?reddit\.com\/[\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]*/gmi)){ //It's already old reddit, do nothing.
@@ -285,7 +286,7 @@ client.on(Events.MessageCreate, message => {
   if(m.includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
-  let nicedice_roll_result = roll(m);
+  const nicedice_roll_result = roll(m);
   if(nicedice_roll_result.valid){
     console.log("rollin: "+JSON.stringify(m));
     console.log("rollout: "+JSON.stringify(nicedice_roll_result));
@@ -296,14 +297,16 @@ client.on(Events.MessageCreate, message => {
     whos_that_pokemon(channel);
   }
   if(pokemon_answers[channel.id]){
-    let target = pokemon_answers[channel.id].answer.toLowerCase();
-    target = target.replace(/[^\(]*\)/g, '').replace(/\(/g, '') || target;
-    target = target.replace(/[^a-z]/g, '') || target;
-    let guess = m;
-    guess = guess.replace(/[^a-z]/g, '') || guess;
+    //This tries a number of operations to normalize target and guess, by deleting characters, only normalizing them those ways if they wouldn't thus be empty.
+    //It feels inelegant to have this many intermediate values lying around in scope after the final forms of target and guess are computed, but piling them all in a line or using the ()=>{}() trick seems even more confusing. Maybe using let and reassigning was better than when I refactored to const in this case...
+    const target_raw_lowered = pokemon_answers[channel.id].answer.toLowerCase();
+    const target_slightly_cleaned = target_raw_lowered.replace(/[^\(]*\)/g, '').replace(/\(/g, '') || target_raw_lowered;
+    const target = target_slightly_cleaned.replace(/[^a-z]/g, '') || target_slightly_cleaned;
+    const guess_raw = m;
+    const guess = guess_raw.replace(/[^a-z]/g, '') || guess_raw;
     //fuzzy string match
-    let normalized_distance = distance(target, guess) / target.length;
-    let distance_threshold = .75; // This tuning seems alright, in terms of false negative to false positive ratio, but the whole experience is still very difficult, which is regrettable.
+    const normalized_distance = distance(target, guess) / target.length;
+    const distance_threshold = .75; // This tuning seems alright, in terms of false negative to false positive ratio, but the whole experience is still very difficult, which is regrettable.
     if (normalized_distance < distance_threshold){
       channel.send(
         "[It's]("+pokemon_answers[channel.id].original_message_link+") "+pokemon_answers[channel.id].answer+"!\n" +
@@ -456,7 +459,7 @@ function random_choice(array){
 }
 
 function update_status_clock(){ //This date is extremely precisely formatted for maximum readability in Discord's tiny area, and also familiarity and explicitness to users.
-  let date = new Date(); //Want to avoid edge cases so we use the same Date object in each format call.
+  const date = new Date(); //Want to avoid edge cases so we use the same Date object in each format call.
   if(date.getSeconds()){return false;} //only update with minute resolution, on 00 seconds of each minute (Discord can't handle us using second resolution)
   if(!client.user){return false;} // I guess this could be null sometimes somehow.
   client.user.setActivity(
@@ -508,7 +511,7 @@ function whos_that_pokemon(channel){
 }
 
 function think(channel){
-  let s = texts[channel.id].shift();
+  const s = texts[channel.id].shift();
   if(s){
     send_long(channel, s);
     if(!think_intervals[channel.id]){ //This clause handles the difference between a guy saying Think! for the first time, and a guy spamming Think!. It ensures there will be no great think-spam the next day as well.
@@ -595,7 +598,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   console.log("Here are the attachments of the message (normalized)(includes regular response):", rs);
   let all_ok = true;
   let any_ok = false;
-  let mode_announcement = "(" + (for_server? "server": "channel") + (regex? " regex" : "")+ ") ";
+  const mode_announcement = "(" + (for_server? "server": "channel") + (regex? " regex" : "")+ ") ";
   if (unset) {
     if (rs.length) { //did you know empty arrays are truey in javascript? even though empty strings are falsey? Curious.
       for (const r of rs) {
@@ -646,11 +649,11 @@ function send_response(message, for_server=false) {
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild.id : message.channel.id;
 
-  let r = response_container[response_container_indexer][message.content.toLowerCase()];
+  const r = response_container[response_container_indexer][message.content.toLowerCase()];
 
   // Pick by weighted randomness. Implicitly (and also to the typechecker), the type of r is object mapping from string → number, with each number being the count of "tickets" the string has in the "raffle", so to speak.
   // This algorithm is pretty simple, and obscured only by javascript syntax.
-  let cumulative_weights = [];
+  const cumulative_weights = [];
   for(const response of Object.keys(r)){
     cumulative_weights.push( (+r[response]||0) + (cumulative_weights.at(-1)||0) );
   }
@@ -809,9 +812,9 @@ function normalize_discord_attachment_urls(text) {
       params.delete('ex');
       params.delete('is');
       params.delete('hm');
-      let search = params.toString();
-      let normalized = u.origin + u.pathname + (search ? ('?' + search) : '');
-      normalized = normalized.replace(/[?&]+$/, '');
+      const search = params.toString();
+      const normalized_with_trailers = u.origin + u.pathname + (search ? ('?' + search) : '');
+      const normalized = normalized_with_trailers.replace(/[?&]+$/, '');
       return normalized;
     } catch (e) {
       return url;
