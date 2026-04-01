@@ -2,7 +2,7 @@
 
 //// Imports:
 
-const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, TextChannel, DMChannel, NewsChannel, StageChannel, VoiceChannel} = require('discord.js');
+const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, Message, CategoryChannel} = require('discord.js'); // You apparently can't import Channel nor SendableChannels here since they're pure types and this is a js file not a ts file.
 const { roll } = require('nicedice');
 const { distance } = require('fastest-levenshtein');
 const { parseDate } = require('chrono-node');
@@ -15,11 +15,22 @@ const writeFileAtomicSync = require('write-file-atomic').sync //Note that you MU
 
 /** This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
  * @template T
- * @param { T[] } array
+ * @param { readonly T[] } array
  * @param { T } undesirable_item
-*/
+ */
 function array_but_without(array, undesirable_item) {
   return array.filter(item => item !== undesirable_item);
+}
+
+/**Channel Cast. There doesn't seem to be a good way to check exactly the right type here (per https://github.com/discordjs/discord.js/issues/3622), so let's just assume that it is the right type (SendableChannels) given that someone was able to issue a command in it before. The casts all flow through this function, which has complicated and indirect types for a simple cast to validate our assumptions about what's going on; not out of necessity.
+ * Message<true>.channel is a GuildTextBasedChannel and thus doesn't need this cast, so casting that can reduce the number of cc casts needed, using only one "message cast" instead.
+ * @template T
+ * @param {import('discord.js').Channel} channel 
+ * @returns {Exclude<T, CategoryChannel>}
+ */
+function cc(channel){
+  //@ts-expect-error
+  return channel;
 }
 
 /** Strip the command prefix from a string
@@ -41,10 +52,12 @@ function crash(){
   throw "crash"; //do not catch this, if you really want to crash
 }
 
+/** @template T @param {T} date The point of this otherwise-useless type annotation is that it does in fact let typescript catch this type error when you try to pass a Symbol or BigInt to this function (in accordance with https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tonumber), even though I'm not sure what type you're actually supposed to specify here for a unary-plus-able type, and the error messages won't tell me. */
 function discord_timestamp(date, is_relative=false){
   return "<t:"+ Math.trunc(+date/1000) + (is_relative? ":R>" : ">"); //there are other types of discord timestamps but we needn't bother with them here.
 }
 
+/** @param {unknown} e */
 function error_message_first_line_if_error(e){
   return (e instanceof Error) ? e.message.split('\n')[0] : e;
 }
@@ -93,10 +106,12 @@ function pl(quantity, label){
   return quantity + " " + label + marker;
 }
 
+/** @param {unknown} object */
 function pretty_string(object){
   return JSON.stringify(object, null, 4);
 }
 
+/** @template T @param {readonly T[]} array */
 function random_choice(array){
   const a = array;
   const n = Math.floor(Math.random() * a.length);
@@ -117,7 +132,13 @@ function split_once(source_string, splitter){
   const i = source_string.indexOf(s);
   return [source_string.slice(0,i), source_string.slice(i+s.length)];
 }
-/** @param require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid */
+
+/** It would be nice if we could just normal require these files, and also have it deduce the types, but that's not really how it works (at least for us, at least so far).
+ * Since this returns the perfidious `any` type, make sure to immediately assign it to something with a known type. `noImplicitAny` won't save you here.
+ * @template T
+ * @param {string} require_id a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
+ * @param {T} default_value
+ * */
 function try_require(require_id, default_value){
   try{
     return require(require_id);
@@ -127,6 +148,7 @@ function try_require(require_id, default_value){
   }
 }
 
+/** @param {string} record_filename @param {unknown} object_value */ 
 function update_record_on_disk(record_filename, object_value){
   console.log("Writing updates to", record_filename);
   const data_backups_folder = "data_backups/";
@@ -137,12 +159,20 @@ function update_record_on_disk(record_filename, object_value){
   writeFileAtomicSync(record_filename, payload);
 }
 
+/** ??0, but I also mean to editorialize that the check was useless, and just a result of the typechecker not knowing something that I know.
+ * @template T @param {T} value @returns T
+ */
+function zz(value){
+  return value??0;
+}
+
 //// Top-level constants used by the program, ranging from most to least "actually constant":
 // These "constants" might not actually be marked const; that's fine.
-// Also, keep in mind that most of these top-level variables are const, but they're object const, which means their internals change all the time — it's almost meaningless that they're const'd.
+// Also, keep in mind that most of these top-level variables are const, but they're object const, which means their internals change all the time — it's almost meaningless that they're const'd. Hence why most of them aren't readonly'd!
 
 const remindme_regex = /^remind ?me ?!?/i;
 const howlongago_regex = /^how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
+/** @type { {[key: string]: string} } */ //Funnily enough, you actually need to do this particular type comment to *lose* type information, so the typechecker doesn't get too picky later.
 const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 const first_arg = process.argv[2];
 const command_prefix = first_arg === undefined ? '!' : first_arg;
@@ -159,7 +189,7 @@ const git_commit_logline = (()=>{
 })();
 /** @type string */
 const version_string = "Version "+version_number+", git commit "+git_commit_logline;
-/** @type string[] */
+/** @type {readonly string[]} */
 const text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 
 //These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
@@ -181,13 +211,17 @@ const track_leaves = try_require('./track_leaves.json', {});
 /** @type {{ [guildId: string]: { [channelId: string]: { quantity_required_in_order_to_forward: number, messageIds: string[] } } }} */
 const starboards = try_require('./starboards.json', {});
 
-//I never bothered to document the types of these data structure.
+/** @type { [{ user: string; userId: string; channelId: string; guildId: string; content: string; timestamp: string; messageId: string;}] }*/
 const batphone = try_require('./batphone.json', []);
+/** @type { { [channelId: string]: {"answer": string; "original_message_link": string} } } */
 const pokemon_answers = try_require("./pokemon_answers.json", {});
+/** @type { { datestamp: number; message: Message;}[] } */
 let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
 
 //These are perhaps the least constant consts of all...!
+/** @type { { [channelId: string]: string[] } } */
 const texts = {};
+/** @type { { [channelId: string]: number } } */
 const think_intervals = {};
 
 /** These are exported merely for our testing purposes, and aren't expected to be generally useful. */
@@ -222,7 +256,7 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
             console.error(channel, member.guild, member.user.toString());
             return;
           }
-          send_long(channel, member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is gone from the server (left, kicked, or banned).");
+          send_long(cc(channel), member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is gone from the server (left, kicked, or banned).");
         }
         );
       }
@@ -233,7 +267,7 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
 client.on(Events.MessageCreate, message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
   if (!message.content){return;} //don't even consider empty messages
-  if (!message.guild){return;} //don't consider... uh... I guess this is DMs? IDK I just got a warning from typescript.
+  if (!message.inGuild()){return;} //don't bother with DMs
   const channel = message.channel;
   // We assign this back into message.content so later functions that take message and operate on its content and aren't expecting a ! prefix actually work.
   message.content = command_prefix_strip(message.content);
@@ -256,7 +290,7 @@ client.on(Events.MessageCreate, message => {
         user: message.author.tag,
         userId: message.author.id,
         channelId: message.channel.id,
-        guildId: message.guild?.id,
+        guildId: message.guild.id,
         content: batmsg,
         timestamp: new Date().toISOString(),
         messageId: message.id
@@ -277,7 +311,7 @@ client.on(Events.MessageCreate, message => {
   }
 
   if (client.user !== null){ //apparently this could be null. So, guard against that.
-    if(message.mentions.has(client.user, {ignoreRoles: true, ignoreEveryone: true})){
+    if(message.mentions.has(client.user.toString(), {ignoreRoles: true, ignoreEveryone: true})){
       if(m.includes("version")){
         channel.send(version_string);
       }
@@ -416,7 +450,8 @@ client.on(Events.MessageCreate, message => {
   if (m.startsWith('enumerate responses')) {
     // If an argument is given, only enumerate responses for that argument (keyword or regex)
     const filter = command_prefix_strip(message.content.split(/\s+/).slice(2).join(' ').toLowerCase());
-    const pick = (obj) => {
+    /** @template T @param {{[string: string]: T}|null|undefined} obj  */
+    function pick (obj) {
       if (!obj || !filter) return obj;
       return { [filter]: obj[filter] };
     }
@@ -551,8 +586,7 @@ client.on(Events.MessageReactionAdd, async (reaction, _user) => {
         && ((reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward)
       ) {
         client.channels.fetch(channel_id).then( channel => {
-          if (channel != null) {
-            if(reaction.message.guild === null){return;}
+          if (channel !== null && channel.isSendable()) {
             //Forward the message to the channel.
             const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
             const emoji_image_url = reaction.emoji.imageURL();
@@ -563,7 +597,6 @@ client.on(Events.MessageReactionAdd, async (reaction, _user) => {
             console.log(emoji_image);
             send_long(channel, emoji_image); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
             send_long(channel, metadata);
-            //@ts-expect-error //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
             reaction.message.forward(channel)
               .then(message => {
                   if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
@@ -597,7 +630,7 @@ function update_status_clock(){ //This date is extremely precisely formatted for
   return true; //nota bene: the return value indicates if the function decided to update, but I don't use the return value anywhere else in the program so far.
 }
 
-/** @param {DMChannel | import('discord.js').PartialDMChannel | NewsChannel | StageChannel | TextChannel | import('discord.js').PublicThreadChannel<boolean> | import('discord.js').PrivateThreadChannel | VoiceChannel} channel */ //I wish there were a shorter name for this type.
+/** @param {import('discord.js').SendableChannels} channel */
 function whos_that_pokemon(channel){
   //Sort of comply with https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy to avoid getting this error message: filely_match of the 'pokemon' file name was null, which I didn't even think was possible. Logging this message and returning early... Original data value: Please set a user-agent and respect our robot policy https://w.wiki/4wJS. See also https://phabricator.wikimedia.org/T400119.
   const options = {
@@ -636,6 +669,7 @@ function whos_that_pokemon(channel){
   req.end();
 }
 
+/** @param {import('discord.js').SendableChannels} channel */
 function think(channel){
   const s = texts[channel.id].shift();
   if(s){
@@ -648,6 +682,7 @@ function think(channel){
   }
 }
 
+/** @param {import('discord.js').Channel} channel */
 function stop_think(channel){
   clearInterval(think_intervals[channel.id]);
   delete think_intervals[channel.id]; //purposefully, I delete the entry for the channel, to allow it to be re-Think!ed
@@ -658,6 +693,7 @@ function stop_think(channel){
  * So, this function splits up the message before sending.
  * It also guards against sending an empty string (which is a crashing error otherwise(?!)).
  * Someday I might make an internal rule that we always use send_long instead of .send, but I haven't bothered yet.
+ * @param {import('discord.js').SendableChannels} channel @param {string} string @param {boolean} [resume_quotatively=false] @param {string?} [message_id_to_reply_to=null] 
 */
 function send_long(channel, string, resume_quotatively=false, message_id_to_reply_to=null){
   const resumptor_prefix = resume_quotatively? ">>> " : "";
@@ -667,9 +703,8 @@ function send_long(channel, string, resume_quotatively=false, message_id_to_repl
     while(l){
       const prefix = we_are_first? "" : resumptor_prefix;
       const content = prefix + l.slice(0, upper_limit);
-      const reply = we_are_first? message_id_to_reply_to : null; //if null, this just posts and does not reply to anyone
-      channel.send({ content: content, reply: {messageReference: reply} })
-      .catch((error) => {
+      const reply_payload = (we_are_first && message_id_to_reply_to)? {messageReference: message_id_to_reply_to} : undefined; //This "undefined" business is purely just to please the typechecker; just passing it in with null would work anyway (and not reply to anything.
+      channel.send( { content: content, reply: reply_payload } ).catch( (error) => {
 	      if (error.code == RESTJSONErrorCodes.InvalidFormBodyOrContentType) { //It's not completely obvious, but this seems to be the way to check for this. Possibly one could specify it more exactly.
 		      console.error("Failed to send_long a message, probably because a message I would reply to was later deleted. Will now just send my message as a regular message. Here is the original error:", error);
           channel.send(content);
@@ -683,6 +718,7 @@ function send_long(channel, string, resume_quotatively=false, message_id_to_repl
   }
 }
 
+/** @param {Message<true>} message */
 function set_response(message, for_server=false, unset=false, regex=false){
   const response_container = regex? (for_server ? server_regex_responses : regex_responses) : (for_server? server_responses : responses);
   const response_container_indexer = regex? (for_server ? message.guild.id : message.channel.id) : (for_server? message.guild.id : message.channel.id);
@@ -692,7 +728,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   const command_arguments_text = split_once(message.content, /\s/)[1];
   // So now we're at: [number] first_arg rest_args...
   const [first_argument, rest_arguments] = split_once(command_arguments_text, /\s/);
-  /** @type {[number, string, string]} */ //We don't *need* this type annotation, but it might help you follow the code. The code is structured oddly because of const; sorry.
+  /** @type {readonly [number, string, string]} */ //We don't *need* this type annotation, but it might help you follow the code. The code is structured oddly because of const; sorry.
   const [number, keyword_raw, response] = unset? //The number parameter is not allowed for the unset commands, so there is no need to search further.
       [0, first_argument, rest_arguments] // 0 is simply a dummy value here, since we don't actually need this number for this route
     : isNaN(+first_argument)? //optional, default number to 1 if there's nothing there. //Note that whitespace-only strings get converted by js to 0. They crazy for that one, but whatever. //The + prefix is just to appease typescript.
@@ -714,7 +750,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
     }
   }
 
-  const attachments = Array.from(message.attachments.values()).map(x => x.attachment);
+  const attachments = Array.from(message.attachments.values()).map(x => x.url);
   const raw_rs = response? [response].concat(attachments) : attachments;
   const rs = raw_rs.map(normalize_discord_attachment_urls);
   console.log("Here are the attachments of the message (normalized)(includes regular response):", rs);
@@ -767,6 +803,7 @@ function set_response(message, for_server=false, unset=false, regex=false){
   );
 }
 
+/** @param {Message<true>} message */
 function send_response(message, for_server=false) {
   const response_container = for_server? server_responses : responses;
   const response_container_indexer = for_server? message.guild.id : message.channel.id;
@@ -775,20 +812,26 @@ function send_response(message, for_server=false) {
 
   // Pick by weighted randomness. Implicitly (and also to the typechecker), the type of r is object mapping from string → number, with each number being the count of "tickets" the string has in the "raffle", so to speak.
   // This algorithm is pretty simple, and obscured only by javascript syntax.
+  /** @type {number[]} */
   const cumulative_weights = [];
   for(const response of Object.keys(r)){
     cumulative_weights.push( (+r[response]||0) + (cumulative_weights.at(-1)||0) );
   }
-  const random = Math.random() * cumulative_weights.at(-1);
+  const random = Math.random() * zz(cumulative_weights.at(-1));
   console.log("random number", random, "cumulative_weights", cumulative_weights);
   for(const key of Object.keys(r)){
-    if (random - cumulative_weights.shift() <= 0) {
+    if (random - zz(cumulative_weights.shift()) <= 0) {
       send_long(message.channel, normalize_discord_attachment_urls(key));
       break;
     }
   }
 }
 
+/**
+ * @param {Message<true>} message
+ * @param {boolean} for_server
+ * @param {typeof regex_responses[string]} regexes_object
+ */
 function possibly_send_regex_responses(message, for_server, regexes_object) {
   for (const [pattern, _responses] of Object.entries(regexes_object)) {
     let match;
@@ -803,6 +846,12 @@ function possibly_send_regex_responses(message, for_server, regexes_object) {
   }
 }
 
+/**
+ * @param {Message<true>} message
+ * @param {boolean} for_server
+ * @param {string} pattern
+ * @param {RegExpMatchArray} match
+ */
 function send_regex_responses(message, for_server, pattern, match){
   // This function duplicates a number of things from the analogous non-regex function, because it's AI slop,
   // but, whatever; it's fine.
@@ -830,6 +879,7 @@ function send_regex_responses(message, for_server, pattern, match){
   }
 }
 
+/** @param {Message} message */
 function set_remindme(message){
   const command_arguments_text = split_once(message.content, remindme_regex)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text.
   if (!command_arguments_text){ //The message was just the prompt phrase, not actually a well-formed prompt for us to do this thing; so, early return.
@@ -854,6 +904,7 @@ function set_remindme(message){
   }
 }
 
+/** @param {Message} message */
 function howlongago(message){
   const command_arguments_text = split_once(message.content, howlongago_regex)[1]; //this just filters out the "how long ago was " portion. The text does not need to be further split, because the date parser is fine taking extra text.
   if (!command_arguments_text){ //The message was just the prompt phrase, not actually a well-formed prompt for us to do this thing; so, early return.
@@ -866,12 +917,13 @@ function howlongago(message){
   } else { //Because the computer operates with variable speed(?) d<now is SOMETIMES true if you've declared d to be now. But d<=now is ALWAYS true, so we use it for greater consistency.
     const then = d.getTime();
     const now = now_d.getTime();
-    //@ts-expect-error //Idk what the big deal is; this api is supposed to be in typescript by now.
+    //@ts-expect-error //Someday, Property 'DurationFormat' *will* exist on type 'typeof Intl'.
     const diff = new Intl.DurationFormat("en", { style: "long" }).format({milliseconds: now - then});
     message.reply(`${now_d} **(now)** - ${d} **(then)** = ${diff}.`);
   }
 }
 
+/** @param {typeof remindmes} remindmes  */
 function launch_remindmes(remindmes){
   const workaround_wait_ms = 2000000000; // 147,483,647 less than the s32-int-max.
   for (const remindme of remindmes) {
@@ -886,6 +938,7 @@ function launch_remindmes(remindmes){
   }
 }
 
+/** @param {typeof remindmes[0]} remindme  */
 function discharge_remindme(remindme){ //Send a remindme, making sure to remove it from the authoritative data structure, and cache that structure to file:
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
   client.channels.fetch(remindme.message.channelId).then( channel => {
@@ -894,9 +947,9 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
       console.error(remindme)
       return;
     }
-    send_long(channel, "It is time:\n"+remindme.message.content, false, remindme.message.id);
+    send_long(cc(channel), "It is time:\n"+remindme.message.content, false, remindme.message.id);
     console.log(`Sent (or attempted to send) message: ${remindme.message.content}`);
-    remindmes = remindmes.filter(item => item !== remindme) //remove the remindme from the global list
+    remindmes = array_but_without(remindmes, remindme); //remove the remindme from the global list
     update_record_on_disk("remindmes.json", remindmes);
   });
 }

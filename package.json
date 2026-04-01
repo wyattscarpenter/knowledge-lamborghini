@@ -1,26 +1,26 @@
 {
   "name": "knowledge-lamborghini",
   "description": "But you know what I like a lot more than knowledge? Knowledge. (an eclectic discord bot)",
-  "version": "7.2.19",
+  "version": "7.2.20-dev",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
-    "test": "node test.js && tsc --version && tsc --checkJs --noEmit --resolveJsonModule --skipLibCheck --lib es2022,dom bot.js --strict --noImplicitAny false"
+    "test": "node test.js && tsc --version && tsc --checkJs --noEmit --resolveJsonModule --module node20 bot.js --strict"
   },
-  "remark upon the check": "I don't think there's any particular reason to require es2022 there. Maybe it was the most recent one when I tried to require one in particular to fix some other problem.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wyattscarpenter/knowledge-lamborghini.git"
   },
   "license": "Unlicense",
   "devDependencies": {
+    "@types/write-file-atomic": "^4.0.3",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "chrono-node": "^2.6.3",
     "discord.js": "^14.18.0",
     "fastest-levenshtein": "^1.0.12",
-    "nicedice": "~1.0.2",
+    "nicedice": "^1.0.4",
     "write-file-atomic": "^7.0.1"
   },
   "engines": {
