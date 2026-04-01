@@ -1,6 +1,6 @@
 // Tests for normalize_discord_attachment_urls
 const assert = require('assert');
-const { normalize_discord_attachment_urls, set_response, split_once } = require('./bot.js');
+const { normalize_discord_attachment_urls, set_response, split_once, version_string } = require('./bot.js');
 const { exit } = require('process');
 
 const eq = assert.deepStrictEqual; //We have to use this due to the funny fact that, eg, []==[] is false in js
@@ -96,7 +96,7 @@ function test_split_once() {
 let reply_mock = undefined;
 function fake_channel_send(x){
   reply_mock = x.content;
-  return {catch: () => {}} 
+  return {catch: () => {}};
 }
 /** Non-comprehensive tests for set_responses. Note that these do write to disk */
 function test_set_responses() {
@@ -108,16 +108,16 @@ function test_set_responses() {
   };
   set_response(test_msg);
   eq(reply_mock, 'OK, "test_boy" is now (channel) set to 1 response with a cumulative pool of 1 total ticket.');
-  test_msg.content = "set "
+  test_msg.content = "set ";
   set_response(test_msg);
   eq(reply_mock, 'What do you want me to (channel) set it to?');
-  test_msg.content = "set test_boy"
+  test_msg.content = "set test_boy";
   set_response(test_msg);
   eq(reply_mock, 'What do you want me to (channel) set it to?');
-  test_msg.content = "set 2 test_boy"
+  test_msg.content = "set 2 test_boy";
   set_response(test_msg);
   eq(reply_mock, 'What do you want me to (channel) set it to?');
-  test_msg.content = "unset test_boy"
+  test_msg.content = "unset test_boy";
   set_response(test_msg, false, true);
   eq(reply_mock, 'OK, "test_boy" is now (channel) set to 0 responses with a cumulative pool of 0 total tickets.');
 }
@@ -127,6 +127,8 @@ function _bad_test_tee_hee_hee() {
     assert.strictEqual(0,'0');
 }
 //_bad_test_tee_hee_hee();
+console.log(version_string);
+eq(version_string[0], "V");
 test_normalize_discord_attachment_urls();
 test_split_once();
 test_set_responses();

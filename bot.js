@@ -1,4 +1,7 @@
 // @ts-check //This instructs typescript to also check this file, and provide diagnostics, in vscode. I also have `"js/ts.implicitProjectConfig.checkJs": true` in my user `settings.json`, which does the same thing for all js files.
+
+//// Imports:
+
 const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, TextChannel, DMChannel, NewsChannel, StageChannel, VoiceChannel} = require('discord.js');
 const { roll } = require('nicedice');
 const { distance } = require('fastest-levenshtein');
@@ -8,35 +11,100 @@ const { execSync } = require('child_process');
 const { mkdirSync } = require('fs');
 const writeFileAtomicSync = require('write-file-atomic').sync //Note that you MUST use this to write all files, not fs.write or whatever, because the default non-atomic behavior is garbage for non-serious people, and will probably occasionally corrupt the json files (my power does go out occasionally). I've never really evalutated all/any of the atomic file writing options out there, I just picked this one since I guess npm made it so it's probably trustworthy.
 
-/** These are exported merely for our testing purposes, and aren't expected to be generally useful. */
-module.exports = {
-  normalize_discord_attachment_urls, set_response, split_once
+//// Utility functions of perhaps a general applicability (conceptually; their actual extensibility is dubious)
+
+/** This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
+ * @template T
+ * @param { T[] } array
+ * @param { T } undesirable_item
+*/
+function array_but_without(array, undesirable_item) {
+  return array.filter(item => item !== undesirable_item);
 }
 
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessageReactions],
-  partials: [Partials.Message, Partials.Reaction],
-});
+/** Strip the command prefix from a string
+ * @param {string} string The string from which the prefix will be stripped.
+ * @remarks Prefix handling: allow a custom prefix, defaulting to '!'. If a prefix is provided as the first argument on the command line, use it.
+ */
+function command_prefix_strip(string){
+  //the command_prefix is defined below
+  if (string.startsWith(command_prefix + ' ')) {
+    return string.slice(command_prefix.length + 1);
+  } else if (string.startsWith(command_prefix)) {
+    return string.slice(command_prefix.length);
+  } else {
+    return string;
+  }
+}
 
-// THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
-client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
+function crash(){
+  throw "crash"; //do not catch this, if you really want to crash
+}
 
-/** @type string[] */
-const text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
+function discord_timestamp(date, is_relative=false){
+  return "<t:"+ Math.trunc(+date/1000) + (is_relative? ":R>" : ">"); //there are other types of discord timestamps but we needn't bother with them here.
+}
 
 function error_message_first_line_if_error(e){
   return (e instanceof Error) ? e.message.split('\n')[0] : e;
+}
+
+/**
+ * Normalize all Discord attachment URLs in a string.
+ * - Finds all cdn.discordapp.com and media.discordapp.net /attachments/ URLs
+ * - For each, strips Discord timing params (ex, is, hm), forces https, keeps other params
+ * - Leaves other text and non-attachment URLs untouched
+ * @param {string} text
+ * @returns {string}
+ */
+function normalize_discord_attachment_urls(text) {
+  /** Regex to match Discord CDN/media attachment URLs (greedy up to whitespace or end) */
+  // TODO: possibly use [\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]* instead of \S here? Or possibly a library that matches the current URL highlighting precisely.
+  const discord_attachment_url_regex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*/gi;
+  /**discord_attachment_url_regex, but for purposes of actually matching/testing, because .match()/test() actually checks if a string *contains* text that matches a regex. */
+  const discord_attachment_url_ONLY_regex = /^https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*$/i;
+  //You know, is that URL regex technically correct? Prob'ly not. Is that hostname match check redundant? Prob'ly. But it probably mostly works, which is enough for this.
+  return text.replace(discord_attachment_url_regex, (url) => {
+    try {
+      const u = new URL(url, 'https://cdn.discordapp.com');
+      // Only process Discord CDN attachment URLs
+      if (!u.hostname.match(/^(cdn\.discordapp\.com|media\.discordapp\.net)$/i)) return url;
+      if (!u.pathname.startsWith('/attachments/')) return url;
+      u.protocol = 'https:';
+      const params = u.searchParams;
+      params.delete('ex');
+      params.delete('is');
+      params.delete('hm');
+      const search = params.toString();
+      const normalized_with_trailers = u.origin + u.pathname + (search ? ('?' + search) : '');
+      const normalized = normalized_with_trailers.replace(/[?&]+$/, '');
+      return normalized;
+    } catch (e) {
+      return url;
+    }
+  });
 }
 
 /** Naïve pluralization fn. Returns a string that is the quantity, a space, the label, and then (an s (or es) iff the quantity !== 1).
  * Obviously, it doesn't work in more complicated linguistic edge cases like "cherry".
  * This also means that -1 is treated as taking a plural, which I'm ambivalent about.
  * You might be worried that floating point will somehow ruin this, but actually the equality and display truncation logic in js seem to work the same way so it's apparently fine.
+ * @param {unknown} quantity @param {string} label //unknown is the typesafe ts top type
  */
 function pl(quantity, label){
   const pl = label.slice(-1).toLowerCase() === "s"? "es" : "s"; //if it ends in s, use es instead. Note that if it ends in uppercase S, we also do this (motivating example: OSes)
-  const marker = quantity !==1 ? pl : "";
+  const marker = quantity !== 1 ? pl : "";
   return quantity + " " + label + marker;
+}
+
+function pretty_string(object){
+  return JSON.stringify(object, null, 4);
+}
+
+function random_choice(array){
+  const a = array;
+  const n = Math.floor(Math.random() * a.length);
+  return a[n];
 }
 
 /** ("a\n\nb", /\s/) ⇒ ["a", "\nb"]; accepts both strings and RegExps (anything with a Symbol.match method returning a string, actually).
@@ -53,8 +121,8 @@ function split_once(source_string, splitter){
   const i = source_string.indexOf(s);
   return [source_string.slice(0,i), source_string.slice(i+s.length)];
 }
-
-function try_require(require_id, default_value){ // require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid
+/** @param require_id is a bit baroque, but the most simple case is ./local_file_name https://nodejs.org/api/modules.html#requireid */
+function try_require(require_id, default_value){
   try{
     return require(require_id);
   } catch (e) {
@@ -63,28 +131,25 @@ function try_require(require_id, default_value){ // require_id is a bit baroque,
   }
 }
 
-//Keep in mind that most of these top-level variables are const, but they're object const, which means their internals change all the time — it's almost meaningless that they're const'd.
-//These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
-//On a similar note, could combine regexes and regular responses into the same data structure, just with a boolean flag indicating regexness — relatively easy to hot-update that backwards compatibly. (I already don't really like how nested this object is, but realistically speaking it's no problem to nest it further.) An incremental possibility for "someday".
-// The number is the number of "tickets" aka the "weight". I can't figure out how to label it like you would the key type of an object.
-/** @type {{ [channelId: string]: { [keyword: string]: {[response: string] : number} } }} */
-const responses = try_require("./responses.json", {});
-/** @type {{ [guildId: string]: { [keyword: string]: {[response: string] : number} } }} */
-const server_responses = try_require('./server_responses.json', {});
-/** @type {{ [channelId: string]: { [regex: string]: {[response: string] : number} } }} */
-const regex_responses = try_require('./regex_responses.json', {});
-/** @type {{ [guildId: string]: { [regex: string]: {[response: string] : number} } }} */
-const server_regex_responses = try_require('./server_regex_responses.json', {});
+function update_record_on_disk(record_filename, object_value){
+  console.log("Writing updates to", record_filename);
+  const data_backups_folder = "data_backups/";
+  mkdirSync(data_backups_folder, { recursive: true }); //The use of "recursive" here is just to keep it from crashing if the folder already exists.
+  const backup_date_string = new Date().toISOString().replaceAll(':', '-'); //Example of how this comes out: 2026-03-17T11-18-42.678Z
+  const payload = pretty_string(object_value);
+  writeFileAtomicSync(data_backups_folder+backup_date_string+record_filename, payload);
+  writeFileAtomicSync(record_filename, payload);
+}
 
-const batphone = try_require('./batphone.json', []); //I never bothered to document the type of this data structure.
-let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
-//The type of track_leaves is an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string[]; } in typescript.
-/** @type {{ [guildId: string]: string[] }} */
-const track_leaves = try_require('./track_leaves.json', {});
-// The type of starboards is an object mapping from guildIds to an object mapping from channelIds to an object containing an integer that is the cutoff for the number of reactions needed to forward to the starboard, and an array of messageIds (of already-included messages).
-/** @type {{ [guildId: string]: { [channelId: string]: { quantity_required_in_order_to_forward: number, messageIds: string[] } } }} */
-const starboards = try_require('./starboards.json', {});
+//// Top-level constants used by the program, ranging from most to least "actually constant":
+// These "constants" might not actually be marked const; that's fine.
+// Also, keep in mind that most of these top-level variables are const, but they're object const, which means their internals change all the time — it's almost meaningless that they're const'd.
 
+const remindme_regex = /^remind ?me ?!?/i;
+const howlongago_regex = /^how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
+const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
+const first_arg = process.argv[2];
+const command_prefix = first_arg === undefined ? '!' : first_arg;
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
@@ -98,12 +163,52 @@ const git_commit_logline = (() => {
 })()
 /** @type string */
 const version_string = "Version "+version_number+", git commit "+git_commit_logline;
+/** @type string[] */
+const text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
 
+//These provide persistent storage of responses. Could collect them all into one file, someday, if I keep making new ones that take up space but do the same thing... (this would, however, incur more writes for more data).
+//On a similar note, could combine regexes and regular responses into the same data structure, just with a boolean flag indicating regexness — relatively easy to hot-update that backwards compatibly. (I already don't really like how nested this object is, but realistically speaking it's no problem to nest it further.) An incremental possibility for "someday".
+// The number is the number of "tickets" aka the "weight". I can't figure out how to label it like you would the key type of an object.
+/** @type {{ [channelId: string]: { [keyword: string]: {[response: string] : number} } }} */
+const responses = try_require("./responses.json", {});
+/** @type {{ [guildId: string]: { [keyword: string]: {[response: string] : number} } }} */
+const server_responses = try_require('./server_responses.json', {});
+/** @type {{ [channelId: string]: { [regex: string]: {[response: string] : number} } }} */
+const regex_responses = try_require('./regex_responses.json', {});
+/** @type {{ [guildId: string]: { [regex: string]: {[response: string] : number} } }} */
+const server_regex_responses = try_require('./server_regex_responses.json', {});
+
+//The type of track_leaves is an object mapping from guildIds to arrays of channelIds. That is, { [key: string]: string[]; } in typescript.
+/** @type {{ [guildId: string]: string[] }} */
+const track_leaves = try_require('./track_leaves.json', {});
+// The type of starboards is an object mapping from guildIds to an object mapping from channelIds to an object containing an integer that is the cutoff for the number of reactions needed to forward to the starboard, and an array of messageIds (of already-included messages).
+/** @type {{ [guildId: string]: { [channelId: string]: { quantity_required_in_order_to_forward: number, messageIds: string[] } } }} */
+const starboards = try_require('./starboards.json', {});
+
+//I never bothered to document the types of these data structure.
+const batphone = try_require('./batphone.json', []);
+const pokemon_answers = try_require("./pokemon_answers.json", {});
+let remindmes = try_require('./remindmes.json', []); //This loads the remindmes into the authoritative data structure, but we can't actually do anything with them (ie launch them) until the bot is ready, because we might need to discharge them by sending messsages.
+
+//These are perhaps the least constant consts of all...!
 const texts = {};
 const think_intervals = {};
-const pokemon_answers = try_require("./pokemon_answers.json", {});
-const global_responses = {"hewwo": "perish", "good bot": "Don't patronize me."};
 
+/** These are exported merely for our testing purposes, and aren't expected to be generally useful. */
+module.exports = {
+  normalize_discord_attachment_urls, set_response, split_once, version_string
+}
+
+//// Discord bot nitty-gritty and focussed implementation:
+// (mainly "client.on" implementations, although helper functions come after)
+
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessageReactions],
+  partials: [Partials.Message, Partials.Reaction],
+});
+
+// THIS LINE MUST HAPPEN FOR THE BOT TO LOGIN:
+client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
 
 client.on('clientReady', () => {
   console.log('I am ready! Logged in as', client.user?.tag, "with optional command prefix", command_prefix);
@@ -128,24 +233,6 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
     }
   }
 });
-
-// Prefix handling: allow a custom prefix, defaulting to '!'. If a prefix is provided as the first argument, use it.
-const first_arg = process.argv[2];
-const command_prefix = first_arg === undefined ? '!' : first_arg;
-
-const remindme_regex = /^remind ?me ?!?/i;
-const howlongago_regex = /^how ?long ?ago ?!? ?w?a?i?s? ?!?/i;
-
-/** @param {string} string */
-function command_prefix_strip(string){
-  if (string.startsWith(command_prefix + ' ')) {
-    return string.slice(command_prefix.length + 1);
-  } else if (string.startsWith(command_prefix)) {
-    return string.slice(command_prefix.length);
-  } else {
-    return string;
-  }
-}
 
 client.on(Events.MessageCreate, message => {
   if (message.author.bot){return;} //don't let the bot respond to its own messages
@@ -436,27 +523,65 @@ client.on(Events.MessageCreate, message => {
   }
 });
 
-//implementation functions
+//the top of this function is example code from https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
+client.on(Events.MessageReactionAdd, async (reaction, _user) => {
+  // When a reaction is received, check if the structure is partial
+  if (reaction.partial) {
+    // If the message this reaction belongs to was removed, the fetching might result in an API error which should be handled
+    try {
+      await reaction.fetch();
+    } catch (error) {
+      console.error('Something went wrong when fetching the message:', error);
+      // Return as `reaction.message.author` may be undefined/null
+      return;
+    }
+  }
+  // Now the message has been cached and is fully available. The reaction is now also fully available and the properties will be reflected accurately.
+  if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
+    console.error("channel I wanted to examine for starboarding was null, which is surprising, and I can't send the message.");
+    console.error(reaction.message);
+    return;
+  }
+  if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
+    for (const [channel_id, starboard_metadata] of Object.entries(starboards[reaction.message.guild.id])){ //forward to starboard channels, with the emoji
+      if (
+        (!starboard_metadata.messageIds.includes(reaction.message.id))
+        && ((reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward)
+      ) {
+        client.channels.fetch(channel_id).then( channel => {
+          if (channel != null) {
+            if(reaction.message.guild === null){return;}
+            //Forward the message to the channel.
+            const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
+            const emoji_image_url = reaction.emoji.imageURL();
+            const emoji_image = emoji_image_url?
+              reaction.emoji.animated? `https://cdn.discordapp.com/emojis/${reaction.emoji.id}.gif` : emoji_image_url
+              : reaction.emoji.toString()
+            ;
+            console.log(emoji_image);
+            send_long(channel, emoji_image); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
+            send_long(channel, metadata);
+            //@ts-expect-error //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
+            reaction.message.forward(channel)
+              .then(message => {
+                  if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
+                  console.error("channel I wanted to update the starboard record of was null, which is surprising, and I can't do that.");
+                  console.error(reaction.message);
+                  return;
+                }
+                console.log(`forwarded message to starboard: ${message.content}`);
+                starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
+                update_record_on_disk("starboards.json", starboards);
+              })
+              .catch(console.error);
+          }
+        });
+      }
+    }
+  }
+});
 
-function update_record_on_disk(record_filename, object_value){
-  console.log("Writing updates to", record_filename);
-  const data_backups_folder = "data_backups/";
-  mkdirSync(data_backups_folder, { recursive: true }); //The use of "recursive" here is just to keep it from crashing if the folder already exists.
-  const backup_date_string = new Date().toISOString().replaceAll(':', '-'); //Example of how this comes out: 2026-03-17T11-18-42.678Z
-  const payload = pretty_string(object_value);
-  writeFileAtomicSync(data_backups_folder+backup_date_string+record_filename, payload);
-  writeFileAtomicSync(record_filename, payload);
-}
-
-function pretty_string(object){
-  return JSON.stringify(object, null, 4);
-}
-
-function random_choice(array){
-  const a = array;
-  const n = Math.floor(Math.random() * a.length);
-  return a[n];
-}
+//// Bot-focussed implementation functions:
 
 function update_status_clock(){ //This date is extremely precisely formatted for maximum readability in Discord's tiny area, and also familiarity and explicitness to users.
   const date = new Date(); //Want to avoid edge cases so we use the same Date object in each format call.
@@ -470,8 +595,7 @@ function update_status_clock(){ //This date is extremely precisely formatted for
   return true; //nota bene: the return value indicates if the function decided to update, but I don't use the return value anywhere else in the program so far.
 }
 
-///** @param {TextChannel} channel */ //This actually is not general enough of a type to pass real typechecking with our current caller calling it, apparently. But the real type is long so I'm not super stoked about writing it out for real. As I now must:
-/** @param {DMChannel | import('discord.js').PartialDMChannel | NewsChannel | StageChannel | TextChannel | import('discord.js').PublicThreadChannel<boolean> | import('discord.js').PrivateThreadChannel | VoiceChannel} channel */
+/** @param {DMChannel | import('discord.js').PartialDMChannel | NewsChannel | StageChannel | TextChannel | import('discord.js').PublicThreadChannel<boolean> | import('discord.js').PrivateThreadChannel | VoiceChannel} channel */ //I wish there were a shorter name for this type.
 function whos_that_pokemon(channel){
   //Sort of comply with https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy to avoid getting this error message: filely_match of the 'pokemon' file name was null, which I didn't even think was possible. Logging this message and returning early... Original data value: Please set a user-agent and respect our robot policy https://w.wiki/4wJS. See also https://phabricator.wikimedia.org/T400119.
   const options = {
@@ -555,10 +679,6 @@ function send_long(channel, string, resume_quotatively=false, message_id_to_repl
       we_are_first = false
     }
   }
-}
-
-function crash(){
-  throw "crash"; //do not catch this, if you really want to crash
 }
 
 function set_response(message, for_server=false, unset=false, regex=false){
@@ -708,10 +828,6 @@ function send_regex_responses(message, for_server, pattern, match){
   }
 }
 
-function discord_timestamp(date, is_relative=false){
-  return "<t:"+ Math.trunc(+date/1000) + (is_relative? ":R>" : ">"); //there are other types of discord timestamps but we needn't bother with them here.
-}
-
 function set_remindme(message){
   const command_arguments_text = split_once(message.content, remindme_regex)[1]; //this just filters out the "remindme " portion. The text does not need to be further split, because the date parser is fine taking extra text.
   if (!command_arguments_text){ //The message was just the prompt phrase, not actually a well-formed prompt for us to do this thing; so, early return.
@@ -782,100 +898,3 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
     update_record_on_disk("remindmes.json", remindmes);
   });
 }
-
-function array_but_without(array, undesirable_item) { return array.filter(item => item !== undesirable_item); } // This function is just because javascript lacks a .remove() function on arrays. It is NOT in-place, you have to assign it to the original array if you want that. I thought about extending the array prototype to add a .remove(), but this sets up a footgun for for-in loops (which I never use, for that reason, but may slip up about some day).
-
-/** Regex to match Discord CDN/media attachment URLs (greedy up to whitespace or end) */
-// TODO: possibly use [\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]* instead of \S here? Or possibly a library that matches the current URL highlighting precisely.
-const discord_attachment_url_regex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*/gi;
-/**discord_attachment_url_regex, but for purposes of actually matching/testing, because .match()/test() actually checks if a string *contains* text that matches a regex. */
-const discord_attachment_url_ONLY_regex = /^https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*$/i;
-
-/**
- * Normalize all Discord attachment URLs in a string.
- * - Finds all cdn.discordapp.com and media.discordapp.net /attachments/ URLs
- * - For each, strips Discord timing params (ex, is, hm), forces https, keeps other params
- * - Leaves other text and non-attachment URLs untouched
- * @param {string} text
- * @returns {string}
- */
-function normalize_discord_attachment_urls(text) {
-  //You know, is that URL regex technically correct? Prob'ly not. Is that hostname match check redundant? Prob'ly. But it probably mostly works, which is enough for this.
-  return text.replace(discord_attachment_url_regex, (url) => {
-    try {
-      const u = new URL(url, 'https://cdn.discordapp.com');
-      // Only process Discord CDN attachment URLs
-      if (!u.hostname.match(/^(cdn\.discordapp\.com|media\.discordapp\.net)$/i)) return url;
-      if (!u.pathname.startsWith('/attachments/')) return url;
-      u.protocol = 'https:';
-      const params = u.searchParams;
-      params.delete('ex');
-      params.delete('is');
-      params.delete('hm');
-      const search = params.toString();
-      const normalized_with_trailers = u.origin + u.pathname + (search ? ('?' + search) : '');
-      const normalized = normalized_with_trailers.replace(/[?&]+$/, '');
-      return normalized;
-    } catch (e) {
-      return url;
-    }
-  });
-}
-
-//the top of this function is example code from https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
-client.on(Events.MessageReactionAdd, async (reaction, user) => {
-  // When a reaction is received, check if the structure is partial
-  if (reaction.partial) {
-    // If the message this reaction belongs to was removed, the fetching might result in an API error which should be handled
-    try {
-      await reaction.fetch();
-    } catch (error) {
-      console.error('Something went wrong when fetching the message:', error);
-      // Return as `reaction.message.author` may be undefined/null
-      return;
-    }
-  }
-  // Now the message has been cached and is fully available. The reaction is now also fully available and the properties will be reflected accurately.
-  if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
-    console.error("channel I wanted to examine for starboarding was null, which is surprising, and I can't send the message.");
-    console.error(reaction.message);
-    return;
-  }
-  if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
-    for (const [channel_id, starboard_metadata] of Object.entries(starboards[reaction.message.guild.id])){ //forward to starboard channels, with the emoji
-      if (
-        (!starboard_metadata.messageIds.includes(reaction.message.id))
-        && ((reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward)
-      ) {
-        client.channels.fetch(channel_id).then( channel => {
-          if (channel != null) {
-            if(reaction.message.guild === null){return;}
-            //Forward the message to the channel.
-            const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
-            const emoji_image_url = reaction.emoji.imageURL();
-            const emoji_image = emoji_image_url?
-              reaction.emoji.animated? `https://cdn.discordapp.com/emojis/${reaction.emoji.id}.gif` : emoji_image_url
-              : reaction.emoji.toString()
-            ;
-            console.log(emoji_image);
-            send_long(channel, emoji_image); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
-            send_long(channel, metadata);
-            //@ts-expect-error //There doesn't seem to be a good way to check exactly the right type here, so let's just assume that it is the right type (textual) given that someone was able to issue a command in it before.
-            reaction.message.forward(channel)
-              .then(message => {
-                  if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
-                  console.error("channel I wanted to update the starboard record of was null, which is surprising, and I can't do that.");
-                  console.error(reaction.message);
-                  return;
-                }
-                console.log(`forwarded message to starboard: ${message.content}`);
-                starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
-                update_record_on_disk("starboards.json", starboards);
-              })
-              .catch(console.error);
-          }
-        });
-      }
-    }
-  }
-});
