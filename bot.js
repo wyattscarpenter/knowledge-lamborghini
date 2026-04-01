@@ -2,7 +2,7 @@
 
 //// Imports:
 
-const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, Message, CategoryChannel} = require('discord.js'); // You apparently can't import Channel nor SendableChannels here since they're pure types and this is a js file not a ts file.
+const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, Message} = require('discord.js'); // You apparently can't import Channel nor SendableChannels here since they're pure types and this is a js file not a ts file.
 const { roll } = require('nicedice');
 const { distance } = require('fastest-levenshtein');
 const { parseDate } = require('chrono-node');
@@ -240,14 +240,6 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
     if ( track_leaves[member.guild.id] ) {
       for (const channelId of track_leaves[member.guild.id]) {
         client.channels.fetch(channelId).then( channel => {
-          if (channel === null) {
-            console.error("channel I wanted to tell about a user leaving was null, which is surprising, and I can't send the message. member & channel:", member, channel);
-            return;
-          }
-          if (!channel.isSendable()) {
-            console.error("channel I wanted to tell about a user leaving was not sendable, which is surprising, and I can't send the message. member & channel:", member, channel);
-            return;
-          }
           send_long(channel, member.user.toString() + " (" + member.user.tag + ", id `" + member.user.id + "`)" + " is gone from the server (left, kicked, or banned).");
         }
         );
@@ -566,9 +558,8 @@ client.on(Events.MessageReactionAdd, async (reaction, _user) => {
     }
   }
   // Now the message has been cached and is fully available. The reaction is now also fully available and the properties will be reflected accurately.
-  if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
-    console.error("channel I wanted to examine for starboarding was null, which is surprising, and I can't send the message.");
-    console.error(reaction.message);
+  if ( !reaction.message.inGuild() ) {
+    console.error("message I wanted to examine for starboarding was not in-guild, which is surprising, and I can't send the message. message:", reaction.message);
     return;
   }
   if (reaction.message.guild.id in starboards) { //if we have turned on starboard in this server
@@ -578,7 +569,13 @@ client.on(Events.MessageReactionAdd, async (reaction, _user) => {
         && ((reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward)
       ) {
         client.channels.fetch(channel_id).then( channel => {
-          if (channel !== null && channel.isSendable()) {
+          if (channel === null) {
+            console.error("channel I wanted to forward a starboard hit to was null, which is surprising, and I can't do that. channel & message:", channel, reaction.message);
+            return;
+          } else if (!channel.isSendable()) {
+            console.error("channel I wanted to forward a starboard hit to was not sendable, which is surprising, and I can't do that. channel & message:", channel, reaction.message);
+            return;
+          } else {
             //Forward the message to the channel.
             const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
             const emoji_image_url = reaction.emoji.imageURL();
@@ -591,9 +588,8 @@ client.on(Events.MessageReactionAdd, async (reaction, _user) => {
             send_long(channel, metadata);
             reaction.message.forward(channel)
               .then(message => {
-                  if(reaction.message.guild === null){ //we do this pattern several times in our code because this thing claims it can be null, but I don't know why it would be...
-                  console.error("channel I wanted to update the starboard record of was null, which is surprising, and I can't do that.");
-                  console.error(reaction.message);
+                if ( !reaction.message.inGuild() ) {
+                  console.error("message I wanted to update the starboard record of the channel of was not in-guild, which is surprising, and I can't do that. message:", reaction.message);
                   return;
                 }
                 console.log(`forwarded message to starboard: ${message.content}`);
@@ -674,7 +670,7 @@ function think(channel){
   }
 }
 
-/** @param {import('discord.js').Channel} channel */
+/** @param {import('discord.js').SendableChannels} channel */
 function stop_think(channel){
   clearInterval(think_intervals[channel.id]);
   delete think_intervals[channel.id]; //purposefully, I delete the entry for the channel, to allow it to be re-Think!ed
@@ -685,9 +681,19 @@ function stop_think(channel){
  * So, this function splits up the message before sending.
  * It also guards against sending an empty string (which is a crashing error otherwise(?!)).
  * Someday I might make an internal rule that we always use send_long instead of .send, but I haven't bothered yet.
- * @param {import('discord.js').SendableChannels} channel @param {string} string @param {boolean} [resume_quotatively=false] @param {string?} [message_id_to_reply_to=null]
+ * @param {import('discord.js').Channel | null} channel in terms of types this can be a Channel, and is nullable, but null or a non-Sendable channel (ie CategoryChannel) will cause a runtime error to be logged instead; this convenient centralizes some error handling @param {string} string @param {boolean} [resume_quotatively=false] @param {string?} [message_id_to_reply_to=null]
 */
 function send_long(channel, string, resume_quotatively=false, message_id_to_reply_to=null){
+  //Narrow the type of channel down
+  if (channel === null) {
+    console.error("channel I wanted to send_long to was null, which is surprising, and I can't send the message. channel & message:", channel, string);
+    return;
+  }
+  if (!channel.isSendable()) {
+    console.error("channel I wanted to send_long to was not sendable, which is surprising, and I can't send the message. channel & message:", channel, string);
+    return;
+  }
+
   const resumptor_prefix = resume_quotatively? ">>> " : "";
   const upper_limit = 2000 - resumptor_prefix.length; //2000 is the limit given from on-high. Note that slice, which we use later, is 0-indexed and excludes the specified end character index.
   let we_are_first = true;
@@ -936,16 +942,8 @@ function launch_remindmes(remindmes){
 function discharge_remindme(remindme){ //Send a remindme, making sure to remove it from the authoritative data structure, and cache that structure to file:
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
   client.channels.fetch(remindme.message.channelId).then( channel => {
-    if (channel === null) {
-      console.error("channel I wanted to tell about a remindme was null, which is surprising, and I can't send the message. remindme & channel:", remindme, channel);
-      return;
-    }
-    if (!channel.isSendable()) {
-      console.error("channel I wanted to tell about a remindme was not sendable, which is surprising, and I can't send the message. remindme & channel:", remindme, channel);
-      return;
-    }
     send_long(channel, "It is time:\n"+remindme.message.content, false, remindme.message.id);
-    console.log(`Sent (or attempted to send) message: ${remindme.message.content}`);
+    console.log(`Sent (or attempted to send) reminder message: ${remindme.message.content}`);
     remindmes = array_but_without(remindmes, remindme); //remove the remindme from the global list
     update_record_on_disk("remindmes.json", remindmes);
   });

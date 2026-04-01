@@ -101,7 +101,7 @@ function test_set_responses() {
   const test_msg = {
     content: "set test_boy hm\nm", //It seems inconvenient to test this actual value, alas.
     guild: {id: "test_guild_id"},
-    channel: {id: "test_channel_id", send: fake_channel_send},
+    channel: {id: "test_channel_id", send: fake_channel_send, isSendable: () => true},
     attachments: {values: ()=> []}
   };
   set_response(test_msg);
@@ -121,7 +121,7 @@ function test_set_responses() {
 }
 
 function _test_url_detector() {
-  //Discord has a particular, non-url-standard idea of what things to consider links and highlight. For instance, "https://example.com/hello." is detected as a link to "https://example.com/hello" and the period is not highlighted, even though that would be a valid url technically. Many such cases. This being a discord project, we try to agree with discord. However, we don't have functionality that satisfies this. These tests are just here to establish some cases that an ideal implementation would handle correctly. This unknown function is called x here. Amusingly, none of our static analysis complains about it.
+  //Discord has a particular, non-url-standard idea of what things to consider links and highlight. For instance, "https://example.com/hello." is detected as a link to "https://example.com/hello" and the period is not highlighted, even though that would be a valid url technically. Many such cases. This being a discord project, we try to agree with discord. However, we don't have functionality that satisfies this. These tests are just here to establish some cases that an ideal implementation would handle correctly. This unknown function is called x here. We run no static analysis on this file so it's fine; nothing complains about it.
   //Side note: this breaks at least one of my IDE paren colorers lmao
   eq(x("https://example.com/hello."), "https://example.com/hello");
   eq(x("(https://en.wikipedia.org/wiki/God_(disambiguation)"), "https://en.wikipedia.org/wiki/God_(disambiguation)");
