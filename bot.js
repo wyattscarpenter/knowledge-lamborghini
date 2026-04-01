@@ -1,11 +1,12 @@
 // @ts-check //This instructs typescript to also check this file, and provide diagnostics, in vscode. I also have `"js/ts.implicitProjectConfig.checkJs": true` in my user `settings.json`, which does the same thing for all js files.
 const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, TextChannel, DMChannel, NewsChannel, StageChannel, VoiceChannel} = require('discord.js');
-const nicedice = require('nicedice');
-const {distance} = require('fastest-levenshtein');
-const chrono = require('chrono-node');
-const https = require('https');
-const fs = require('fs');
-const writeFileAtomicSync = require('write-file-atomic').sync //Note that you MUST use this to write all files, because the default non-atomic behavior is garbage for non-serious people, and will probably occasionally corrupt the json files (my power does go out occasionally). There is a rule about this in npm run check. //I've never really evalutated all/any of the atomic file writing options out there, I just picked this one since I guess npm made it so it's probably trustworthy.
+const { roll } = require('nicedice');
+const { distance } = require('fastest-levenshtein');
+const { parseDate } = require('chrono-node');
+const { request } = require('https');
+const { execSync } = require('child_process');
+const { mkdirSync } = require('fs');
+const writeFileAtomicSync = require('write-file-atomic').sync //Note that you MUST use this to write all files, not fs.write or whatever, because the default non-atomic behavior is garbage for non-serious people, and will probably occasionally corrupt the json files (my power does go out occasionally). I've never really evalutated all/any of the atomic file writing options out there, I just picked this one since I guess npm made it so it's probably trustworthy.
 
 /** These are exported merely for our testing purposes, and aren't expected to be generally useful. */
 module.exports = {
@@ -22,7 +23,6 @@ client.login(require("./token.json"));//this file is probably missing from your 
 
 /** @type string[] */
 let text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
-const { execSync } = require('child_process');
 
 function error_message_first_line_if_error(e){
   return (e instanceof Error) ? e.message.split('\n')[0] : e;
@@ -285,7 +285,7 @@ client.on(Events.MessageCreate, message => {
   if(m.includes('nice dice')){
     message.channel.send("Sponsored by NiceDice™");
   }
-  let nicedice_roll_result = nicedice.roll(m);
+  let nicedice_roll_result = roll(m);
   if(nicedice_roll_result.valid){
     console.log("rollin: "+JSON.stringify(m));
     console.log("rollout: "+JSON.stringify(nicedice_roll_result));
@@ -438,7 +438,7 @@ client.on(Events.MessageCreate, message => {
 function update_record_on_disk(record_filename, object_value){
   console.log("Writing updates to", record_filename);
   const data_backups_folder = "data_backups/";
-  fs.mkdirSync(data_backups_folder, { recursive: true }); //The use of "recursive" here is just to keep it from crashing if the folder already exists.
+  mkdirSync(data_backups_folder, { recursive: true }); //The use of "recursive" here is just to keep it from crashing if the folder already exists.
   const backup_date_string = new Date().toISOString().replaceAll(':', '-'); //Example of how this comes out: 2026-03-17T11-18-42.678Z
   const payload = pretty_string(object_value);
   writeFileAtomicSync(data_backups_folder+backup_date_string+record_filename, payload);
@@ -477,7 +477,7 @@ function whos_that_pokemon(channel){
     }
   };
   const url_the_image_is_gotten_from = 'https://commons.wikimedia.org/w/api.php?action=query&generator=random&grnnamespace=6&format=json';
-  const req = https.request(url_the_image_is_gotten_from, options,
+  const req = request(url_the_image_is_gotten_from, options,
     (resp) => {
       let data = '';
       resp.on('data', (chunk) => {data += chunk;});
@@ -714,10 +714,10 @@ function set_remindme(message){
   if (!command_arguments_text){ //The message was just the prompt phrase, not actually a well-formed prompt for us to do this thing; so, early return.
     return;
   }
-  let d = chrono.parseDate(command_arguments_text);
+  let d = parseDate(command_arguments_text);
   const d_first = d;
   if(!d){ //try again, once, with "in "
-    d = chrono.parseDate("in "+command_arguments_text);
+    d = parseDate("in "+command_arguments_text);
   }
   if(!d){
     message.reply("You have used the remindme command with argument `"+command_arguments_text+"`, but I can't understand the date you've tried to specify. I think it's `"+ d_first + "`. I also tried the modified argument `"+"in "+command_arguments_text+"` for good measure, but that also got me `"+ d + "`. My date parsing handles a lot of formats and some natural language, but it's not perfect. Try a different tack?");
@@ -738,7 +738,7 @@ function howlongago(message){
   if (!command_arguments_text){ //The message was just the prompt phrase, not actually a well-formed prompt for us to do this thing; so, early return.
     return;
   }
-  const d = chrono.parseDate(command_arguments_text)
+  const d = parseDate(command_arguments_text)
   const now_d = new Date();
   if(!d){
     message.reply("You have used the howlongago command with argument `"+command_arguments_text+"`, but I can't understand the date you've tried to specify. I think it's `"+ d + "`. My date parsing handles a lot of formats and some natural language, but it's not perfect. Try a different tack?");
