@@ -149,14 +149,14 @@ const command_prefix = first_arg === undefined ? '!' : first_arg;
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
-const git_commit_logline = (() => {
+const git_commit_logline = (()=>{
   //This gets us the git commit hash and first line of commit message
   try {
     return execSync('git log --oneline HEAD').toString().split('\n')[0];
   } catch (e) {
     return `unknown ( ${error_message_first_line_if_error(e)} )`;
   }
-})()
+})();
 /** @type string */
 const version_string = "Version "+version_number+", git commit "+git_commit_logline;
 /** @type string[] */
@@ -380,13 +380,19 @@ client.on(Events.MessageCreate, message => {
     whos_that_pokemon(channel);
   }
   if(pokemon_answers[channel.id]){
-    //This tries a number of operations to normalize target and guess, by deleting characters, only normalizing them those ways if they wouldn't thus be empty.
-    //It feels inelegant to have this many intermediate values lying around in scope after the final forms of target and guess are computed, but piling them all in a line or using the ()=>{}() trick seems even more confusing. Maybe using let and reassigning was better than when I refactored to const in this case...
-    const target_raw_lowered = pokemon_answers[channel.id].answer.toLowerCase();
-    const target_slightly_cleaned = target_raw_lowered.replace(/[^\(]*\)/g, '').replace(/\(/g, '') || target_raw_lowered;
-    const target = target_slightly_cleaned.replace(/[^a-z]/g, '') || target_slightly_cleaned;
-    const guess_raw = m;
-    const guess = guess_raw.replace(/[^a-z]/g, '') || guess_raw;
+    //This tries a number of operations to normalize target and guess, by deleting characters, BUT only normalizing them those ways if they wouldn't thus be empty.
+    // We use the (()=>{})() trick to do the intermediate operations in private scopes that won't pollute the namespace, but still assign the result to a const.
+    const target = (()=>{
+      const target_raw_lowered = pokemon_answers[channel.id].answer.toLowerCase();
+      const target_slightly_cleaned = target_raw_lowered.replace(/[^\(]*\)/g, '').replace(/\(/g, '') || target_raw_lowered;
+      const target_fully_cleaned = target_slightly_cleaned.replace(/[^a-z]/g, '') || target_slightly_cleaned;
+      return target_fully_cleaned;
+    })();
+    const guess = (()=>{
+      const guess_raw = m;
+      const guess_clean = guess_raw.replace(/[^a-z]/g, '') || guess_raw;
+      return guess_clean;
+    })();
     //fuzzy string match
     const normalized_distance = distance(target, guess) / target.length;
     const distance_threshold = .75; // This tuning seems alright, in terms of false negative to false positive ratio, but the whole experience is still very difficult, which is regrettable.
