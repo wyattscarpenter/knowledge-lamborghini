@@ -69,8 +69,7 @@ A note about the commands: all commands are usually just as they are written her
 * `death has many doors` (starting a message; followed by any or no other text) will cause kl to post a message in that channel whenever someone leaves/is kicked from the server, identifying them by mention, tag, and user id. `death has no doors` will turn this feature off for a channel it is posted in.
 * `keep a starboard here [quantity required in order to forward]` (starting a message; followed by any or no other text) will cause kl to repost messages into that channel whenever it is running and a message gets [quantity required in order to forward] (default 7) reactions of the same type (that is to say, so to speak, n of the same "emoji" at once). Note: unlike other starboards, not just the star emoji, but any reaction, will cause this to happen. If you'd like to adjust that quantity, you can call the command again with a different quantity. `don't keep a starboard here` will turn this feature off for a channel it is posted in; this will also wipe out kl's memory of what posts it's already forwarded (and, thus, they may be forwarded again).
 * Type `crash` and kl will crash. Please do not do this.
-* Reddit link “oldification”: links to reddit.com pages are immediately reposted as links to old.reddit.com pages.
-  * Link detection is kind of a fraught topic. There is an official, standard URL syntax, of course, but Discord (following in the footsteps of many other apps) uses a different grammar to detect URLs, to highlight them, in order to not include trailing punctuation as part of the URL (even though technically that could be a valid URL, it usually is just punctuation that happens to follow the URL). So, the link detected and manipulated by KL might or might not match the link detected and highlighted by Discord, exactly. Feel free to raise an issue about this and/or fix my code, if it bothers you and/or you figure out the best way to do it.
+* Reddit link “oldification”: links to reddit.com pages are immediately reposted as links to old.reddit.com pages. (See "Known Issues"§"Link detection" below for a caveat about link format.)
 * KL displays the time in Los Angeles as its status, updated each minute.
 * `yud(!)` will display yud status (textual).
 * `Jo(h)n(a)(t)(h)(a)(n)( )Frakes(?)` (anywhere in a message) will display the wisdom of Jonathan Frakes as it applies to your situation.
@@ -86,6 +85,20 @@ A note about the commands: all commands are usually just as they are written her
 
                 🏌️‍♂️
 ```
+
+### Known issues
+
+#### Reddit link oldification
+
+There is no way to turn off the Reddit link oldification feature. I think this is fine, but it has been complained about by a user before.
+
+#### Link detection
+
+Link (URL) detection is kind of a fraught topic. There is an official, standard URL syntax, of course, and I (often) use a regex that probably matches this. But Discord (following in the footsteps of many other apps) uses a different grammar to detect URLs, to highlight them, in order to not include trailing punctuation as part of the URL (even though technically that could be a valid URL, it usually is just punctuation that happens to follow the URL). So, the link detected and manipulated by KL might or might not match the link detected and highlighted by Discord, exactly. Feel free to raise an issue about this and/or fix my code, if it bothers you and/or you figure out the best way to do it. I have some test case in the tests that you can check against. https://github.com/discord/simple-markdown and https://github.com/discord/SimpleAST seem like they would be promising ways to find the real Discord URL-detection algorithm, but they don't seem to contain it as far as I can tell. I would be willing to use a generic, off-the-shelf URL-detector, but I didn't look into this too hard.
+
+#### Audio responses
+
+See "Sadly, audio links[...]" above.
 
 ### Metadata
 
