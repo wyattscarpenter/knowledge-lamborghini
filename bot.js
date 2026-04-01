@@ -22,6 +22,7 @@ client.login(require("./token.json"));//this file is probably missing from your 
 
 /** @type string[] */
 let text = require('./text.json'); //At this time, this is Book 1 of the W. D. Ross 1908 translation of Nicomachean Ethics, as best I can tell.
+const { execSync } = require('child_process');
 
 function error_message_first_line_if_error(e){
   return (e instanceof Error) ? e.message.split('\n')[0] : e;
@@ -86,17 +87,16 @@ let starboards = try_require('./starboards.json', {});
 /** @type string */
 const version_number = require('./package.json').version;
 /** @type string */
-const git_commit_hash = (() => {
-  //This gets us the git commit hash, assuming you're on branch master, which we assume. Unfortunately, this doesn't get you the commit message, but this is an easy 80% solution.
-  //At some point in Git 3.0 this is going to stop working, because of reftables becoming the new format instead of this loose ref file format. Cf https://lwn.net/Articles/1057561/#:~:text=As%20with,command; a straight replacement would be `git rev-parse HEAD` but another option would be `git log --oneline HEAD`, which would have richer information about the version. But we'll cross that bridge when we get to it. COULD: cross this bridge before we get to it.
+const git_commit_logline = (() => {
+  //This gets us the git commit hash and first line of commit message
   try {
-    return fs.readFileSync(".git/refs/heads/master").toString().trim();
+    return execSync('git log --oneline HEAD').toString().split('\n')[0];
   } catch (e) {
     return `unknown ( ${error_message_first_line_if_error(e)} )`;
   }
 })()
 /** @type string */
-const version_string = "Version "+version_number+", git commit "+git_commit_hash;
+const version_string = "Version "+version_number+", git commit "+git_commit_logline;
 
 let texts = {};
 var think_intervals = {};
