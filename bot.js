@@ -2,7 +2,7 @@
 
 //// Imports:
 
-const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, Message} = require('discord.js'); // You apparently can't import Channel nor SendableChannels here since they're pure types and this is a js file not a ts file.
+const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, Message, CategoryChannel} = require('discord.js'); // You apparently can't import Channel nor SendableChannels here since they're pure types and this is a js file not a ts file.
 const { roll } = require('nicedice');
 const { distance } = require('fastest-levenshtein');
 const { parseDate } = require('chrono-node');
@@ -44,6 +44,30 @@ function crash(){
 /** @template T @param {T} date The point of this otherwise-useless type annotation is that it does in fact let typescript catch this type error when you try to pass a Symbol or BigInt to this function (in accordance with https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tonumber), even though I'm not sure what type you're actually supposed to specify here for a unary-plus-able type, and the error messages won't tell me. */
 function discord_timestamp(date, is_relative=false){
   return "<t:"+ Math.trunc(+date/1000) + (is_relative? ":R>" : ">"); //there are other types of discord timestamps but we needn't bother with them here.
+}
+
+/**
+ * This utility function downcasts the general type Channel to the type SendableChannels, effectively excluding CategoryChannel. This should always work at runtime where we use it, given that someone was able to issue a command in the channel before to have triggered us; but the type system can't tell this, so there is the possibility of a runtime error which we have to account for (which we do by logging an error and then throwing (to crash)). For convenience, we also de-null the type here, which is a much more possible error case in some of our functionalities, since the channel could have been deleted since. Centralizing error handling here is convenient.
+ * Message<true>.channel is a GuildTextBasedChannel and thus doesn't need this cast
+ * @param {import('discord.js').Channel | null} channel
+ * @param {unknown} [optional_additional_information_for_error_message] such as the message you were trying to send
+ * @returns {import('discord.js').SendableChannels}
+ * @throws {string}
+ */
+function downcast_channel(channel, optional_additional_information_for_error_message){
+  const problem = (
+    channel === null ?
+      "null"
+    : !channel.isSendable() ?
+      "not sendable"
+      : null //No problem (not to be confused with "null", which is when the problem is that the channel is null, which is a problem)
+  );
+  if (problem) {
+    const problem_description = `channel I wanted to send_long to was {problem}, which is surprising, and I can't send the message.\n\tchannel: {channel}\n\tadditional_information (such as, perhaps, the message that we were trying to send): {optional_additional_information}`;
+    console.error(problem_description);
+    throw problem_description;
+  }
+  return channel;
 }
 
 /** @param {unknown} e */
@@ -240,6 +264,7 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
     if ( track_leaves[member.guild.id] ) {
       for (const channelId of track_leaves[member.guild.id]) {
         client.channels.fetch(channelId).then( channel => {
+          channel = downcast_channel(channel); //Here we take "advantage" of the odd fact that it's impossible in js/ts to const a function parameter, to reassign to it after downcasting.
           send_long(channel, member.user.toString() + " (" + member.user.tag + ", id `" + member.user.id + "`)" + " is gone from the server (left, kicked, or banned).");
         }
         );
@@ -681,19 +706,9 @@ function stop_think(channel){
  * So, this function splits up the message before sending.
  * It also guards against sending an empty string (which is a crashing error otherwise(?!)).
  * Someday I might make an internal rule that we always use send_long instead of .send, but I haven't bothered yet.
- * @param {import('discord.js').Channel | null} channel in terms of types this can be a Channel, and is nullable, but null or a non-Sendable channel (ie CategoryChannel) will cause a runtime error to be logged instead; this convenient centralizes some error handling @param {string} string @param {boolean} [resume_quotatively=false] @param {string?} [message_id_to_reply_to=null]
+ * @param {import('discord.js').SendableChannels} channel in terms of types this can be a Channel, and is nullable, but null or a non-Sendable channel (ie CategoryChannel) will cause a runtime error to be logged instead; this convenient centralizes some error handling @param {string} string @param {boolean} [resume_quotatively=false] @param {string?} [message_id_to_reply_to=null]
 */
 function send_long(channel, string, resume_quotatively=false, message_id_to_reply_to=null){
-  //Narrow the type of channel down
-  if (channel === null) {
-    console.error("channel I wanted to send_long to was null, which is surprising, and I can't send the message. channel & message:", channel, string);
-    return;
-  }
-  if (!channel.isSendable()) {
-    console.error("channel I wanted to send_long to was not sendable, which is surprising, and I can't send the message. channel & message:", channel, string);
-    return;
-  }
-
   const resumptor_prefix = resume_quotatively? ">>> " : "";
   const upper_limit = 2000 - resumptor_prefix.length; //2000 is the limit given from on-high. Note that slice, which we use later, is 0-indexed and excludes the specified end character index.
   let we_are_first = true;
