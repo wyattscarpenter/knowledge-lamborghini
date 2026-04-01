@@ -49,8 +49,7 @@ function error_message_first_line_if_error(e){
   return (e instanceof Error) ? e.message.split('\n')[0] : e;
 }
 
-/**
- * Normalize all Discord attachment URLs in a string.
+/** Normalize all Discord attachment URLs in a string.
  * - Finds all cdn.discordapp.com and media.discordapp.net /attachments/ URLs
  * - For each, strips Discord timing params (ex, is, hm), forces https, keeps other params
  * - Leaves other text and non-attachment URLs untouched
@@ -59,10 +58,7 @@ function error_message_first_line_if_error(e){
  */
 function normalize_discord_attachment_urls(text) {
   /** Regex to match Discord CDN/media attachment URLs (greedy up to whitespace or end) */
-  // TODO: possibly use [\w\-.~:\/?#\[\]@!$&'\(\)\*+,;%=]* instead of \S here? Or possibly a library that matches the current URL highlighting precisely.
-  const discord_attachment_url_regex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*/gi;
-  /**discord_attachment_url_regex, but for purposes of actually matching/testing, because .match()/test() actually checks if a string *contains* text that matches a regex. */
-  const discord_attachment_url_ONLY_regex = /^https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*$/i;
+  const discord_attachment_url_regex = /https?:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\/\S*/gi; // \S* is not really URL-spec compliant here, nor discord-url-detection-algorithm-compliant, but it's fine for our purposes.
   //You know, is that URL regex technically correct? Prob'ly not. Is that hostname match check redundant? Prob'ly. But it probably mostly works, which is enough for this.
   return text.replace(discord_attachment_url_regex, (url) => {
     try {
@@ -302,7 +298,7 @@ client.on(Events.MessageCreate, message => {
         return;
       }
       const target = little_match[1]; // "target" is not here meant to have any precise technical meaning, it's just all the url stuff after the first / (almost, but not quite, a "path").
-      channel.send("<https://old.reddit.com/"+target+">"); //note that urls followed by eg a comma might include the comma, since it's technically a valid url to have that character at the end. This is arguably undesireable behavior.
+      channel.send("<https://old.reddit.com/"+target+">");
     }
   }
 

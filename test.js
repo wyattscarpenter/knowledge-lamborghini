@@ -98,7 +98,8 @@ function fake_channel_send(x){
   reply_mock = x.content;
   return {catch: () => {}};
 }
-/** Non-comprehensive tests for set_responses. Note that these do write to disk */
+
+/** Non-comprehensive tests for set_responses. Note that these do write to disk. */
 function test_set_responses() {
   const test_msg = {
     content: "set test_boy hm\nm", //It seems inconvenient to test this actual value, alas.
@@ -120,6 +121,20 @@ function test_set_responses() {
   test_msg.content = "unset test_boy";
   set_response(test_msg, false, true);
   eq(reply_mock, 'OK, "test_boy" is now (channel) set to 0 responses with a cumulative pool of 0 total tickets.');
+}
+
+function _test_url_detector() {
+  //Discord has a particular, non-url-standard idea of what things to consider links and highlight. For instance, "https://example.com/hello." is detected as a link to "https://example.com/hello" and the period is not highlighted, even though that would be a valid url technically. Many such cases. This being a discord project, we try to agree with discord. However, we don't have functionality that satisfies this. These tests are just here to establish some cases that an ideal implementation would handle correctly. This unknown function is called x here. Amusingly, none of our static analysis complains about it.
+  //Side note: this breaks at least one of my IDE paren colorers lmao
+  eq(x("https://example.com/hello."), "https://example.com/hello");
+  eq(x("(https://en.wikipedia.org/wiki/God_(disambiguation)"), "https://en.wikipedia.org/wiki/God_(disambiguation)");
+  eq(x("((https://en.wikipedia.org/wiki/God_((disambiguation)))"), "https://en.wikipedia.org/wiki/God_((disambiguation))");
+  eq(x("(https://en.wikipedia.org/wiki/God_(disambiguation)"), "https://en.wikipedia.org/wiki/God_(disambiguation)");
+  eq(x("https://en.wikipedia.org/wiki/God_disambiguation)"), "https://en.wikipedia.org/wiki/God_disambiguation");
+  eq(
+    x("(((((((((https://en.wikipedia.org/wiki/God_(((((((((((((((disambiguation)))(((())))))))))))))))))))))))))))))))))))"),
+    "https://en.wikipedia.org/wiki/God_(((((((((((((((disambiguation)))(((()))))))))))))))))))))))))))))))))))"
+  );
 }
 
 function _bad_test_tee_hee_hee() {
