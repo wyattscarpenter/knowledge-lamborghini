@@ -22,17 +22,6 @@ function array_but_without(array, undesirable_item) {
   return array.filter(item => item !== undesirable_item);
 }
 
-/**Channel Cast. There doesn't seem to be a good way to check exactly the right type here (per https://github.com/discordjs/discord.js/issues/3622), so let's just assume that it is the right type (SendableChannels) given that someone was able to issue a command in it before. The casts all flow through this function, which has complicated and indirect types for a simple cast to validate our assumptions about what's going on; not out of necessity.
- * Message<true>.channel is a GuildTextBasedChannel and thus doesn't need this cast, so casting that can reduce the number of cc casts needed, using only one "message cast" instead.
- * @template T
- * @param {import('discord.js').Channel} channel 
- * @returns {Exclude<T, CategoryChannel>}
- */
-function cc(channel){
-  //@ts-expect-error
-  return channel;
-}
-
 /** Strip the command prefix from a string
  * @param {string} string The string from which the prefix will be stripped.
  * @remarks Prefix handling: allow a custom prefix, defaulting to '!'. If a prefix is provided as the first argument on the command line, use it.
@@ -148,7 +137,7 @@ function try_require(require_id, default_value){
   }
 }
 
-/** @param {string} record_filename @param {unknown} object_value */ 
+/** @param {string} record_filename @param {unknown} object_value */
 function update_record_on_disk(record_filename, object_value){
   console.log("Writing updates to", record_filename);
   const data_backups_folder = "data_backups/";
@@ -249,14 +238,17 @@ client.on('clientReady', () => {
 client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member leaves a guild, or is kicked."
   if (!member.user.bot) { // If we naively try to send a message to a server we're not in (ie if we've just been removed), we may crash! So, avoid that by checking if it is us who got kicked out.
     if ( track_leaves[member.guild.id] ) {
-      for (const channelId of track_leaves[member.guild.id]){
+      for (const channelId of track_leaves[member.guild.id]) {
         client.channels.fetch(channelId).then( channel => {
           if (channel === null) {
-            console.error("channel I wanted to tell about a member leaving was null, which is surprising, and I can't send the message.");
-            console.error(channel, member.guild, member.user.toString());
+            console.error("channel I wanted to tell about a user leaving was null, which is surprising, and I can't send the message. member & channel:", member, channel);
             return;
           }
-          send_long(cc(channel), member.user.toString()+" ("+member.user.tag+", id `"+member.user.id+"`)"+" is gone from the server (left, kicked, or banned).");
+          if (!channel.isSendable()) {
+            console.error("channel I wanted to tell about a user leaving was not sendable, which is surprising, and I can't send the message. member & channel:", member, channel);
+            return;
+          }
+          send_long(channel, member.user.toString() + " (" + member.user.tag + ", id `" + member.user.id + "`)" + " is gone from the server (left, kicked, or banned).");
         }
         );
       }
@@ -693,7 +685,7 @@ function stop_think(channel){
  * So, this function splits up the message before sending.
  * It also guards against sending an empty string (which is a crashing error otherwise(?!)).
  * Someday I might make an internal rule that we always use send_long instead of .send, but I haven't bothered yet.
- * @param {import('discord.js').SendableChannels} channel @param {string} string @param {boolean} [resume_quotatively=false] @param {string?} [message_id_to_reply_to=null] 
+ * @param {import('discord.js').SendableChannels} channel @param {string} string @param {boolean} [resume_quotatively=false] @param {string?} [message_id_to_reply_to=null]
 */
 function send_long(channel, string, resume_quotatively=false, message_id_to_reply_to=null){
   const resumptor_prefix = resume_quotatively? ">>> " : "";
@@ -703,7 +695,7 @@ function send_long(channel, string, resume_quotatively=false, message_id_to_repl
     while(l){
       const prefix = we_are_first? "" : resumptor_prefix;
       const content = prefix + l.slice(0, upper_limit);
-      const reply_payload = (we_are_first && message_id_to_reply_to)? {messageReference: message_id_to_reply_to} : undefined; //This "undefined" business is purely just to please the typechecker; just passing it in with null would work anyway (and not reply to anything.
+      const reply_payload = (we_are_first && message_id_to_reply_to)? {messageReference: message_id_to_reply_to} : undefined; //This "undefined" business is purely just to please the typechecker; just passing it in with null as the value of the object would work anyway (and not reply to anything).
       channel.send( { content: content, reply: reply_payload } ).catch( (error) => {
 	      if (error.code == RESTJSONErrorCodes.InvalidFormBodyOrContentType) { //It's not completely obvious, but this seems to be the way to check for this. Possibly one could specify it more exactly.
 		      console.error("Failed to send_long a message, probably because a message I would reply to was later deleted. Will now just send my message as a regular message. Here is the original error:", error);
@@ -938,16 +930,21 @@ function launch_remindmes(remindmes){
   }
 }
 
+
+
 /** @param {typeof remindmes[0]} remindme  */
 function discharge_remindme(remindme){ //Send a remindme, making sure to remove it from the authoritative data structure, and cache that structure to file:
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
   client.channels.fetch(remindme.message.channelId).then( channel => {
     if (channel === null) {
-      console.error("channel I wanted to tell about a remindme was null, which is surprising, and I can't send the message.");
-      console.error(remindme)
+      console.error("channel I wanted to tell about a remindme was null, which is surprising, and I can't send the message. remindme & channel:", remindme, channel);
       return;
     }
-    send_long(cc(channel), "It is time:\n"+remindme.message.content, false, remindme.message.id);
+    if (!channel.isSendable()) {
+      console.error("channel I wanted to tell about a remindme was not sendable, which is surprising, and I can't send the message. remindme & channel:", remindme, channel);
+      return;
+    }
+    send_long(channel, "It is time:\n"+remindme.message.content, false, remindme.message.id);
     console.log(`Sent (or attempted to send) message: ${remindme.message.content}`);
     remindmes = array_but_without(remindmes, remindme); //remove the remindme from the global list
     update_record_on_disk("remindmes.json", remindmes);
