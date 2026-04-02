@@ -46,30 +46,33 @@ function discord_timestamp(date, is_relative=false){
   return "<t:"+ Math.trunc(+date/1000) + (is_relative? ":R>" : ">"); //there are other types of discord timestamps but we needn't bother with them here.
 }
 
-/** This utility function downcasts the general type Channel to the type SendableChannels — effectively, excluding CategoryChannel. This should always work at runtime where we use it, given that someone was able to issue a command in the channel before to have triggered us; but the type system can't tell this, so when it hands us back a channel from various things it is the more general type of channel, so there is the possibility of a runtime error which we have to account for (which we do by logging an error). For convenience, we also de-null the type here, which (I guess?) is a much more possible error case in some of our functionalities, since the channel could have been deleted since. Centralizing error handling here is convenient. We often take "advantage" of the odd fact that it's impossible in js/ts to const a function parameter, to reassign to it narrowingly after downcasting. You also almost certainly want to catch what we throw, since we already log the error, so there's no sense in interrupting everything else. As usual with control, I'm not very happy with this architecture.
- * Note that Message<true>.channel (which Message gets narrowed to if .inGuild()) is a GuildTextBasedChannel and thus doesn't need this cast.
+/** This utility function downcasts the general type `Channel` to the type `SendableChannels` — effectively, excluding `CategoryChannel`.
+ * Note that `Message<true>.channel`, which `Message` gets narrowed to if `.inGuild()`, is a `GuildTextBasedChannel` and thus doesn't need this cast.
+ * This should always work at runtime where we use it, given that someone was able to issue a command in the channel before to have triggered us; but the type system can't tell this, so when it hands us back a channel from various things it is the more general type of channel, so there is the possibility of a runtime error which we have to account for (which we do by logging an error). For convenience, we also nullcheck the type in here, which is a more plausible error case in some of our functionalities, since the channel could have been deleted since we learned about it. (I guess? Honestly I'm not sure why some of these functions can return null, but that seems a likely explanation to me. I just do what the types tell me.) Centralizing error handling here is convenient.
+ * In usage code, we often take "advantage" of the odd fact that it's impossible in js/ts to const a function parameter, to reassign to it narrowingly after downcasting it hereby.
  * @param {import('discord.js').Channel | null} channel
  * @template Stringable1, Stringable2
  * @param {Stringable1} purpose Purely informative, for the error message if an error occurs.
  * @param {Stringable2} attempting_to_send Purely informative, for the error message if an error occurs.
- * @returns {import('discord.js').SendableChannels | false} the cast-to type, *or* boolean value false if the cast was unsuccessful. You are expected to check the truthiness of this return value before operating on the value like a channel, but wordlessly ignore any falsy values since we have already done the error logging for invalid values inside this downcast function. False has been picked as a failure return value instead of the more-common null to indicate a difference from the nullable type coming in. Object values are always truey, anyway, so there is no overlap in possible return values here anyway.
- * Bonus fun fact: you can go `downcast_channel(c) && c.whatever()` if you really like styling on the flow control. Although, an early-return guard like `if (!channel) {return;}` is probably "better".
+ * @returns {import('discord.js').SendableChannels | null} the cast-to type, *or* null if the cast was unsuccessful. You are expected to check the truthiness (or, at your option,¹ nullity) of this return value before operating on the value like a Channel, but wordlessly ignore it on null since we have already done the error logging for invalid values inside this downcast function. Null has been picked here so you can re-assign this value back to the original channel variable and it will be compatible and just narrow — but don't confuse this null with the unexamined null coming into this function.
+ * @remark Bonus fun fact: you can go `(c = downcast_channel(c)) && c.whatever()` (or, more reasonably, `c = downcast_channel(c); c && c.whatever()`) if you really like styling on the flow control. Although, an early-return guard like `if (!channel) {return;}` is probably "better".
+ * @footnote1 Object values are always truey, anyway, so there is no overlap in truthiness of possible return values here anyway.
  */
 function downcast_channel(channel, purpose, attempting_to_send){
-  /** @param {string} problem @returns {false}*/
-  function complaint(problem) {
+  /** @param {string} problem */
+  function complain(problem) {
     const problem_description = `channel I wanted to send_long to was ${problem}, which is surprising, and I can't send the message.
     channel: ${channel}
     purpose: ${purpose}
     the thing I was attempting to send: ${attempting_to_send}`;
     console.error(problem_description);
-    return false; 
+    return null; 
   }
   if (channel === null) {
-    return complaint("null");
+    return complain("null");
   }
   if (!channel.isSendable()) {
-    return complaint("not sendable");
+    return complain("not sendable");
   }
   return channel;
 }
