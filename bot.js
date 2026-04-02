@@ -2,7 +2,7 @@
 
 //// Imports:
 
-const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, Message, CategoryChannel} = require('discord.js'); // You apparently can't import Channel nor SendableChannels here since they're pure types and this is a js file not a ts file.
+const {Client, Events, GatewayIntentBits, Partials, RESTJSONErrorCodes, Message, CategoryChannel, TextChannel} = require('discord.js'); // You apparently can't import Channel nor SendableChannels here since they're pure types and this is a js file not a ts file.
 const { roll } = require('nicedice');
 const { distance } = require('fastest-levenshtein');
 const { parseDate } = require('chrono-node');
@@ -46,30 +46,30 @@ function discord_timestamp(date, is_relative=false){
   return "<t:"+ Math.trunc(+date/1000) + (is_relative? ":R>" : ">"); //there are other types of discord timestamps but we needn't bother with them here.
 }
 
-/** This utility function downcasts the general type Channel to the type SendableChannels, effectively excluding CategoryChannel. This should always work at runtime where we use it, given that someone was able to issue a command in the channel before to have triggered us; but the type system can't tell this, so when it hands us back a channel from various things it is the more general type of channel, so there is the possibility of a runtime error which we have to account for (which we do by logging an error and then throwing that string to crash). For convenience, we also de-null the type here, which is a much more possible error case in some of our functionalities, since the channel could have been deleted since. Centralizing error handling here is convenient. We often take "advantage" of the odd fact that it's impossible in js/ts to const a function parameter, to reassign to it narrowingly after downcasting. You also almost certainly want to catch what we throw, since we already log the error, so there's no sense in interrupting everything else. As usual with exception-based flow control, I'm not very happy with this architecture.
+/** This utility function downcasts the general type Channel to the type SendableChannels — effectively, excluding CategoryChannel. This should always work at runtime where we use it, given that someone was able to issue a command in the channel before to have triggered us; but the type system can't tell this, so when it hands us back a channel from various things it is the more general type of channel, so there is the possibility of a runtime error which we have to account for (which we do by logging an error). For convenience, we also de-null the type here, which (I guess?) is a much more possible error case in some of our functionalities, since the channel could have been deleted since. Centralizing error handling here is convenient. We often take "advantage" of the odd fact that it's impossible in js/ts to const a function parameter, to reassign to it narrowingly after downcasting. You also almost certainly want to catch what we throw, since we already log the error, so there's no sense in interrupting everything else. As usual with control, I'm not very happy with this architecture.
  * Note that Message<true>.channel (which Message gets narrowed to if .inGuild()) is a GuildTextBasedChannel and thus doesn't need this cast.
  * @param {import('discord.js').Channel | null} channel
  * @template Stringable1, Stringable2
  * @param {Stringable1} purpose Purely informative, for the error message if an error occurs.
  * @param {Stringable2} attempting_to_send Purely informative, for the error message if an error occurs.
- * @returns {import('discord.js').SendableChannels}
- * @throws {string}
+ * @returns {import('discord.js').SendableChannels | false} the cast-to type, *or* boolean value false if the cast was unsuccessful. You are expected to check the truthiness of this return value before operating on the value like a channel, but wordlessly ignore any falsy values since we have already done the error logging for invalid values inside this downcast function. False has been picked as a failure return value instead of the more-common null to indicate a difference from the nullable type coming in. Object values are always truey, anyway, so there is no overlap in possible return values here anyway.
+ * Bonus fun fact: you can go `downcast_channel(c) && c.whatever()` if you really like styling on the flow control. Although, an early-return guard like `if (!channel) {return;}` is probably "better".
  */
 function downcast_channel(channel, purpose, attempting_to_send){
-  /** @param {string} problem */
+  /** @param {string} problem @returns {false}*/
   function complaint(problem) {
     const problem_description = `channel I wanted to send_long to was ${problem}, which is surprising, and I can't send the message.
     channel: ${channel}
     purpose: ${purpose}
     the thing I was attempting to send: ${attempting_to_send}`;
     console.error(problem_description);
-    return problem_description;
+    return false; 
   }
   if (channel === null) {
-    throw complaint("null");
+    return complaint("null");
   }
   if (!channel.isSendable()) {
-    throw complaint("not sendable");
+    return complaint("not sendable");
   }
   return channel;
 }
@@ -269,10 +269,8 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
       for (const channelId of track_leaves[member.guild.id]) {
         client.channels.fetch(channelId).then( channel => {
           const msg = member.user.toString() + " (" + member.user.tag + ", id `" + member.user.id + "`)" + " is gone from the server (left, kicked, or banned).";
-          try { //I guess if the channel is deleted we need to just ignore a throw, probably. To get to the other ones after.
-            channel = downcast_channel(channel, "to notify about a user leaving", msg);
-            send_long(channel, msg);
-          } catch {/* No need to do anything. */}
+          channel = downcast_channel(channel, "to notify about a user leaving", msg);
+          channel && send_long(channel, msg);
         });
       }
     }
@@ -600,9 +598,8 @@ client.on(Events.MessageReactionAdd, async (reaction, _user) => {
         && ((reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward)
       ) {
         client.channels.fetch(channel_id).then( channel => {
-          try {
-            channel = downcast_channel(channel, "to forward a starboard hit to", reaction.message);
-          } catch {return;}
+          channel = downcast_channel(channel, "to forward a starboard hit to", reaction.message);
+          if (!channel) {return;}
           //Forward the message to the channel.
           const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
           const emoji_image_url = reaction.emoji.imageURL();
@@ -957,10 +954,8 @@ function discharge_remindme(remindme){ //Send a remindme, making sure to remove 
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
   client.channels.fetch(remindme.message.channelId).then( channel => {
     const msg = "It is time:\n"+remindme.message.content;
-    try {
-      channel = downcast_channel(channel, `to send a remindme, replying to ${remindme.message.id}`, msg);
-      send_long(channel, msg, false, remindme.message.id);
-    } catch {/* No need to do anything. */ }
+    channel = downcast_channel(channel, `to send a remindme, replying to ${remindme.message.id}`, msg);
+    channel && send_long(channel, msg, false, remindme.message.id);
     console.log(`Sent (or attempted to send) reminder message: ${remindme.message.content}`);
     remindmes = array_but_without(remindmes, remindme); //remove the remindme from the global list
     update_record_on_disk("remindmes.json", remindmes);
