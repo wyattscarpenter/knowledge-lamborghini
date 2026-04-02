@@ -41,36 +41,40 @@ function crash(){
   throw "crash"; //do not catch this, if you really want to crash
 }
 
-/** @template T @param {T} date The point of this otherwise-useless type annotation is that it does in fact let typescript catch this type error when you try to pass a Symbol or BigInt to this function (in accordance with https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tonumber), even though I'm not sure what type you're actually supposed to specify here for a unary-plus-able type, and the error messages won't tell me. */
+/** @template T @param {T} date */
 function discord_timestamp(date, is_relative=false){
   return "<t:"+ Math.trunc(+date/1000) + (is_relative? ":R>" : ">"); //there are other types of discord timestamps but we needn't bother with them here.
 }
 
-/**
- * This utility function downcasts the general type Channel to the type SendableChannels, effectively excluding CategoryChannel. This should always work at runtime where we use it, given that someone was able to issue a command in the channel before to have triggered us; but the type system can't tell this, so there is the possibility of a runtime error which we have to account for (which we do by logging an error and then throwing (to crash)). For convenience, we also de-null the type here, which is a much more possible error case in some of our functionalities, since the channel could have been deleted since. Centralizing error handling here is convenient.
- * Message<true>.channel is a GuildTextBasedChannel and thus doesn't need this cast
+/** This utility function downcasts the general type Channel to the type SendableChannels, effectively excluding CategoryChannel. This should always work at runtime where we use it, given that someone was able to issue a command in the channel before to have triggered us; but the type system can't tell this, so when it hands us back a channel from various things it is the more general type of channel, so there is the possibility of a runtime error which we have to account for (which we do by logging an error and then throwing that string to crash). For convenience, we also de-null the type here, which is a much more possible error case in some of our functionalities, since the channel could have been deleted since. Centralizing error handling here is convenient. We often take "advantage" of the odd fact that it's impossible in js/ts to const a function parameter, to reassign to it narrowingly after downcasting. You also almost certainly want to catch what we throw, since we already log the error, so there's no sense in interrupting everything else. As usual with exception-based flow control, I'm not very happy with this architecture.
+ * Note that Message<true>.channel (which Message gets narrowed to if .inGuild()) is a GuildTextBasedChannel and thus doesn't need this cast.
  * @param {import('discord.js').Channel | null} channel
- * @param {unknown} [optional_additional_information_for_error_message] such as the message you were trying to send
+ * @template Stringable1, Stringable2
+ * @param {Stringable1} purpose Purely informative, for the error message if an error occurs.
+ * @param {Stringable2} attempting_to_send Purely informative, for the error message if an error occurs.
  * @returns {import('discord.js').SendableChannels}
  * @throws {string}
  */
-function downcast_channel(channel, optional_additional_information_for_error_message){
-  const problem = (
-    channel === null ?
-      "null"
-    : !channel.isSendable() ?
-      "not sendable"
-      : null //No problem (not to be confused with "null", which is when the problem is that the channel is null, which is a problem)
-  );
-  if (problem) {
-    const problem_description = `channel I wanted to send_long to was {problem}, which is surprising, and I can't send the message.\n\tchannel: {channel}\n\tadditional_information (such as, perhaps, the message that we were trying to send): {optional_additional_information}`;
+function downcast_channel(channel, purpose, attempting_to_send){
+  /** @param {string} problem */
+  function complaint(problem) {
+    const problem_description = `channel I wanted to send_long to was ${problem}, which is surprising, and I can't send the message.
+    channel: ${channel}
+    purpose: ${purpose}
+    the thing I was attempting to send: ${attempting_to_send}`;
     console.error(problem_description);
-    throw problem_description;
+    return problem_description;
+  }
+  if (channel === null) {
+    throw complaint("null");
+  }
+  if (!channel.isSendable()) {
+    throw complaint("not sendable");
   }
   return channel;
 }
 
-/** @param {unknown} e */
+/** @template T @param {T} e */
 function error_message_first_line_if_error(e){
   return (e instanceof Error) ? e.message.split('\n')[0] : e;
 }
@@ -111,7 +115,7 @@ function normalize_discord_attachment_urls(text) {
  * Obviously, it doesn't work in more complicated linguistic edge cases like "cherry".
  * This also means that -1 is treated as taking a plural, which I'm ambivalent about.
  * You might be worried that floating point will somehow ruin this, but actually the equality and display truncation logic in js seem to work the same way so it's apparently fine.
- * @param {unknown} quantity @param {string} label //unknown is the typesafe ts top type
+ * @template Stringable @param {Stringable} quantity @param {string} label
  */
 function pl(quantity, label){
   const pl = label.slice(-1).toLowerCase() === "s"? "es" : "s"; //if it ends in s, use es instead. Note that if it ends in uppercase S, we also do this (motivating example: OSes)
@@ -119,9 +123,9 @@ function pl(quantity, label){
   return quantity + " " + label + marker;
 }
 
-/** @param {unknown} object */
-function pretty_string(object){
-  return JSON.stringify(object, null, 4);
+/** @template Stringifyable @param {Stringifyable} value */
+function pretty_string(value){
+  return JSON.stringify(value, null, 4);
 }
 
 /** @template T @param {readonly T[]} array */
@@ -161,7 +165,7 @@ function try_require(require_id, default_value){
   }
 }
 
-/** @param {string} record_filename @param {unknown} object_value */
+/** @template Stringifyable @param {string} record_filename @param {Stringifyable} object_value */
 function update_record_on_disk(record_filename, object_value){
   console.log("Writing updates to", record_filename);
   const data_backups_folder = "data_backups/";
@@ -264,10 +268,12 @@ client.on(Events.GuildMemberRemove, member => { //"Emitted whenever a member lea
     if ( track_leaves[member.guild.id] ) {
       for (const channelId of track_leaves[member.guild.id]) {
         client.channels.fetch(channelId).then( channel => {
-          channel = downcast_channel(channel); //Here we take "advantage" of the odd fact that it's impossible in js/ts to const a function parameter, to reassign to it after downcasting.
-          send_long(channel, member.user.toString() + " (" + member.user.tag + ", id `" + member.user.id + "`)" + " is gone from the server (left, kicked, or banned).");
-        }
-        );
+          const msg = member.user.toString() + " (" + member.user.tag + ", id `" + member.user.id + "`)" + " is gone from the server (left, kicked, or banned).";
+          try { //I guess if the channel is deleted we need to just ignore a throw, probably. To get to the other ones after.
+            channel = downcast_channel(channel, "to notify about a user leaving", msg);
+            send_long(channel, msg);
+          } catch {/* No need to do anything. */}
+        });
       }
     }
   }
@@ -594,35 +600,30 @@ client.on(Events.MessageReactionAdd, async (reaction, _user) => {
         && ((reaction.count??0) >= starboard_metadata.quantity_required_in_order_to_forward)
       ) {
         client.channels.fetch(channel_id).then( channel => {
-          if (channel === null) {
-            console.error("channel I wanted to forward a starboard hit to was null, which is surprising, and I can't do that. channel & message:", channel, reaction.message);
-            return;
-          } else if (!channel.isSendable()) {
-            console.error("channel I wanted to forward a starboard hit to was not sendable, which is surprising, and I can't do that. channel & message:", channel, reaction.message);
-            return;
-          } else {
-            //Forward the message to the channel.
-            const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
-            const emoji_image_url = reaction.emoji.imageURL();
-            const emoji_image = emoji_image_url?
-              reaction.emoji.animated? `https://cdn.discordapp.com/emojis/${reaction.emoji.id}.gif` : emoji_image_url
-              : reaction.emoji.toString()
-            ;
-            console.log(emoji_image);
-            send_long(channel, emoji_image); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
-            send_long(channel, metadata);
-            reaction.message.forward(channel)
-              .then(message => {
-                if ( !reaction.message.inGuild() ) {
-                  console.error("message I wanted to update the starboard record of the channel of was not in-guild, which is surprising, and I can't do that. message:", reaction.message);
-                  return;
-                }
-                console.log(`forwarded message to starboard: ${message.content}`);
-                starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
-                update_record_on_disk("starboards.json", starboards);
-              })
-              .catch(console.error);
-          }
+          try {
+            channel = downcast_channel(channel, "to forward a starboard hit to", reaction.message);
+          } catch {return;}
+          //Forward the message to the channel.
+          const metadata = `${reaction.emoji} ${reaction.message.author} ${reaction.message.url}`;
+          const emoji_image_url = reaction.emoji.imageURL();
+          const emoji_image = emoji_image_url?
+            reaction.emoji.animated? `https://cdn.discordapp.com/emojis/${reaction.emoji.id}.gif` : emoji_image_url
+            : reaction.emoji.toString()
+          ;
+          console.log(emoji_image);
+          send_long(channel, emoji_image); //we send a presagatory image copy of the emoji in case it is an external emoji, which will just show up as :whatever_text: as of 2025-06-30; see https://github.com/discord/discord-api-docs/discussions/3256#discussioncomment-13542724 for more information.
+          send_long(channel, metadata);
+          reaction.message.forward(channel)
+            .then(message => {
+              if ( !reaction.message.inGuild() ) {
+                console.error("message I wanted to update the starboard record of the channel of was not in-guild, which is surprising, and I can't do that. message:", reaction.message);
+                return;
+              }
+              console.log(`forwarded message to starboard: ${message.content}`);
+              starboards[reaction.message.guild.id][channel_id].messageIds.push(reaction.message.id);
+              update_record_on_disk("starboards.json", starboards);
+            })
+            .catch(console.error);
         });
       }
     }
@@ -951,13 +952,15 @@ function launch_remindmes(remindmes){
   }
 }
 
-
-
 /** @param {typeof remindmes[0]} remindme  */
 function discharge_remindme(remindme){ //Send a remindme, making sure to remove it from the authoritative data structure, and cache that structure to file:
   //The method to send this is slightly convoluted, since we lose the method-state by which we would do it simply on bot-reboot.
   client.channels.fetch(remindme.message.channelId).then( channel => {
-    send_long(channel, "It is time:\n"+remindme.message.content, false, remindme.message.id);
+    const msg = "It is time:\n"+remindme.message.content;
+    try {
+      channel = downcast_channel(channel, `to send a remindme, replying to ${remindme.message.id}`, msg);
+      send_long(channel, msg, false, remindme.message.id);
+    } catch {/* No need to do anything. */ }
     console.log(`Sent (or attempted to send) reminder message: ${remindme.message.content}`);
     remindmes = array_but_without(remindmes, remindme); //remove the remindme from the global list
     update_record_on_disk("remindmes.json", remindmes);

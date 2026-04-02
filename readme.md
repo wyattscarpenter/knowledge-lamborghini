@@ -104,6 +104,44 @@ const DISCORD_URL_REGEX = /^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/ //I extracted t
 
 See "Sadly, audio links[...]" above.
 
+#### Typescript
+
+##### Preamble
+
+If you are maintaining or contributing to this project, you should read this section. Otherwise, you don't have to, and it will probably be quite boring and confusing to you. And, ideally, the user will never see any of this stuff! However, if you are maintaining, then you'll probably want to know about these things. Additionally, bot.js may contain some `//@ts-expect-error` lines documenting similar stuff. (The goal of `//@ts-expect-error` lines is generally to be removed once something underlying is fixed.)
+
+##### Format
+
+Due to the contingency of history, the file is a js file that just has TSDoc comments on the functions and top-level variables to provide type information. This seems fine to me; I will let it go on like this.
+
+These type comments aim to be comprehensive to avoid problems caused by types being inferred as `any`. (`any` is bad because it is not typesafe; it lets you ignore the type system.) Luckily, typescript will warn you about most cases where `any` pops up implicitly, although sometimes an `any` sneaks in anyway, like in the return type of `require`.
+
+Here I'll make my normal token complaint that it's not actually technologically necessary for me to provide these type annotations; the typechecker should just deduce the types, like it does in code that doesn't cross function boundaries. This is a UX failure and should be fixed. But I am not in charge of typescript.
+
+##### Version
+
+The typescript version is pinned to the latest 5. At time of writing (2026-04-01), 6 (current version: 6.0.2) seems to have a couple of problems, such as multiply-referenced types being mistaken for distinct types. They will probably eventually iron those out. I know about those errors because it's what VS Code uses to show me type errors in the IDE (I *think*), which makes it a little annoying that it displays spurious type errors.
+
+The versions of node and ecmascript I target are probably just chosen to encompass all the features I was using at the time and were limited mainly by the fact that I live in linear time and cannot rely on versions from the future. It's probably fine and mostly painless to upgrade them. It may be impossible or quite inconvenient to downgrade them, but hopefully you don't need to do that.
+
+##### Seemingly-useless single-use generics
+
+This codebase often uses generics that apparently only occur once in the type signature, which seems mysterious and perhaps useless. This section explains the various reasons why we do that. We'll call a single-use generic `T` in this section for brevity. You might think `T` is equivalent in meaning to `unknown` (why did you think this?), but they actually have different semantics in important ways, some intentional and some bugs, that force us to use `T` instead.
+
+`unknown` is the typesafe top type in TypeScript, meaning that it can represent any value. This is to be contrasted with `any`, which is a type that can also represent any value, but turns off typechecking when you try to assign it to things, thus ruining the whole point of having these types in the first place. Cf https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-0.html#new-unknown-top-type. (Why is the reference information for the TypeScript system its release notes? This is another one of life's little mysteries.) You should almost never use `any`. Which makes it sad that it's named so temptingly for a top type. Anyway, because I'm such an `unknown`-respecter, you might think I use it for my fully generic functions, which can take any value whatsoever. But I actually never use it in this codebase.
+
+First of all, often a function with a fully generic parameter also wants to return that value. If you use `unknown` then typescript will deduce the return type as `unknown` when you return that parameter, which makes using the result of the function cumbersome. But if you use `T`, then the return type will also be deduced (when proper) as `T`, which means the calling code can keep using the return value while knowing its type, which is very convenient. Notably, this deduction happens whether or not you annotate the return type, so I usually don't annotate the return type, and so this is one case where it looks like I'm using a generic with only one use.
+
+But, secondly, usually my functions are not indeed fully generic. Here are some instances in which I use `T` rather than `unknown`, and why:
+
+• When the function needs to unary plus the parameter (eg `+x`) to convert it to a number, TypeScript correctly deduces that this is disallowed on `unknown` — for example, `+Symbol()` TypeErrors at runtime. So instead I use `T`. The point of this otherwise-useless type annotation is that it does in fact let typescript catch this type error when you try to pass a Symbol or BigInt to this function (in accordance with https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tonumber), even though I'm not sure what type you're actually supposed to specify here for a unary-plus-able type, and the error messages won't tell me.
+
+• When the function needs to concatenate/interpolate an `unknown` value with a string, TypeScript accepts this, but this is a bug — for example, `""+Symbol()` TypeErrors at runtime. See https://github.com/microsoft/TypeScript/issues/29963. Here we use a `T` called Stringable to give our code a fighting chance to be correct in the future, although current TypeScript does not seem to catch this error.
+
+• When the function calls JSON.stringify on the value, this can result in a runtime TypeError. For instance `JSON.stringify(BigInt(123))`; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/BigInt_not_serializable. https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#exceptions also claims this will be thrown if the value contains a circular reference (although that would be harder to statically verify against). I've raised this issue on GitHub: https://github.com/microsoft/TypeScript/issues/63333. Given that they have decided not to fix the type signature of JSON.stringify in the past, for a different problem (https://github.com/microsoft/TypeScript/issues/18879#issuecomment-1399758565), and also how busy they are with the TypeScript 7.0 migration, I'm not sanguine about them fixing this one any time soon. Here we use a `T` called Stringifyable to give our code a fighting chance to be correct in the future, although current TypeScript does not seem to catch this error. TODO: maybe try installing https://github.com/uhyo/better-typescript-lib or https://www.totaltypescript.com/ts-reset?
+
+Nb: When multiple *independent* single-use generics are needed, they need to be declared like `T1`, `T2`, etc, instead of all sharing the same `T`, or this would imply that the values that use `T` all have to be the same type, which isn't intended.
+
 ### Metadata
 
 * The code is public domain under CC0 1.0.
