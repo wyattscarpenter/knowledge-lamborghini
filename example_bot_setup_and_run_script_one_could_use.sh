@@ -5,5 +5,7 @@ fi
 cd knowledge-lamborghini
 git pull
 
-npm install
-npm start >logs.txt
+echo "New log chunk" >>logs.txt
+date >>logs.txt
+npm install >>logs.txt
+npm start >>logs.txt
