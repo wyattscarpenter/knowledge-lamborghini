@@ -1,4 +1,4 @@
-# This script runs the bot, in a particular way.
+# This script monitors the git origin/master to see if there is a new version, and if there is it changes to that and kills and runs the project again.
 
 # Sporadically (and for that, all the more confusingly) there is a git lock conflict. I don't know what the heck its problem is. I have deliberately tried to set up this system so that git will just act like a download and it won't be a federal issue every time. Alas!
 # Anyway, presumably there's some kind of git unlock command I can run first which will unbreak things prophylactically.
