@@ -261,7 +261,7 @@ const client = new Client({
 client.login(require("./token.json"));//this file is probably missing from your code base, initially, since I have it gitignored, as it is the secret bot token. Never fear! Go to discord and get a bot token of your own, and then put it in a new file called token.json in this directory, surrounding the token in quotes to make a javascript string, "like this". That's all!
 
 client.on('clientReady', () => {
-  console.log('I am ready! I am kl", version_number, "logged in as', client.user?.tag, "with optional command prefix", command_prefix);
+  console.log("I am ready! I am kl", version_number, "logged in as", client.user?.tag, "with optional command prefix", command_prefix);
   setInterval(update_status_clock, 1000);
   launch_remindmes(remindmes);
 });
