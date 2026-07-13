@@ -140,8 +140,8 @@ function random_choice(array){
 
 /** ("a\n\nb", /\s/) ⇒ ["a", "\nb"]; accepts both strings and RegExps (anything with a Symbol.match method returning a string, actually).
  * @param {string} source_string
- * @param {{ [Symbol.match](string: string): RegExpMatchArray | null }} splitter
- * @returns {[string, string]} the part of the string before the found instance of the splitter, and then the part of the string after the found instance of the splitter. The actual found splitter value is lost in the process (who cares?). Returns [source_string, ""] if splitter not found; this is impossible to distinguish from cases where the splitter is detected at the end, which can happen — but this definition was most useful for this application.
+ * @param {{ [Symbol.match](string: string): RegExpMatchArray | null }} splitter TODO: does this type not cover string?
+ * @returns {[string, string]} the part of the string before the found instance of the splitter, and then the part of the string after the found instance of the splitter. The actual found splitter value is lost in the process (who cares?). Returns [source_string, ""] if splitter not found; this is impossible to distinguish from cases where the splitter is detected at the end, which can happen — but the current definition was most useful for this application.
  */
 function split_once(source_string, splitter){
   const array_of_matched_strings_or_null = source_string.match(splitter); //Since splitter could be not a string, make it array of string instead (or null)
@@ -152,6 +152,24 @@ function split_once(source_string, splitter){
   const i = source_string.indexOf(s);
   return [source_string.slice(0,i), source_string.slice(i+s.length)];
 }
+
+/** ("abcbd", "b", 2) ⇒ "d"
+ * @param {string} source_string
+ * @param {{ [Symbol.match](string: string): RegExpMatchArray | null }} splitter
+ * @param {number} n A non-negative integer; the number of times to split.
+ * @returns {string} the result of applying split_once n times and always picking its [1]
+ */
+function nth_split_tail(source_string, splitter, n){
+  //This function has been written to be nice and readable rather than performant. It has also chosen to do it the functional programming way rather than the iterative loop way, even though that's only "more readable" to a very specific kind of person. Also I chose not to use the ternary expression, again for readability reasons. 
+  //It would be more aesthetic to make the guard condition ==, but you know what's really aesthetic? Not infinite looping when someone gives us a slightly wrong value that is technically still allowed by our type signature. //P.S.: this is cool https://stackoverflow.com/a/69413070 but it would not allow anything but literals to be passed in, which is a shame.
+  if (n <= 0) {  
+    return source_string;
+  } else {
+    const tail = split_once(source_string, splitter)[1];
+    return nth_split_tail(tail, splitter, n-1);
+  }
+}
+
 
 /** It would be nice if we could just normal require these files, and also have it deduce the types, but that's not really how it works (at least for us, at least so far).
  * Since this returns the perfidious `any` type, make sure to immediately assign it to something with a known type. `noImplicitAny` won't save you here.
@@ -246,7 +264,7 @@ const think_intervals = {};
 
 /** These are exported merely for our testing purposes, and aren't expected to be generally useful. */
 module.exports = {
-  normalize_discord_attachment_urls, set_response, split_once, version_string
+  normalize_discord_attachment_urls, nth_split_tail, set_response, split_once, version_string
 }
 
 //// Discord bot nitty-gritty and focussed implementation:
@@ -393,7 +411,7 @@ client.on(Events.MessageCreate, message => {
   //Track starboard-type functionality
   if (m.startsWith('keep a starboard here')) {
     const default_n = 7;
-    const n = parseInt(m.split(/\s+/).slice(4).join(' ')) || default_n; //ignoring the "keep a starboard here" beginning of m, try to interpret the next part of it as a number, and assign that or a default value of 7 to a const n
+    const n = parseInt(nth_split_tail(m, /\s+/, 4)) || default_n; //ignoring the "keep a starboard here" beginning of m, try to interpret the next part of it as a number, and assign that or a default value of 7 to a const n
     if (message.guild.id in starboards) {
       if ( starboards[message.guild.id][message.channel.id] ){
         starboards[message.guild.id][message.channel.id]["quantity_required_in_order_to_forward"] = n;
@@ -465,7 +483,7 @@ client.on(Events.MessageCreate, message => {
 
   if (m.startsWith('enumerate responses')) {
     // If an argument is given, only enumerate responses for that argument (keyword or regex)
-    const filter = command_prefix_strip(message.content.split(/\s+/).slice(2).join(' ').toLowerCase());
+    const filter = command_prefix_strip(nth_split_tail(message.content, /\s+/, 2).toLowerCase());
     /** @template T @param {{[string: string]: T}|null|undefined} obj  */
     function pick (obj) {
       if (!obj || !filter) return obj;

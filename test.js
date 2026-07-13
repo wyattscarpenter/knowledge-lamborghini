@@ -1,5 +1,5 @@
 const eq = require('assert').deepStrictEqual; //We have to use this due to the funny fact that, eg, []==[] is false in js.
-const { normalize_discord_attachment_urls, set_response, split_once, version_string } = require('./bot.js');
+const { normalize_discord_attachment_urls, nth_split_tail, set_response, split_once, version_string } = require('./bot.js');
 const { exit } = require('process');
 
 function test_normalize_discord_attachment_urls() {
@@ -90,6 +90,15 @@ function test_split_once() {
     ["a", "\nb"]
   );
 }
+
+function test_nth_split_tail(){
+  eq(nth_split_tail("abcbd", "b", 0), "abcbd");
+  eq(nth_split_tail("abcbd", "b", 1), "cbd");
+  eq(nth_split_tail("abcbd", "b", 2), "d");
+  eq(nth_split_tail("abcbd", "f", 2), "");
+  eq(nth_split_tail("abcbd", /b/, 0), "abcbd");
+}
+
 let reply_mock = undefined;
 function fake_channel_send(x){
   reply_mock = x.content;
@@ -143,6 +152,7 @@ console.log(version_string);
 eq(version_string[0], "V");
 test_normalize_discord_attachment_urls();
 test_split_once();
+test_nth_split_tail();
 test_set_responses();
 console.log('All tests passed!');
 exit(); // Since we require the bot, we must exit the process once we are done with our tests or, like, the bot will just start running.
